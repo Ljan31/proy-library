@@ -38,7 +38,7 @@ public class Usuario {
       @UniqueConstraint(columnNames = { "user_id", "role_id" }) })
   private List<Role> roles;
 
-  private boolean enabled;
+  private Boolean enabled;
 
   @Transient
   // @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -85,11 +85,11 @@ public class Usuario {
     this.roles = roles;
   }
 
-  public boolean isEnabled() {
+  public Boolean isEnabled() {
     return enabled;
   }
 
-  public void setEnabled(boolean enabled) {
+  public void setEnabled(Boolean enabled) {
     this.enabled = enabled;
   }
 
