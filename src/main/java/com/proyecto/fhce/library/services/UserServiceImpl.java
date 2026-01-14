@@ -7,6 +7,7 @@ import java.util.Optional;
 import javax.management.relation.Role;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.proyecto.fhce.library.entities.Usuario;
@@ -20,6 +21,9 @@ public class UserServiceImpl implements UserService {
 
   @Autowired
   private RoleRepository roleRepository;
+
+  @Autowired
+  private PasswordEncoder passwordEncoder;
 
   @Override
   @Transactional(readOnly = true)
@@ -44,7 +48,7 @@ public class UserServiceImpl implements UserService {
   public Usuario save(Usuario user) {
     // user.setRoles(getRoleOptional(user));
     user.setEnabled(true);
-    // user.setPassword(passwordEncoder.encode(user.getPassword()));
+    user.setPassword(passwordEncoder.encode(user.getPassword()));
     return userRepository.save(user);
   }
 
