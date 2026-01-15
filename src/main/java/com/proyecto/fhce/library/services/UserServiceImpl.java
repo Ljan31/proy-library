@@ -4,16 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.management.relation.Role;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.proyecto.fhce.library.entities.Role;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.repositories.RoleRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 
+@Service
 public class UserServiceImpl implements UserService {
 
   @Autowired
@@ -46,7 +47,7 @@ public class UserServiceImpl implements UserService {
   @Override
   @Transactional
   public Usuario save(Usuario user) {
-    // user.setRoles(getRoleOptional(user));
+    user.setRoles(getRoleOptional(user));
     user.setEnabled(true);
     user.setPassword(passwordEncoder.encode(user.getPassword()));
     return userRepository.save(user);
@@ -65,7 +66,8 @@ public class UserServiceImpl implements UserService {
         existing.setEnabled(user.isEnabled());
       // existing.setEmail(user.getEmail());
 
-      existing.setRoles(user.getRoles());
+      // existing.setRoles(user.getRoles());
+      existing.setRoles(getRoleOptional(user));
 
       return Optional.of(userRepository.save(existing));
     }).orElseGet(() -> Optional.empty());
@@ -78,18 +80,18 @@ public class UserServiceImpl implements UserService {
     userRepository.deleteById(id);
   }
 
-  // private List<Role> getRoleOptional(Usuario user) {
-  // List<Role> roles = new ArrayList<>();
-  // Optional<Role> roleOptional = roleRepository.findByName("ROLE_USER");
-  // roleOptional.ifPresent(roles::add);
+  private List<Role> getRoleOptional(Usuario user) {
+    List<Role> roles = new ArrayList<>();
+    Optional<Role> roleOptional = roleRepository.findByName("ROLE_USER");
+    roleOptional.ifPresent(roles::add);
 
-  // if (user.isAdmin()) {
-  // Optional<Role> adminRoleOptional = roleRepository.findByName("ROLE_ADMIN");
-  // adminRoleOptional.ifPresent(roles::add);
-  // }
+    if (user.isAdmin()) {
+      Optional<Role> adminRoleOptional = roleRepository.findByName("ROLE_ADMIN");
+      adminRoleOptional.ifPresent(roles::add);
+    }
 
-  // return roles;
-  // }
+    return roles;
+  }
 
   @Override
   public boolean existsByUsername(String username) {
