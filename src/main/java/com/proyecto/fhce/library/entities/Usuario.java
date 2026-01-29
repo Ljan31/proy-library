@@ -1,18 +1,21 @@
 package com.proyecto.fhce.library.entities;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
@@ -32,13 +35,18 @@ public class Usuario {
   @Column(length = 60)
   private String password;
 
-  @ManyToMany
+  @ManyToMany(fetch = FetchType.EAGER)
   @JsonIgnoreProperties({ "users", "handler", "hibernateLazyInitializer" })
   @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"), uniqueConstraints = {
       @UniqueConstraint(columnNames = { "user_id", "role_id" }) })
-  private List<Role> roles;
+  // private List<Role> roles;
+  private Set<Role> roles;
 
   private Boolean enabled;
+
+  @OneToOne(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+  @JoinColumn(name = "persona_id", nullable = false, unique = true)
+  private Persona persona;
 
   @Transient
   // @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -50,7 +58,8 @@ public class Usuario {
   }
 
   public Usuario() {
-    roles = new ArrayList<>();
+    // roles = new ArrayList<>();
+    roles = new HashSet<>();
   }
 
   public Long getId_usuario() {
@@ -77,11 +86,11 @@ public class Usuario {
     this.password = password;
   }
 
-  public List<Role> getRoles() {
+  public Set<Role> getRoles() {
     return roles;
   }
 
-  public void setRoles(List<Role> roles) {
+  public void setRoles(Set<Role> roles) {
     this.roles = roles;
   }
 
@@ -99,6 +108,14 @@ public class Usuario {
 
   public void setAdmin(boolean admin) {
     this.admin = admin;
+  }
+
+  public Persona getPersona() {
+    return persona;
+  }
+
+  public void setPersona(Persona persona) {
+    this.persona = persona;
   }
 
   @Override

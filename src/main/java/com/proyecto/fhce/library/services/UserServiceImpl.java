@@ -47,7 +47,7 @@ public class UserServiceImpl implements UserService {
   @Override
   @Transactional
   public Usuario save(Usuario user) {
-    user.setRoles(getRoleOptional(user));
+    // user.setRoles(getRoleOptional(user));
     user.setEnabled(true);
     user.setPassword(passwordEncoder.encode(user.getPassword()));
     return userRepository.save(user);
@@ -67,7 +67,7 @@ public class UserServiceImpl implements UserService {
       // existing.setEmail(user.getEmail());
 
       // existing.setRoles(user.getRoles());
-      existing.setRoles(getRoleOptional(user));
+      // existing.setRoles(getRoleOptional(user));
 
       return Optional.of(userRepository.save(existing));
     }).orElseGet(() -> Optional.empty());
