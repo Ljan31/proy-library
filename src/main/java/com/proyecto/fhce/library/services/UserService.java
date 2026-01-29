@@ -1,23 +1,38 @@
 package com.proyecto.fhce.library.services;
 
 import java.util.List;
-import java.util.Optional;
 
-import com.proyecto.fhce.library.entities.Usuario;
+import com.proyecto.fhce.library.dto.request.ChangePasswordRequest;
+import com.proyecto.fhce.library.dto.request.RegisterRequest;
+import com.proyecto.fhce.library.dto.request.UsuarioUpdateRequest;
+import com.proyecto.fhce.library.dto.response.UsuarioResponse;
 
 public interface UserService {
-  List<Usuario> findAll();
 
-  Optional<Usuario> findById(Long id);
+  UsuarioResponse create(RegisterRequest request);
 
-  Optional<Usuario> findByUsername(String username);
+  UsuarioResponse update(Long id, UsuarioUpdateRequest request);
 
-  Usuario save(Usuario user);
+  void changePassword(Long id, ChangePasswordRequest request);
 
-  Optional<Usuario> update(Usuario user, Long id);
+  void toggleEnabled(Long id);
 
-  void delete(Long id);
+  List<UsuarioResponse> findAll();
 
-  boolean existsByUsername(String username);
+  UsuarioResponse findById(Long id);
+
+  List<UsuarioResponse> findByRoleName(String roleName);
+
+  List<UsuarioResponse> search(String searchTerm);
+
+  // Optional<Usuario> findByUsername(String username);
+
+  // Usuario save(Usuario user);
+
+  // Optional<Usuario> update(Usuario user, Long id);
+
+  // void delete(Long id);
+
+  // boolean existsByUsername(String username);
 
 }
