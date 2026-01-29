@@ -20,8 +20,8 @@ public class Permiso {
   @Column(unique = true, nullable = false)
   private Long id_permiso;
 
-  @Column(unique = true, nullable = false, length = 100)
-  private String nombre_permiso;
+  @Column(name = "nombre_permiso", unique = true, nullable = false, length = 100)
+  private String nombrePermiso;
 
   private String descripcion;
 
@@ -41,11 +41,11 @@ public class Permiso {
   }
 
   public String getNombre_permiso() {
-    return nombre_permiso;
+    return nombrePermiso;
   }
 
-  public void setNombre_permiso(String nombre_permiso) {
-    this.nombre_permiso = nombre_permiso;
+  public void setNombre_permiso(String nombrePermiso) {
+    this.nombrePermiso = nombrePermiso;
   }
 
   public String getDescripcion() {
@@ -69,7 +69,7 @@ public class Permiso {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((id_permiso == null) ? 0 : id_permiso.hashCode());
-    result = prime * result + ((nombre_permiso == null) ? 0 : nombre_permiso.hashCode());
+    result = prime * result + ((nombrePermiso == null) ? 0 : nombrePermiso.hashCode());
     result = prime * result + ((modulo == null) ? 0 : modulo.hashCode());
     return result;
   }
@@ -88,10 +88,10 @@ public class Permiso {
         return false;
     } else if (!id_permiso.equals(other.id_permiso))
       return false;
-    if (nombre_permiso == null) {
-      if (other.nombre_permiso != null)
+    if (nombrePermiso == null) {
+      if (other.nombrePermiso != null)
         return false;
-    } else if (!nombre_permiso.equals(other.nombre_permiso))
+    } else if (!nombrePermiso.equals(other.nombrePermiso))
       return false;
     if (modulo == null) {
       if (other.modulo != null)

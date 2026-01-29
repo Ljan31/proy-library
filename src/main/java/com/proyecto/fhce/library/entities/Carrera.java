@@ -21,8 +21,8 @@ public class Carrera {
 
   private String nombre;
 
-  @OneToMany(mappedBy = "carrera", fetch = FetchType.LAZY)
-  private List<Persona> personas = new ArrayList<>();
+  // @OneToMany(mappedBy = "carrera", fetch = FetchType.LAZY)
+  // private List<Persona> personas = new ArrayList<>();
 
   public Long getIdCarrera() {
     return id_carrera;
@@ -40,13 +40,13 @@ public class Carrera {
     this.nombre = nombre;
   }
 
-  public List<Persona> getPersonas() {
-    return personas;
-  }
+  // public List<Persona> getPersonas() {
+  // return personas;
+  // }
 
-  public void setPersonas(List<Persona> personas) {
-    this.personas = personas;
-  }
+  // public void setPersonas(List<Persona> personas) {
+  // this.personas = personas;
+  // }
 
   @Override
   public int hashCode() {

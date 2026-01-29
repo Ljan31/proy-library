@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.proyecto.fhce.library.entities.Persona;
 
@@ -17,6 +19,14 @@ public interface PersonaRepository extends JpaRepository<Persona, Long> {
 
   boolean existsByEmail(String email);
 
-  List<Persona> findByNombreContainingIgnoreCaseOrApellidoPatContainingIgnoreCase(
-      String nombre, String apellidoPat);
+  // List<Persona>
+  // findByNombreContainingIgnoreCaseOrApellido__patContainingIgnoreCase(
+  // String nombre, String apellido_pat);
+
+  @Query("""
+          SELECT p FROM Persona p
+          WHERE LOWER(p.nombre) LIKE LOWER(CONCAT('%', :termino, '%'))
+             OR LOWER(p.apellido_pat) LIKE LOWER(CONCAT('%', :termino, '%'))
+      """)
+  List<Persona> buscarPorNombreOApellidoPaterno(@Param("termino") String termino);
 }

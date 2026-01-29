@@ -34,6 +34,8 @@ public interface UserRepository extends JpaRepository<Usuario, Long> {
   @Query("SELECT COUNT(u) FROM Usuario u JOIN u.roles r WHERE r.name = :roleName")
   Long countByRoleName(@Param("roleName") String roleName);
 
-  @Query("SELECT u FROM Usuario u WHERE u.intentosLogin >= :maxIntentos AND u.enabled = true")
-  List<Usuario> findUsuariosBloqueados(@Param("maxIntentos") Integer maxIntentos);
+  // @Query("SELECT u FROM Usuario u WHERE u.intentosLogin >= :maxIntentos AND
+  // u.enabled = true")
+  // List<Usuario> findUsuariosBloqueados(@Param("maxIntentos") Integer
+  // maxIntentos);
 }
