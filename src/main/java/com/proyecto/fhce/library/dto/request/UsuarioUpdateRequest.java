@@ -7,4 +7,53 @@ public class UsuarioUpdateRequest {
   private String celular;
   private String email;
   private Boolean enabled;
+
+  public String getNombre() {
+    return nombre;
+  }
+
+  public void setNombre(String nombre) {
+    this.nombre = nombre;
+  }
+
+  public String getApellido_pat() {
+    return apellido_pat;
+  }
+
+  public void setApellido_pat(String apellido_pat) {
+    this.apellido_pat = apellido_pat;
+  }
+
+  public String getApellido_mat() {
+    return apellido_mat;
+  }
+
+  public void setApellido_mat(String apellido_mat) {
+    this.apellido_mat = apellido_mat;
+  }
+
+  public String getCelular() {
+    return celular;
+  }
+
+  public void setCelular(String celular) {
+    this.celular = celular;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
+  public Boolean getEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(Boolean enabled) {
+    this.enabled = enabled;
+  }
+
 }

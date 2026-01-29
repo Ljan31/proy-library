@@ -25,4 +25,52 @@ public class PersonaRequest {
   @Email(message = "Email debe ser válido")
   private String email;
 
+  public String getNombre() {
+    return nombre;
+  }
+
+  public void setNombre(String nombre) {
+    this.nombre = nombre;
+  }
+
+  public String getApellido_pat() {
+    return apellido_pat;
+  }
+
+  public void setApellido_pat(String apellido_pat) {
+    this.apellido_pat = apellido_pat;
+  }
+
+  public String getApellido_mat() {
+    return apellido_mat;
+  }
+
+  public void setApellido_mat(String apellido_mat) {
+    this.apellido_mat = apellido_mat;
+  }
+
+  public Integer getCi() {
+    return ci;
+  }
+
+  public void setCi(Integer ci) {
+    this.ci = ci;
+  }
+
+  public String getCelular() {
+    return celular;
+  }
+
+  public void setCelular(String celular) {
+    this.celular = celular;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
 }
