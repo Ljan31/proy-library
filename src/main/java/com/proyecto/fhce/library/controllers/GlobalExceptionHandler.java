@@ -8,9 +8,10 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-  @ExceptionHandler(NoResourceFoundException.class)
-  public ResponseEntity<String> handleNoResource(NoResourceFoundException ex) {
-    return ResponseEntity.status(404)
-        .body("El recurso solicitado no existe o no está habilitado en este profile");
-  }
+  // @ExceptionHandler(NoResourceFoundException.class)
+  // public ResponseEntity<String> handleNoResource(NoResourceFoundException ex) {
+  // return ResponseEntity.status(404)
+  // .body("El recurso solicitado no existe o no está habilitado en este
+  // profile");
+  // }
 }
