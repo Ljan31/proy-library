@@ -1,11 +1,13 @@
 package com.proyecto.fhce.library.services;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.proyecto.fhce.library.dto.request.ChangePasswordRequest;
 import com.proyecto.fhce.library.dto.request.RegisterRequest;
 import com.proyecto.fhce.library.dto.request.UsuarioUpdateRequest;
 import com.proyecto.fhce.library.dto.response.UsuarioResponse;
+import com.proyecto.fhce.library.entities.Usuario;
 
 public interface UserService {
 
@@ -25,7 +27,7 @@ public interface UserService {
 
   List<UsuarioResponse> search(String searchTerm);
 
-  // Optional<Usuario> findByUsername(String username);
+  Optional<Usuario> findByUsername(String username);
 
   // Usuario save(Usuario user);
 

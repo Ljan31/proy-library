@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.proyecto.fhce.library.dto.response.UsuarioResponse;
 import com.proyecto.fhce.library.entities.Usuario;
 
 public interface UserRepository extends JpaRepository<Usuario, Long> {
