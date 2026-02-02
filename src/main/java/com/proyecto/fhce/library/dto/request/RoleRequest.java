@@ -11,4 +11,21 @@ public class RoleRequest {
   private String name;
 
   private Set<Long> permisoIds;
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public Set<Long> getPermisoIds() {
+    return permisoIds;
+  }
+
+  public void setPermisoIds(Set<Long> permisoIds) {
+    this.permisoIds = permisoIds;
+  }
+
 }

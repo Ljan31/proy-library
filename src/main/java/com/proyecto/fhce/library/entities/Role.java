@@ -69,6 +69,14 @@ public class Role {
     this.users = users;
   }
 
+  public Set<Permiso> getPermisos() {
+    return permisos;
+  }
+
+  public void setPermisos(Set<Permiso> permisos) {
+    this.permisos = permisos;
+  }
+
   @Override
   public int hashCode() {
     final int prime = 31;

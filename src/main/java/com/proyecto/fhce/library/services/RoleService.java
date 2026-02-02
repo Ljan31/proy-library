@@ -1,20 +1,26 @@
 package com.proyecto.fhce.library.services;
 
 import java.util.List;
-import java.util.Optional;
 
-import com.proyecto.fhce.library.entities.Role;
+import com.proyecto.fhce.library.dto.request.RoleRequest;
+import com.proyecto.fhce.library.dto.response.RoleResponse;
 
 public interface RoleService {
-  List<Role> findAll();
+  List<RoleResponse> findAll();
 
-  Optional<Role> findById(Long id);
+  RoleResponse findById(Long id);
 
-  Optional<Role> findByName(String rol);
+  RoleResponse findByName(String rol);
 
-  Role save(Role rol);
+  RoleResponse create(RoleRequest request);
 
-  Optional<Role> update(Role rol, Long id);
+  RoleResponse update(RoleRequest request, Long id);
 
   void delete(Long id);
+
+  List<RoleResponse> findAllWithPermisos();
+
+  RoleResponse asignarPermiso(Long roleId, Long permisoId);
+
+  RoleResponse removerPermiso(Long roleId, Long permisoId);
 }

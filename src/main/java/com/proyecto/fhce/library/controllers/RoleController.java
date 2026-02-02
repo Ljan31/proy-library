@@ -15,8 +15,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.proyecto.fhce.library.dto.request.RoleRequest;
+import com.proyecto.fhce.library.dto.response.ApiResponse;
+import com.proyecto.fhce.library.dto.response.RoleResponse;
 import com.proyecto.fhce.library.entities.Role;
 import com.proyecto.fhce.library.services.RoleService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/roles")
@@ -26,42 +31,63 @@ public class RoleController {
   private RoleService roleService;
 
   @GetMapping
-  public List<Role> findAll() {
-    return roleService.findAll();
+  public ResponseEntity<ApiResponse<List<RoleResponse>>> findAll() {
+    List<RoleResponse> roles = roleService.findAll();
+    return ResponseEntity.ok(ApiResponse.success(roles));
+  }
+
+  @GetMapping("/with-permisos")
+  public ResponseEntity<ApiResponse<List<RoleResponse>>> findAllWithPermisos() {
+    List<RoleResponse> roles = roleService.findAllWithPermisos();
+    return ResponseEntity.ok(ApiResponse.success(roles));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<Role> findById(@PathVariable Long id) {
-    return roleService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+  public ResponseEntity<ApiResponse<RoleResponse>> findById(@PathVariable Long id) {
+    RoleResponse role = roleService.findById(id);
+    return ResponseEntity.ok(ApiResponse.success(role));
   }
 
   @GetMapping("/name/{name}")
-  public ResponseEntity<Role> findByName(@PathVariable String name) {
-    return roleService.findByName(name)
-        .map(ResponseEntity::ok)
-        .orElse(ResponseEntity.notFound().build());
+  public ResponseEntity<ApiResponse<RoleResponse>> findByName(@PathVariable String name) {
+    RoleResponse role = roleService.findByName(name);
+    return ResponseEntity.ok(ApiResponse.success(role));
   }
 
   @PostMapping
-  public ResponseEntity<Role> create(@RequestBody Role rol) {
-    return new ResponseEntity<>(roleService.save(rol), HttpStatus.CREATED);
+  public ResponseEntity<ApiResponse<RoleResponse>> create(@Valid @RequestBody RoleRequest request) {
+    RoleResponse role = roleService.create(request);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.success("Rol creado exitosamente", role));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Role rol) {
-    // return new ResponseEntity<>(userService.update(user, id), HttpStatus.OK);
-    Optional<Role> roleOptional = roleService.update(rol, id);
-
-    return roleOptional.map(roleUpdated -> ResponseEntity.status(HttpStatus.OK).body(roleUpdated))
-        .orElseGet(() -> ResponseEntity.notFound().build());
+  public ResponseEntity<ApiResponse<RoleResponse>> update(
+      @PathVariable Long id,
+      @Valid @RequestBody RoleRequest request) {
+    RoleResponse role = roleService.update(request, id);
+    return ResponseEntity.ok(ApiResponse.success("Rol actualizado exitosamente", role));
   }
 
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> delete(@PathVariable Long id) {
-    if (roleService.findById(id).isPresent()) {
-      roleService.delete(id);
-      return ResponseEntity.noContent().build();
-    }
-    return ResponseEntity.notFound().build();
+  public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
+    roleService.delete(id);
+    return ResponseEntity.ok(ApiResponse.success("Rol eliminado exitosamente", null));
+  }
+
+  @PostMapping("/{roleId}/permisos/{permisoId}")
+  public ResponseEntity<ApiResponse<RoleResponse>> asignarPermiso(
+      @PathVariable Long roleId,
+      @PathVariable Long permisoId) {
+    RoleResponse role = roleService.asignarPermiso(roleId, permisoId);
+    return ResponseEntity.ok(ApiResponse.success("Permiso asignado exitosamente", role));
+  }
+
+  @DeleteMapping("/{roleId}/permisos/{permisoId}")
+  public ResponseEntity<ApiResponse<RoleResponse>> removerPermiso(
+      @PathVariable Long roleId,
+      @PathVariable Long permisoId) {
+    RoleResponse role = roleService.removerPermiso(roleId, permisoId);
+    return ResponseEntity.ok(ApiResponse.success("Permiso removido exitosamente", role));
   }
 }
