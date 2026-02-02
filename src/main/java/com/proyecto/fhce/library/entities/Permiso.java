@@ -101,12 +101,12 @@ public class Permiso {
     return true;
   }
 
-  // public Set<Role> getRoles() {
-  // return roles;
-  // }
+  public Set<Role> getRoles() {
+    return roles;
+  }
 
-  // public void setRoles(Set<Role> roles) {
-  // this.roles = roles;
-  // }
+  public void setRoles(Set<Role> roles) {
+    this.roles = roles;
+  }
 
 }
