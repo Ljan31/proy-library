@@ -1,6 +1,7 @@
 package com.proyecto.fhce.library.controllers;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +33,18 @@ import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.security.jwt.JwtTokenProvider;
 import com.proyecto.fhce.library.services.UserService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")
 // @CrossOrigin(origins = "*")
+@Tag(name = "Autenticación", description = "Endpoints para autenticación y registro de usuarios")
 public class AuthController {
   @Autowired
   private AuthenticationManager authenticationManager;
@@ -47,6 +55,10 @@ public class AuthController {
   @Autowired
   private JwtTokenProvider tokenProvider;
 
+  @Operation(summary = "Iniciar sesión", description = "Autentica un usuario y retorna un token JWT", responses = {
+      @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Login exitoso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponse.class))),
+      @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Credenciales inválidas", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"success\": false, \"message\": \"Credenciales inválidas\"}")))
+  })
   @PostMapping("/login")
   public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
     try {
@@ -99,6 +111,7 @@ public class AuthController {
         .body(ApiResponse.success("Usuario registrado exitosamente", usuario));
   }
 
+  @Operation(summary = "Cerrar sesión", description = "Cierra la sesión del usuario actual", security = @SecurityRequirement(name = "bearer-jwt"))
   @PostMapping("/logout")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<ApiResponse<Void>> logout() {
@@ -106,11 +119,37 @@ public class AuthController {
     return ResponseEntity.ok(ApiResponse.success("Logout exitoso", null));
   }
 
+  @Operation(summary = "Obtener usuario actual", description = "Retorna la información del usuario autenticado", security = @SecurityRequirement(name = "bearer-jwt"))
   @GetMapping("/me")
   @PreAuthorize("isAuthenticated()")
-  public ResponseEntity<ApiResponse<Optional<Usuario>>> getCurrentUser(Authentication authentication) {
+  public ResponseEntity<ApiResponse<UsuarioResponse>> getCurrentUser(Authentication authentication) {
     String username = authentication.getName();
-    Optional<Usuario> usuario = usuarioService.findByUsername(username);
-    return ResponseEntity.ok(ApiResponse.success(usuario));
+    // Optional<Usuario> usuario = usuarioService.findByUsername(username);
+
+    Usuario usuario = usuarioService.findByUsername(username)
+        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    // return ResponseEntity.ok(ApiResponse.success(usuario));
+    UsuarioResponse response = new UsuarioResponse();
+    response.setId_usuario(usuario.getId_usuario());
+    response.setUsername(usuario.getUsername());
+    response.setEnabled(usuario.isEnabled());
+
+    // Persona
+    PersonaResponse persona = new PersonaResponse();
+    persona.setNombre(usuario.getPersona().getNombre());
+    persona.setApellido_pat(usuario.getPersona().getApellido_pat());
+    persona.setApellido_mat(usuario.getPersona().getApellido_mat());
+    persona.setEmail(usuario.getPersona().getEmail());
+    response.setPersona(persona);
+
+    // Roles
+    // Set<RoleSimpleResponse> roles = usuario.getRoles().stream()
+    // .map(role -> new RoleSimpleResponse(
+    // role.getId_role(),
+    // role.getName()))
+    // .collect(Collectors.toSet());
+
+    return ResponseEntity.ok(
+        ApiResponse.success("Usuario autenticado", response));
   }
 }

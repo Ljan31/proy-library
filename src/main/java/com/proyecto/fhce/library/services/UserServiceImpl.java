@@ -23,6 +23,7 @@ import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.exception.BadRequestException;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
+import com.proyecto.fhce.library.repositories.PersonaRepository;
 import com.proyecto.fhce.library.repositories.RoleRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 
@@ -34,6 +35,9 @@ public class UserServiceImpl implements UserService {
 
   @Autowired
   private PersonaService personaService;
+
+  @Autowired
+  private PersonaRepository personaRepository;
 
   @Autowired
   private RoleRepository roleRepository;
@@ -48,8 +52,10 @@ public class UserServiceImpl implements UserService {
 
     // Crear persona
     PersonaResponse personaResponse = personaService.create(request.getPersona());
-    Persona persona = new Persona();
-    persona.setId_persona(personaResponse.getId_persona());
+    // Persona persona = new Persona();
+    // persona.setId_persona(personaResponse.getId_persona());
+    Persona persona = personaRepository.findById(personaResponse.getId_persona())
+        .orElseThrow(() -> new RuntimeException("Persona no encontrada"));
 
     // Crear usuario
     Usuario usuario = new Usuario();
