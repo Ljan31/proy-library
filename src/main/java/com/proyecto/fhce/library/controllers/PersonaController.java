@@ -16,8 +16,11 @@ import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.PersonaResponse;
 import com.proyecto.fhce.library.services.PersonaService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/personas")
+@Tag(name = "Personas", description = "Endpoints para personas")
 public class PersonaController {
 
   @Autowired

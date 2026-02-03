@@ -21,8 +21,11 @@ import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.UsuarioResponse;
 import com.proyecto.fhce.library.services.UserService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/users")
+@Tag(name = "Usuarios", description = "Endpoints para usuarios")
 public class UserController {
   @Autowired
   private UserService userService;

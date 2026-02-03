@@ -67,7 +67,7 @@ public class OpenApiConfig {
     return GroupedOpenApi.builder()
         .group("usuarios")
         .displayName("Gestión de Usuarios")
-        .pathsToMatch("/api/usuarios/**", "/api/roles/**", "/api/permisos/**")
+        .pathsToMatch("/api/users/**", "/api/personas/**", "/api/roles/**", "/api/permisos/**")
         .build();
   }
 
