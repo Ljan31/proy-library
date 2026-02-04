@@ -11,14 +11,20 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.proyecto.fhce.library.dto.request.CarreraRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.CarreraResponse;
 import com.proyecto.fhce.library.services.CarreraService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
+@RestController
+@RequestMapping("/api/carreras")
+@Tag(name = "Carreras", description = "Gestión de carreras académicas")
 public class CarreraController {
   @Autowired
   private CarreraService carreraService;

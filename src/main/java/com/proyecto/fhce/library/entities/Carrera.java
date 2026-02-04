@@ -1,13 +1,10 @@
 package com.proyecto.fhce.library.entities;
 
-import java.util.Set;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -26,9 +23,6 @@ public class Carrera {
 
   // @OneToMany(mappedBy = "carrera")
   // private List<Biblioteca> bibliotecas;
-
-  @OneToMany(mappedBy = "carrera")
-  private Set<UsuarioCarrera> usuariosCarrera;
 
   public Long getId_carrera() {
     return id_carrera;
@@ -54,14 +48,6 @@ public class Carrera {
     this.codigo_carrera = codigo_carrera;
   }
 
-  public Set<UsuarioCarrera> getUsuariosCarrera() {
-    return usuariosCarrera;
-  }
-
-  public void setUsuariosCarrera(Set<UsuarioCarrera> usuariosCarrera) {
-    this.usuariosCarrera = usuariosCarrera;
-  }
-
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -69,7 +55,6 @@ public class Carrera {
     result = prime * result + ((id_carrera == null) ? 0 : id_carrera.hashCode());
     result = prime * result + ((nombre_carrera == null) ? 0 : nombre_carrera.hashCode());
     result = prime * result + ((codigo_carrera == null) ? 0 : codigo_carrera.hashCode());
-    result = prime * result + ((usuariosCarrera == null) ? 0 : usuariosCarrera.hashCode());
     return result;
   }
 
@@ -96,11 +81,6 @@ public class Carrera {
       if (other.codigo_carrera != null)
         return false;
     } else if (!codigo_carrera.equals(other.codigo_carrera))
-      return false;
-    if (usuariosCarrera == null) {
-      if (other.usuariosCarrera != null)
-        return false;
-    } else if (!usuariosCarrera.equals(other.usuariosCarrera))
       return false;
     return true;
   }
