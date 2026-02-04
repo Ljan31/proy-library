@@ -15,10 +15,13 @@ public interface PersonaRepository extends JpaRepository<Persona, Long> {
 
   Optional<Persona> findByEmail(String email);
 
+  Optional<Persona> findByMatricula(String matricula);
+
   boolean existsByCi(Integer ci);
 
   boolean existsByEmail(String email);
 
+  boolean existsByMatricula(String matricula);
   // List<Persona>
   // findByNombreContainingIgnoreCaseOrApellido__patContainingIgnoreCase(
   // String nombre, String apellido_pat);

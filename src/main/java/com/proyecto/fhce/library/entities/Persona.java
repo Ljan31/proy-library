@@ -26,6 +26,9 @@ public class Persona {
   @Column(unique = true)
   private String email;
 
+  @Column(unique = true, length = 50)
+  private String matricula;
+
   public Long getId_persona() {
     return id_persona;
   }
@@ -82,15 +85,28 @@ public class Persona {
     this.email = email;
   }
 
+  public void setCi(Integer ci) {
+    this.ci = ci;
+  }
+
+  public String getMatricula() {
+    return matricula;
+  }
+
+  public void setMatricula(String matricula) {
+    this.matricula = matricula;
+  }
+
   @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((id_persona == null) ? 0 : id_persona.hashCode());
     result = prime * result + ((nombre == null) ? 0 : nombre.hashCode());
-    result = prime * result + ci;
+    result = prime * result + ((ci == null) ? 0 : ci.hashCode());
     result = prime * result + ((celular == null) ? 0 : celular.hashCode());
     result = prime * result + ((email == null) ? 0 : email.hashCode());
+    result = prime * result + ((matricula == null) ? 0 : matricula.hashCode());
     return result;
   }
 
@@ -113,7 +129,10 @@ public class Persona {
         return false;
     } else if (!nombre.equals(other.nombre))
       return false;
-    if (ci != other.ci)
+    if (ci == null) {
+      if (other.ci != null)
+        return false;
+    } else if (!ci.equals(other.ci))
       return false;
     if (celular == null) {
       if (other.celular != null)
@@ -124,6 +143,11 @@ public class Persona {
       if (other.email != null)
         return false;
     } else if (!email.equals(other.email))
+      return false;
+    if (matricula == null) {
+      if (other.matricula != null)
+        return false;
+    } else if (!matricula.equals(other.matricula))
       return false;
     return true;
   }

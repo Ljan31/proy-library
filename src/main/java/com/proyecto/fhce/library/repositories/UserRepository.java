@@ -28,7 +28,8 @@ public interface UserRepository extends JpaRepository<Usuario, Long> {
 
   @Query("SELECT u FROM Usuario u WHERE u.persona.nombre LIKE %:searchTerm% " +
       "OR u.persona.apellido_pat LIKE %:searchTerm% " +
-      "OR u.username LIKE %:searchTerm%")
+      "OR u.username LIKE %:searchTerm%" +
+      "OR u.persona.matricula LIKE %:searchTerm%")
   List<Usuario> searchUsuarios(@Param("searchTerm") String searchTerm);
 
   @Query("SELECT COUNT(u) FROM Usuario u JOIN u.roles r WHERE r.name = :roleName")

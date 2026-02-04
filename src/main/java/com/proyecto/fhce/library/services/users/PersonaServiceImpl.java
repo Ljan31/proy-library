@@ -30,7 +30,9 @@ public class PersonaServiceImpl implements PersonaService {
     if (request.getEmail() != null && personaRepository.existsByEmail(request.getEmail())) {
       throw new DuplicateResourceException("Ya existe una persona con email: " + request.getEmail());
     }
-
+    if (request.getMatricula() != null && personaRepository.existsByMatricula(request.getMatricula())) {
+      throw new DuplicateResourceException("Ya existe una persona con matrícula: " + request.getMatricula());
+    }
     Persona persona = new Persona();
     persona.setNombre(request.getNombre());
     persona.setApellido_pat(request.getApellido_pat());
@@ -38,6 +40,7 @@ public class PersonaServiceImpl implements PersonaService {
     persona.setCi(request.getCi());
     persona.setCelular(request.getCelular());
     persona.setEmail(request.getEmail());
+    persona.setMatricula(request.getMatricula());
 
     Persona saved = personaRepository.save(persona);
     return mapToResponse(saved);
@@ -59,13 +62,18 @@ public class PersonaServiceImpl implements PersonaService {
         personaRepository.existsByEmail(request.getEmail())) {
       throw new DuplicateResourceException("Ya existe una persona con email: " + request.getEmail());
     }
-
+    if (request.getMatricula() != null &&
+        !request.getMatricula().equals(persona.getMatricula()) &&
+        personaRepository.existsByMatricula(request.getMatricula())) {
+      throw new DuplicateResourceException("Ya existe una persona con matrícula: " + request.getMatricula());
+    }
     persona.setNombre(request.getNombre());
     persona.setApellido_pat(request.getApellido_pat());
     persona.setApellido_mat(request.getApellido_mat());
     persona.setCi(request.getCi());
     persona.setCelular(request.getCelular());
     persona.setEmail(request.getEmail());
+    persona.setMatricula(request.getMatricula());
 
     Persona updated = personaRepository.save(persona);
     return mapToResponse(updated);
@@ -90,6 +98,7 @@ public class PersonaServiceImpl implements PersonaService {
     response.setCi(persona.getCi());
     response.setCelular(persona.getCelular());
     response.setEmail(persona.getEmail());
+    response.setMatricula(persona.getMatricula());
     return response;
   }
 

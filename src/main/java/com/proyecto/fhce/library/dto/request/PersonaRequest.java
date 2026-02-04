@@ -1,11 +1,13 @@
 package com.proyecto.fhce.library.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
+@Schema(description = "Datos de persona")
 public class PersonaRequest {
   @NotBlank(message = "Nombre es requerido")
   private String nombre;
@@ -24,6 +26,8 @@ public class PersonaRequest {
 
   @Email(message = "Email debe ser válido")
   private String email;
+
+  private String matricula;
 
   public String getNombre() {
     return nombre;
@@ -71,6 +75,14 @@ public class PersonaRequest {
 
   public void setEmail(String email) {
     this.email = email;
+  }
+
+  public String getMatricula() {
+    return matricula;
+  }
+
+  public void setMatricula(String matricula) {
+    this.matricula = matricula;
   }
 
 }
