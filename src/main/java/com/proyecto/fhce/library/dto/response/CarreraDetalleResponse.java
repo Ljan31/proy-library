@@ -1,10 +1,13 @@
 package com.proyecto.fhce.library.dto.response;
 
-public class CarreraResponse {
+import java.util.List;
+
+public class CarreraDetalleResponse {
   private Long id_carrera;
   private String nombre_carrera;
   private String codigo_carrera;
   private Integer estudiantesActivos;
+  private List<BibliotecaSimpleResponse> bibliotecas;
   private Integer bibliotecasCount;
 
   public Long getId_carrera() {
@@ -29,6 +32,14 @@ public class CarreraResponse {
 
   public void setCodigo_carrera(String codigo_carrera) {
     this.codigo_carrera = codigo_carrera;
+  }
+
+  public List<BibliotecaSimpleResponse> getBibliotecas() {
+    return bibliotecas;
+  }
+
+  public void setBibliotecas(List<BibliotecaSimpleResponse> bibliotecas) {
+    this.bibliotecas = bibliotecas;
   }
 
   public Integer getBibliotecasCount() {
