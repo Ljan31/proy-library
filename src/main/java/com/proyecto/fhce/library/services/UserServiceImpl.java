@@ -162,7 +162,10 @@ public class UserServiceImpl implements UserService {
 
   @Transactional(readOnly = true)
   public List<UsuarioResponse> findByRoleName(String roleName) {
-    return usuarioRepository.findByRoleName(roleName).stream()
+    String normalizedRole = roleName.startsWith("ROLE_")
+        ? roleName
+        : "ROLE_" + roleName;
+    return usuarioRepository.findByRoleName(normalizedRole).stream()
         .map(this::mapToResponse)
         .collect(Collectors.toList());
   }
