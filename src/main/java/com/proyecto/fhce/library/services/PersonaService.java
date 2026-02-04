@@ -10,4 +10,5 @@ public interface PersonaService {
 
   PersonaResponse findById(Long id);
 
+  PersonaResponse findByIdSecure(Long id, String username);
 }

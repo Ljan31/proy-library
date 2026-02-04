@@ -1,7 +1,5 @@
 package com.proyecto.fhce.library.controllers;
 
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +12,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,7 +23,6 @@ import com.proyecto.fhce.library.dto.request.RegisterRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.LoginResponse;
 import com.proyecto.fhce.library.dto.response.PersonaResponse;
-import com.proyecto.fhce.library.dto.response.RoleSimpleResponse;
 import com.proyecto.fhce.library.dto.response.UsuarioResponse;
 import com.proyecto.fhce.library.entities.Persona;
 import com.proyecto.fhce.library.entities.Usuario;
@@ -105,6 +101,7 @@ public class AuthController {
   }
 
   @PostMapping("/register")
+  @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<UsuarioResponse>> register(@Valid @RequestBody RegisterRequest request) {
     UsuarioResponse usuario = usuarioService.create(request);
     return ResponseEntity.status(HttpStatus.CREATED)

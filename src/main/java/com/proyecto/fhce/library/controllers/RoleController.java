@@ -1,11 +1,11 @@
 package com.proyecto.fhce.library.controllers;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,19 +18,21 @@ import org.springframework.web.bind.annotation.RestController;
 import com.proyecto.fhce.library.dto.request.RoleRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.RoleResponse;
-import com.proyecto.fhce.library.entities.Role;
 import com.proyecto.fhce.library.services.RoleService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/roles")
+@Tag(name = "Roles", description = "Endpoints para Roles")
 public class RoleController {
 
   @Autowired
   private RoleService roleService;
 
   @GetMapping
+  @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<List<RoleResponse>>> findAll() {
     List<RoleResponse> roles = roleService.findAll();
     return ResponseEntity.ok(ApiResponse.success(roles));
@@ -43,6 +45,7 @@ public class RoleController {
   }
 
   @GetMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<RoleResponse>> findById(@PathVariable Long id) {
     RoleResponse role = roleService.findById(id);
     return ResponseEntity.ok(ApiResponse.success(role));
@@ -55,6 +58,7 @@ public class RoleController {
   }
 
   @PostMapping
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<RoleResponse>> create(@Valid @RequestBody RoleRequest request) {
     RoleResponse role = roleService.create(request);
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -62,6 +66,7 @@ public class RoleController {
   }
 
   @PutMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<RoleResponse>> update(
       @PathVariable Long id,
       @Valid @RequestBody RoleRequest request) {
@@ -70,6 +75,7 @@ public class RoleController {
   }
 
   @DeleteMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
     roleService.delete(id);
     return ResponseEntity.ok(ApiResponse.success("Rol eliminado exitosamente", null));

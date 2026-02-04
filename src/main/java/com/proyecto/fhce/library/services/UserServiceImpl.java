@@ -112,9 +112,9 @@ public class UserServiceImpl implements UserService {
     return mapToResponse(updated);
   }
 
-  public void changePassword(Long id, ChangePasswordRequest request) {
-    Usuario usuario = usuarioRepository.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
+  public void changePassword(String username, ChangePasswordRequest request) {
+    Usuario usuario = usuarioRepository.findByUsername(username)
+        .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado: " + username));
 
     if (!passwordEncoder.matches(request.getCurrentPassword(), usuario.getPassword())) {
       throw new BadRequestException("Password actual incorrecto");

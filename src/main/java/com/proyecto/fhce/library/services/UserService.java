@@ -15,7 +15,7 @@ public interface UserService {
 
   UsuarioResponse update(Long id, UsuarioUpdateRequest request);
 
-  void changePassword(Long id, ChangePasswordRequest request);
+  void changePassword(String username, ChangePasswordRequest request);
 
   void toggleEnabled(Long id);
 

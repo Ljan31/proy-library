@@ -3,6 +3,8 @@ package com.proyecto.fhce.library.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +30,7 @@ public class PersonaController {
 
   // ===================== CREATE =====================
   @PostMapping
+  @PreAuthorize("hasAnyRole('ADMIN')")
   public ResponseEntity<ApiResponse<PersonaResponse>> create(
       @RequestBody PersonaRequest request) {
 
@@ -38,6 +41,8 @@ public class PersonaController {
 
   // ===================== UPDATE =====================
   @PutMapping("/{id}")
+  // @PreAuthorize("hasAnyRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO') or @securityService.isOwner(#id, authentication)")
   public ResponseEntity<ApiResponse<PersonaResponse>> update(
       @PathVariable Long id,
       @RequestBody PersonaRequest request) {
@@ -48,10 +53,24 @@ public class PersonaController {
 
   // ===================== FIND BY ID =====================
   @GetMapping("/{id}")
+  // @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO') or #id ==
+  // principal.getId_persona")
+  @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO') or @securityService.isOwner(#id, authentication)")
   public ResponseEntity<ApiResponse<PersonaResponse>> findById(
       @PathVariable Long id) {
 
     PersonaResponse response = personaService.findById(id);
     return ResponseEntity.ok(ApiResponse.success(response));
   }
+
+  // @GetMapping("/{id}")
+  // @PreAuthorize("isAuthenticated()")
+  // public ResponseEntity<ApiResponse<PersonaResponse>> findById(
+  // @PathVariable Long id,
+  // Authentication authentication) {
+
+  // PersonaResponse response = personaService.findByIdSecure(id,
+  // authentication.getName());
+  // return ResponseEntity.ok(ApiResponse.success(response));
+  // }
 }

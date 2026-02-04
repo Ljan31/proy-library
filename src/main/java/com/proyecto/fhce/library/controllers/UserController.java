@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,6 +34,7 @@ public class UserController {
 
   // ===================== CREATE =====================
   @PostMapping
+  @PreAuthorize("hasAnyRole('ADMIN')")
   public ResponseEntity<ApiResponse<UsuarioResponse>> create(
       @RequestBody RegisterRequest request) {
 
@@ -42,6 +45,8 @@ public class UserController {
 
   // ===================== UPDATE =====================
   @PutMapping("/{id}")
+  // @PreAuthorize("hasAnyRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO') or @securityService.isOwnerUser(#id, authentication)")
   public ResponseEntity<ApiResponse<UsuarioResponse>> update(
       @PathVariable Long id,
       @RequestBody UsuarioUpdateRequest request) {
@@ -51,17 +56,19 @@ public class UserController {
   }
 
   // ===================== CHANGE PASSWORD =====================
-  @PutMapping("/{id}/change-password")
+  @PutMapping("/change-password")
+  @PreAuthorize("isAuthenticated()")
   public ResponseEntity<ApiResponse<Void>> changePassword(
-      @PathVariable Long id,
+      Authentication authentication,
       @RequestBody ChangePasswordRequest request) {
 
-    userService.changePassword(id, request);
+    userService.changePassword(authentication.getName(), request);
     return ResponseEntity.ok(ApiResponse.success("Password actualizado", null));
   }
 
   // ===================== ENABLE / DISABLE =====================
   @PutMapping("/{id}/toggle-enabled")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<Void>> toggleEnabled(@PathVariable Long id) {
 
     userService.toggleEnabled(id);
@@ -70,6 +77,7 @@ public class UserController {
 
   // ===================== FIND BY ID =====================
   @GetMapping("/{id}")
+  @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO') or @securityService.isOwnerUser(#id, authentication)")
   public ResponseEntity<ApiResponse<UsuarioResponse>> findById(@PathVariable Long id) {
 
     UsuarioResponse response = userService.findById(id);
@@ -78,6 +86,7 @@ public class UserController {
 
   // ===================== FIND ALL =====================
   @GetMapping
+  @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<List<UsuarioResponse>>> findAll() {
 
     List<UsuarioResponse> response = userService.findAll();
@@ -86,6 +95,7 @@ public class UserController {
 
   // ===================== FIND BY ROLE =====================
   @GetMapping("/by-role")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<List<UsuarioResponse>>> findByRole(
       @RequestParam String roleName) {
 
@@ -95,6 +105,7 @@ public class UserController {
 
   // ===================== SEARCH =====================
   @GetMapping("/search")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<List<UsuarioResponse>>> search(
       @RequestParam String q) {
 

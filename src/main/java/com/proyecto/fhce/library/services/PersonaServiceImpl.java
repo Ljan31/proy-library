@@ -1,20 +1,26 @@
 package com.proyecto.fhce.library.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.proyecto.fhce.library.dto.request.PersonaRequest;
 import com.proyecto.fhce.library.dto.response.PersonaResponse;
 import com.proyecto.fhce.library.entities.Persona;
+import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.PersonaRepository;
+import com.proyecto.fhce.library.repositories.UserRepository;
 
 @Service
 public class PersonaServiceImpl implements PersonaService {
   @Autowired
   private PersonaRepository personaRepository;
+
+  @Autowired
+  private UserRepository userRepository;
 
   public PersonaResponse create(PersonaRequest request) {
     if (personaRepository.existsByCi(request.getCi())) {
@@ -85,6 +91,26 @@ public class PersonaServiceImpl implements PersonaService {
     response.setCelular(persona.getCelular());
     response.setEmail(persona.getEmail());
     return response;
+  }
+
+  public PersonaResponse findByIdSecure(Long id, String username) {
+    // Obtengo el usuario autenticado
+    Usuario authUser = userRepository.findByUsername(username)
+        .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+    boolean isAdminOrBiblio = authUser.getRoles().stream()
+        .anyMatch(r -> r.getName().equals("ROLE_ADMIN") || r.getName().equals("ROLE_BIBLIOTECARIO"));
+
+    // Si no es admin ni bibliotecario y el id no coincide con su persona → acceso
+    // denegado
+    if (!isAdminOrBiblio && !authUser.getPersona().getId_persona().equals(id)) {
+      throw new AccessDeniedException("No tienes permiso para ver esta persona");
+    }
+
+    Persona persona = personaRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Persona no encontrada"));
+
+    return mapToResponse(persona);
   }
 
 }
