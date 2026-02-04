@@ -12,5 +12,20 @@ public class CarreraRequest {
   @Size(max = 20)
   private String codigo_carrera;
 
-  // private EstadoCarrera estado;
+  public String getNombre_carrera() {
+    return nombre_carrera;
+  }
+
+  public void setNombre_carrera(String nombre_carrera) {
+    this.nombre_carrera = nombre_carrera;
+  }
+
+  public String getCodigo_carrera() {
+    return codigo_carrera;
+  }
+
+  public void setCodigo_carrera(String codigo_carrera) {
+    this.codigo_carrera = codigo_carrera;
+  }
+
 }

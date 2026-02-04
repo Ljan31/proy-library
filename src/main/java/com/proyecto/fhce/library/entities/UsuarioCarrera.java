@@ -31,9 +31,6 @@ public class UsuarioCarrera {
   @Column(length = 50)
   private String matricula;
 
-  @Column(name = "ano_ingreso")
-  private Integer anoIngreso;
-
   @Column(name = "fecha_asignacion")
   private LocalDateTime fechaAsignacion;
 
@@ -72,14 +69,6 @@ public class UsuarioCarrera {
 
   public void setMatricula(String matricula) {
     this.matricula = matricula;
-  }
-
-  public Integer getAnoIngreso() {
-    return anoIngreso;
-  }
-
-  public void setAnoIngreso(Integer anoIngreso) {
-    this.anoIngreso = anoIngreso;
   }
 
   public LocalDateTime getFechaAsignacion() {
