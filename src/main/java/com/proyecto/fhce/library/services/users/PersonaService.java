@@ -1,4 +1,4 @@
-package com.proyecto.fhce.library.services;
+package com.proyecto.fhce.library.services.users;
 
 import com.proyecto.fhce.library.dto.request.PersonaRequest;
 import com.proyecto.fhce.library.dto.response.PersonaResponse;

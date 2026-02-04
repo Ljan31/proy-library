@@ -27,7 +27,7 @@ import com.proyecto.fhce.library.dto.response.UsuarioResponse;
 import com.proyecto.fhce.library.entities.Persona;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.security.jwt.JwtTokenProvider;
-import com.proyecto.fhce.library.services.UserService;
+import com.proyecto.fhce.library.services.users.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

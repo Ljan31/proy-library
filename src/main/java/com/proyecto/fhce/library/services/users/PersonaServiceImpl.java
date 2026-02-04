@@ -1,4 +1,4 @@
-package com.proyecto.fhce.library.services;
+package com.proyecto.fhce.library.services.users;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;

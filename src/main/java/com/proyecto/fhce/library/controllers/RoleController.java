@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.proyecto.fhce.library.dto.request.RoleRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.RoleResponse;
-import com.proyecto.fhce.library.services.RoleService;
+import com.proyecto.fhce.library.services.users.RoleService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

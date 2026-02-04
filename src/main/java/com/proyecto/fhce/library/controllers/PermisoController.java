@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.proyecto.fhce.library.dto.request.PermisoRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.PermisoResponse;
-import com.proyecto.fhce.library.services.PermisoService;
+import com.proyecto.fhce.library.services.users.PermisoService;
 
 import jakarta.validation.Valid;
 

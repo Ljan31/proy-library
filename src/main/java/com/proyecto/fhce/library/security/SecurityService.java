@@ -4,7 +4,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import com.proyecto.fhce.library.entities.Usuario;
-import com.proyecto.fhce.library.services.UserService;
+import com.proyecto.fhce.library.services.users.UserService;
 
 @Component("securityService")
 public class SecurityService {

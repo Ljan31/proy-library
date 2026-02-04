@@ -21,7 +21,7 @@ import com.proyecto.fhce.library.dto.request.RegisterRequest;
 import com.proyecto.fhce.library.dto.request.UsuarioUpdateRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.UsuarioResponse;
-import com.proyecto.fhce.library.services.UserService;
+import com.proyecto.fhce.library.services.users.UserService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
