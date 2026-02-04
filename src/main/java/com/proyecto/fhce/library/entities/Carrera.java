@@ -1,10 +1,9 @@
 package com.proyecto.fhce.library.entities;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -12,48 +11,65 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "carrera")
+@Table(name = "carreras")
 public class Carrera {
-
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(unique = true, nullable = false)
   private Long id_carrera;
 
-  private String nombre;
+  @Column(nullable = false, length = 200)
+  private String nombre_carrera;
 
-  // @OneToMany(mappedBy = "carrera", fetch = FetchType.LAZY)
-  // private List<Persona> personas = new ArrayList<>();
+  @Column(unique = true, nullable = false, length = 20)
+  private String codigo_carrera;
 
-  public Long getIdCarrera() {
+  // @OneToMany(mappedBy = "carrera")
+  // private List<Biblioteca> bibliotecas;
+
+  @OneToMany(mappedBy = "carrera")
+  private Set<UsuarioCarrera> usuariosCarrera;
+
+  public Long getId_carrera() {
     return id_carrera;
   }
 
-  public void setIdCarrera(Long id) {
-    this.id_carrera = id;
+  public void setId_carrera(Long id_carrera) {
+    this.id_carrera = id_carrera;
   }
 
-  public String getNombre() {
-    return nombre;
+  public String getNombre_carrera() {
+    return nombre_carrera;
   }
 
-  public void setNombre(String nombre) {
-    this.nombre = nombre;
+  public void setNombre_carrera(String nombre_carrera) {
+    this.nombre_carrera = nombre_carrera;
   }
 
-  // public List<Persona> getPersonas() {
-  // return personas;
-  // }
+  public String getCodigo_carrera() {
+    return codigo_carrera;
+  }
 
-  // public void setPersonas(List<Persona> personas) {
-  // this.personas = personas;
-  // }
+  public void setCodigo_carrera(String codigo_carrera) {
+    this.codigo_carrera = codigo_carrera;
+  }
+
+  public Set<UsuarioCarrera> getUsuariosCarrera() {
+    return usuariosCarrera;
+  }
+
+  public void setUsuariosCarrera(Set<UsuarioCarrera> usuariosCarrera) {
+    this.usuariosCarrera = usuariosCarrera;
+  }
 
   @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((id_carrera == null) ? 0 : id_carrera.hashCode());
-    result = prime * result + ((nombre == null) ? 0 : nombre.hashCode());
+    result = prime * result + ((nombre_carrera == null) ? 0 : nombre_carrera.hashCode());
+    result = prime * result + ((codigo_carrera == null) ? 0 : codigo_carrera.hashCode());
+    result = prime * result + ((usuariosCarrera == null) ? 0 : usuariosCarrera.hashCode());
     return result;
   }
 
@@ -71,10 +87,20 @@ public class Carrera {
         return false;
     } else if (!id_carrera.equals(other.id_carrera))
       return false;
-    if (nombre == null) {
-      if (other.nombre != null)
+    if (nombre_carrera == null) {
+      if (other.nombre_carrera != null)
         return false;
-    } else if (!nombre.equals(other.nombre))
+    } else if (!nombre_carrera.equals(other.nombre_carrera))
+      return false;
+    if (codigo_carrera == null) {
+      if (other.codigo_carrera != null)
+        return false;
+    } else if (!codigo_carrera.equals(other.codigo_carrera))
+      return false;
+    if (usuariosCarrera == null) {
+      if (other.usuariosCarrera != null)
+        return false;
+    } else if (!usuariosCarrera.equals(other.usuariosCarrera))
       return false;
     return true;
   }
