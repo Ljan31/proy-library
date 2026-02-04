@@ -3,6 +3,7 @@ package com.proyecto.fhce.library.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -58,5 +59,11 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiResponse<Void>> handleAuthorizationDenied(AuthorizationDeniedException ex) {
     return ResponseEntity.status(HttpStatus.FORBIDDEN)
         .body(ApiResponse.error("Acceso denegado"));
+  }
+
+  @ExceptionHandler(DisabledException.class)
+  public ResponseEntity<ApiResponse<Void>> handleDisabledUser(DisabledException ex) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+        .body(ApiResponse.error("El usuario está deshabilitado"));
   }
 }

@@ -7,12 +7,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.proyecto.fhce.library.security.CustomUserDetailsService;
+import com.proyecto.fhce.library.security.UserDetailsImpl;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -41,7 +41,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       if (jwt != null && tokenProvider.validateToken(jwt)) {
         String username = tokenProvider.getUsernameFromJwt(jwt);
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        // UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
+
+        // if (!userDetails.isEnabled()) {
+        if (!tokenProvider.validateTokenAndEnabled(jwt, userDetailsService)) {
+          filterChain.doFilter(request, response);
+          return;
+        }
 
         // System.out.println("Username: " + userDetails.getUsername());
         // System.out.println("Authorities: " + userDetails.getAuthorities());

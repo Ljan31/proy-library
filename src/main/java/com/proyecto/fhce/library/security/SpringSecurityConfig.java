@@ -23,6 +23,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import com.proyecto.fhce.library.security.jwt.JwtAuthenticationEntryPoint;
 // import com.proyecto.fhce.library.security.jwt.JwtAuthenticationEntryPoint;
 import com.proyecto.fhce.library.security.jwt.JwtAuthenticationFilter;
 
@@ -32,13 +33,16 @@ import com.proyecto.fhce.library.security.jwt.JwtAuthenticationFilter;
 public class SpringSecurityConfig {
 
   private final UserDetailsService userDetailsService;
+  private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
   // @Autowired
   // private final JwtAuthenticationEntryPoint unauthorizedHandler;
 
-  public SpringSecurityConfig(UserDetailsService userDetailsService) {
+  public SpringSecurityConfig(UserDetailsService userDetailsService,
+      JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) {
     this.userDetailsService = userDetailsService;
     // this.unauthorizedHandler = unauthorizedHandler;
+    this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
   }
 
   @Bean
@@ -92,7 +96,7 @@ public class SpringSecurityConfig {
             .anyRequest().authenticated());
     // http.authenticationProvider(authenticationProvider());
     http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
-
+    http.exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint));
     return http.build();
   }
 

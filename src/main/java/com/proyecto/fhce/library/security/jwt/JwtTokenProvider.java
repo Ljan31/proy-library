@@ -10,9 +10,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-// import com.proyecto.fhce.library.security.UserDetailsImpl;
+import com.proyecto.fhce.library.security.CustomUserDetailsService;
+import com.proyecto.fhce.library.security.UserDetailsImpl;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -35,13 +37,12 @@ public class JwtTokenProvider {
 
   // 🔐 Generar token
   public String generateToken(Authentication authentication) {
-    // UserDetailsImpl userPrincipal = (UserDetailsImpl)
-    // authentication.getPrincipal();
+    UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
 
-    String username = authentication.getName();
+    // String username = authentication.getName();
     // String username = userPrincipal.getUsername();
 
-    List<String> roles = authentication.getAuthorities().stream()
+    List<String> roles = userPrincipal.getAuthorities().stream()
         .map(GrantedAuthority::getAuthority)
         .collect(Collectors.toList());
 
@@ -51,7 +52,8 @@ public class JwtTokenProvider {
     Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
 
     return Jwts.builder()
-        .setSubject(username)
+        .setSubject(userPrincipal.getUsername())
+        // .setSubject(username)
         .claim("roles", roles)
         .setIssuedAt(now)
         .setExpiration(expiryDate)
@@ -89,7 +91,12 @@ public class JwtTokenProvider {
 
   // 🔍 Obtener roles desde token
   public List<String> getRolesFromToken(String token) {
-    return getClaims(token).get("roles", List.class);
+    // return getClaims(token).get("roles", List.class);
+    List<?> roles = (List<?>) getClaims(token).get("roles");
+
+    return roles.stream()
+        .map(String::valueOf)
+        .toList();
   }
 
   // ✅ Validar token
@@ -97,18 +104,26 @@ public class JwtTokenProvider {
     try {
       getClaims(token);
       return true;
-    } catch (SignatureException ex) {
-      logger.error("Invalid JWT signature");
-    } catch (MalformedJwtException ex) {
-      logger.error("Invalid JWT token");
+    } catch (SignatureException | MalformedJwtException ex) {
+      logger.error("Invalid JWT token: {}", ex.getMessage());
     } catch (ExpiredJwtException ex) {
-      logger.error("Expired JWT token");
+      logger.error("Expired JWT token: {}", ex.getMessage());
     } catch (UnsupportedJwtException ex) {
-      logger.error("Unsupported JWT token");
+      logger.error("Unsupported JWT token: {}", ex.getMessage());
     } catch (IllegalArgumentException ex) {
-      logger.error("JWT claims string is empty");
+      logger.error("JWT claims string is empty: {}", ex.getMessage());
     }
     return false;
+  }
+
+  public boolean validateTokenAndEnabled(String token, CustomUserDetailsService userDetailsService) {
+    if (!validateToken(token))
+      return false;
+
+    String username = getUsernameFromJwt(token);
+    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+    return userDetails.isEnabled();
   }
 
   // 🧠 Claims comunes

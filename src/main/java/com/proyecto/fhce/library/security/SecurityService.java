@@ -30,10 +30,12 @@ public class SecurityService {
    * Devuelve true si el usuario autenticado es dueño del usuario con id_usuario
    */
   public boolean isOwnerUser(Long idUsuario, Authentication authentication) {
-    String username = authentication.getName();
-    Usuario usuario = userService.findByUsername(username)
-        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    // String username = authentication.getName();
+    // Usuario usuario = userService.findByUsername(username)
+    // .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-    return usuario.getId_usuario().equals(idUsuario);
+    // return usuario.getId_usuario().equals(idUsuario);
+    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+    return userDetails.getId().equals(idUsuario);
   }
 }
