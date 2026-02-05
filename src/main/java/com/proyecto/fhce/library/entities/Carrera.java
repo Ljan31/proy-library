@@ -18,8 +18,8 @@ public class Carrera {
   @Column(nullable = false, length = 200)
   private String nombre_carrera;
 
-  @Column(unique = true, nullable = false, length = 20)
-  private String codigo_carrera;
+  @Column(unique = true, nullable = false, length = 20, name = "codigo_carrera")
+  private String codigoCarrera;
 
   // @OneToMany(mappedBy = "carrera")
   // private List<Biblioteca> bibliotecas;
@@ -41,11 +41,11 @@ public class Carrera {
   }
 
   public String getCodigo_carrera() {
-    return codigo_carrera;
+    return codigoCarrera;
   }
 
   public void setCodigo_carrera(String codigo_carrera) {
-    this.codigo_carrera = codigo_carrera;
+    this.codigoCarrera = codigo_carrera;
   }
 
   @Override
@@ -54,7 +54,7 @@ public class Carrera {
     int result = 1;
     result = prime * result + ((id_carrera == null) ? 0 : id_carrera.hashCode());
     result = prime * result + ((nombre_carrera == null) ? 0 : nombre_carrera.hashCode());
-    result = prime * result + ((codigo_carrera == null) ? 0 : codigo_carrera.hashCode());
+    result = prime * result + ((codigoCarrera == null) ? 0 : codigoCarrera.hashCode());
     return result;
   }
 
@@ -77,10 +77,10 @@ public class Carrera {
         return false;
     } else if (!nombre_carrera.equals(other.nombre_carrera))
       return false;
-    if (codigo_carrera == null) {
-      if (other.codigo_carrera != null)
+    if (codigoCarrera == null) {
+      if (other.codigoCarrera != null)
         return false;
-    } else if (!codigo_carrera.equals(other.codigo_carrera))
+    } else if (!codigoCarrera.equals(other.codigoCarrera))
       return false;
     return true;
   }
