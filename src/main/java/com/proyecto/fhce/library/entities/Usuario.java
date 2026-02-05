@@ -26,8 +26,8 @@ import jakarta.persistence.UniqueConstraint;
 public class Usuario {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(unique = true, nullable = false)
-  private Long id_usuario;
+  @Column(unique = true, nullable = false, name = "id_usuario")
+  private Long idUsuario;
 
   @Column(unique = true)
   private String username;
@@ -63,11 +63,11 @@ public class Usuario {
   }
 
   public Long getId_usuario() {
-    return id_usuario;
+    return idUsuario;
   }
 
   public void setId_usuario(Long id_usuario) {
-    this.id_usuario = id_usuario;
+    this.idUsuario = id_usuario;
   }
 
   public String getUsername() {
@@ -122,7 +122,7 @@ public class Usuario {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + ((id_usuario == null) ? 0 : id_usuario.hashCode());
+    result = prime * result + ((idUsuario == null) ? 0 : idUsuario.hashCode());
     result = prime * result + ((username == null) ? 0 : username.hashCode());
     return result;
   }
@@ -136,10 +136,10 @@ public class Usuario {
     if (getClass() != obj.getClass())
       return false;
     Usuario other = (Usuario) obj;
-    if (id_usuario == null) {
-      if (other.id_usuario != null)
+    if (idUsuario == null) {
+      if (other.idUsuario != null)
         return false;
-    } else if (!id_usuario.equals(other.id_usuario))
+    } else if (!idUsuario.equals(other.idUsuario))
       return false;
     if (username == null) {
       if (other.username != null)

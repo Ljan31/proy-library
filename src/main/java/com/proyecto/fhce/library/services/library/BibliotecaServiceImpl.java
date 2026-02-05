@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.proyecto.fhce.library.dto.request.BibliotecaRequest;
@@ -25,6 +26,7 @@ import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.CarreraRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 
+@Service
 public class BibliotecaServiceImpl implements BibliotecaService {
   @Autowired
   private BibliotecaRepository bibliotecaRepository;

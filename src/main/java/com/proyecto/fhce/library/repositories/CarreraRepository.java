@@ -20,7 +20,7 @@ public interface CarreraRepository extends JpaRepository<Carrera, Long> {
   @Query("SELECT c FROM Carrera c WHERE c.nombre_carrera LIKE %:nombre%")
   List<Carrera> findByNombreContaining(@Param("nombre") String nombre);
 
-  @Query("SELECT c FROM Carrera c WHERE c.id_carrera = :id")
+  @Query("SELECT c FROM Carrera c WHERE c.idCarrera = :id")
   // @Query("SELECT c FROM Carrera c LEFT JOIN FETCH c.bibliotecas WHERE
   // c.id_carrera = :id")
   Optional<Carrera> findByIdWithBibliotecas(@Param("id") Long id);

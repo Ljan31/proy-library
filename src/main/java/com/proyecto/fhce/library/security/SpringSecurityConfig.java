@@ -81,6 +81,7 @@ public class SpringSecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/auth/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/carreras/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/bibliotecas/**").permitAll()
             // .requestMatchers("/api/users/**").permitAll()
             // .requestMatchers("/api/personas/**").permitAll()
             // .requestMatchers("/api/libros/**").permitAll()

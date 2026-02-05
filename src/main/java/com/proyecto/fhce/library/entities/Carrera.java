@@ -12,8 +12,8 @@ import jakarta.persistence.Table;
 public class Carrera {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(unique = true, nullable = false)
-  private Long id_carrera;
+  @Column(unique = true, nullable = false, name = "id_carrera")
+  private Long idCarrera;
 
   @Column(nullable = false, length = 200)
   private String nombre_carrera;
@@ -25,11 +25,11 @@ public class Carrera {
   // private List<Biblioteca> bibliotecas;
 
   public Long getId_carrera() {
-    return id_carrera;
+    return idCarrera;
   }
 
   public void setId_carrera(Long id_carrera) {
-    this.id_carrera = id_carrera;
+    this.idCarrera = id_carrera;
   }
 
   public String getNombre_carrera() {
@@ -52,7 +52,7 @@ public class Carrera {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + ((id_carrera == null) ? 0 : id_carrera.hashCode());
+    result = prime * result + ((idCarrera == null) ? 0 : idCarrera.hashCode());
     result = prime * result + ((nombre_carrera == null) ? 0 : nombre_carrera.hashCode());
     result = prime * result + ((codigoCarrera == null) ? 0 : codigoCarrera.hashCode());
     return result;
@@ -67,10 +67,10 @@ public class Carrera {
     if (getClass() != obj.getClass())
       return false;
     Carrera other = (Carrera) obj;
-    if (id_carrera == null) {
-      if (other.id_carrera != null)
+    if (idCarrera == null) {
+      if (other.idCarrera != null)
         return false;
-    } else if (!id_carrera.equals(other.id_carrera))
+    } else if (!idCarrera.equals(other.idCarrera))
       return false;
     if (nombre_carrera == null) {
       if (other.nombre_carrera != null)
