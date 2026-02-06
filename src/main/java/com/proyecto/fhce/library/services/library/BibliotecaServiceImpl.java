@@ -6,6 +6,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +28,7 @@ import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.CarreraRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.security.UserDetailsImpl;
 
 @Service
 public class BibliotecaServiceImpl implements BibliotecaService {
@@ -180,6 +184,23 @@ public class BibliotecaServiceImpl implements BibliotecaService {
         .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada con id: " + id));
 
     EstadoBiblioteca estadoAnterior = biblioteca.getEstado();
+
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+
+    boolean esAdmin = userDetails.getAuthorities().stream()
+        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+    // Si NO es admin, debe ser el encargado
+    if (!esAdmin) {
+      if (biblioteca.getEncargado() == null ||
+          !biblioteca.getEncargado().getId_usuario().equals(userDetails.getId())) {
+
+        throw new AccessDeniedException(
+            "No tiene permiso para cambiar el estado de esta biblioteca");
+      }
+    }
+
     biblioteca.setEstado(nuevoEstado);
 
     bibliotecaRepository.save(biblioteca);

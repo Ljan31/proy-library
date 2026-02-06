@@ -28,6 +28,13 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.error(ex.getMessage()));
   }
 
+  @ExceptionHandler(BusinessException.class)
+  public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException ex) {
+    return ResponseEntity
+        .status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(ex.getMessage()));
+  }
+
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
     String message = ex.getBindingResult()
@@ -51,8 +58,13 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(AccessDeniedException.class)
   public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
-    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-        .body(ApiResponse.error("No tienes permisos para acceder a este recurso"));
+    String message = ex.getMessage() != null
+        ? ex.getMessage()
+        : "No tienes permisos para acceder a este recurso";
+
+    return ResponseEntity
+        .status(HttpStatus.FORBIDDEN)
+        .body(ApiResponse.error(message));
   }
 
   @ExceptionHandler(AuthorizationDeniedException.class)
