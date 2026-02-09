@@ -5,8 +5,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.proyecto.fhce.library.dto.request.PersonaRequest;
-import com.proyecto.fhce.library.dto.response.PersonaResponse;
+import com.proyecto.fhce.library.dto.request.users.PersonaRequest;
+import com.proyecto.fhce.library.dto.response.users.PersonaResponse;
 import com.proyecto.fhce.library.entities.Persona;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;

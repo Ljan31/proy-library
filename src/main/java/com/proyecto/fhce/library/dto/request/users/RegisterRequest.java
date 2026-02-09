@@ -1,4 +1,4 @@
-package com.proyecto.fhce.library.dto.request;
+package com.proyecto.fhce.library.dto.request.users;
 
 import java.util.Set;
 

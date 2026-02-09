@@ -1,17 +1,19 @@
-package com.proyecto.fhce.library.dto.request;
+package com.proyecto.fhce.library.dto.response.library;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-
-public class CategoriaLibroRequest {
-  @NotBlank(message = "Nombre de categoría es requerido")
-  @Size(max = 150)
+public class CategoriaLibroResponse {
+  private Long id_categoria;
   private String nombre_categoria;
-
   private String descripcion;
-
-  @Size(max = 20)
   private String codigo_dewey;
+  private Integer librosCount;
+
+  public Long getId_categoria() {
+    return id_categoria;
+  }
+
+  public void setId_categoria(Long id_categoria) {
+    this.id_categoria = id_categoria;
+  }
 
   public String getNombre_categoria() {
     return nombre_categoria;
@@ -35,6 +37,14 @@ public class CategoriaLibroRequest {
 
   public void setCodigo_dewey(String codigo_dewey) {
     this.codigo_dewey = codigo_dewey;
+  }
+
+  public Integer getLibrosCount() {
+    return librosCount;
+  }
+
+  public void setLibrosCount(Integer librosCount) {
+    this.librosCount = librosCount;
   }
 
 }

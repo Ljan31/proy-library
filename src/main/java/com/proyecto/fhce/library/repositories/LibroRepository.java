@@ -49,4 +49,9 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
   // "WHERE e.biblioteca.id_biblioteca = :bibliotecaId " +
   // "GROUP BY l ORDER BY l.titulo")
   // List<Libro> findByBiblioteca(@Param("bibliotecaId") Long bibliotecaId);
+
+  @Query("SELECT COUNT(l) FROM Libro l WHERE l.categoria.id_categoria = :categoriaId")
+  Long countByCategoria_IdCategoria(@Param("categoriaId") Long categoriaId);
+
+  List<Libro> findTop10ByCategoria_IdCategoriaOrderByAnoPublicacionDesc(Long categoriaId);
 }

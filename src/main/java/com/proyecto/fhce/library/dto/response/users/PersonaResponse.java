@@ -1,13 +1,23 @@
-package com.proyecto.fhce.library.dto.request;
+package com.proyecto.fhce.library.dto.response.users;
 
-public class UsuarioUpdateRequest {
+public class PersonaResponse {
+  private Long id_persona;
   private String nombre;
   private String apellido_pat;
   private String apellido_mat;
+  private String nombreCompleto; // computed
+  private Integer ci;
   private String celular;
   private String email;
   private String matricula;
-  private Boolean enabled;
+
+  public Long getId_persona() {
+    return id_persona;
+  }
+
+  public void setId_persona(Long id_persona) {
+    this.id_persona = id_persona;
+  }
 
   public String getNombre() {
     return nombre;
@@ -33,6 +43,22 @@ public class UsuarioUpdateRequest {
     this.apellido_mat = apellido_mat;
   }
 
+  public String getNombreCompleto() {
+    return nombreCompleto;
+  }
+
+  public void setNombreCompleto(String nombreCompleto) {
+    this.nombreCompleto = nombreCompleto;
+  }
+
+  public Integer getCi() {
+    return ci;
+  }
+
+  public void setCi(Integer ci) {
+    this.ci = ci;
+  }
+
   public String getCelular() {
     return celular;
   }
@@ -47,14 +73,6 @@ public class UsuarioUpdateRequest {
 
   public void setEmail(String email) {
     this.email = email;
-  }
-
-  public Boolean getEnabled() {
-    return enabled;
-  }
-
-  public void setEnabled(Boolean enabled) {
-    this.enabled = enabled;
   }
 
   public String getMatricula() {

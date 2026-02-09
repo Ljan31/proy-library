@@ -2,8 +2,8 @@ package com.proyecto.fhce.library.services.users;
 
 import java.util.List;
 
-import com.proyecto.fhce.library.dto.request.RoleRequest;
-import com.proyecto.fhce.library.dto.response.RoleResponse;
+import com.proyecto.fhce.library.dto.request.users.RoleRequest;
+import com.proyecto.fhce.library.dto.response.users.RoleResponse;
 
 public interface RoleService {
   List<RoleResponse> findAll();

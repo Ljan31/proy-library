@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.proyecto.fhce.library.dto.request.BibliotecaRequest;
+import com.proyecto.fhce.library.dto.request.library.BibliotecaRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
-import com.proyecto.fhce.library.dto.response.BibliotecaResponse;
+import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
 import com.proyecto.fhce.library.services.library.BibliotecaService;

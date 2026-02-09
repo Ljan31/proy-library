@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.proyecto.fhce.library.dto.request.RoleRequest;
+import com.proyecto.fhce.library.dto.request.users.RoleRequest;
 import com.proyecto.fhce.library.dto.response.PermisoResponse;
-import com.proyecto.fhce.library.dto.response.RoleResponse;
+import com.proyecto.fhce.library.dto.response.users.RoleResponse;
 import com.proyecto.fhce.library.entities.Permiso;
 import com.proyecto.fhce.library.entities.Role;
 import com.proyecto.fhce.library.exception.BusinessException;

@@ -1,6 +1,8 @@
-package com.proyecto.fhce.library.dto.response;
+package com.proyecto.fhce.library.dto.response.users;
 
 import java.util.Set;
+
+import com.proyecto.fhce.library.dto.response.PermisoResponse;
 
 public class RoleResponse {
   private Long id_role;

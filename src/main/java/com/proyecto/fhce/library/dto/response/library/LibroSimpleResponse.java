@@ -1,4 +1,4 @@
-package com.proyecto.fhce.library.dto.response;
+package com.proyecto.fhce.library.dto.response.library;
 
 public class LibroSimpleResponse {
   private Long id_libro;

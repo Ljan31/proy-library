@@ -1,37 +1,31 @@
-package com.proyecto.fhce.library.dto.request;
+package com.proyecto.fhce.library.dto.response.library;
 
+import com.proyecto.fhce.library.dto.response.CarreraSimpleResponse;
+import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-
-public class BibliotecaRequest {
-  @NotBlank(message = "Nombre de biblioteca es requerido")
-  @Size(max = 200)
+public class BibliotecaResponse {
+  private Long id_biblioteca;
   private String nombre;
-
-  @NotNull(message = "Tipo de biblioteca es requerido")
   private TipoBiblioteca tipoBiblioteca;
-
-  private Long carreraId;
-
+  private CarreraSimpleResponse carrera;
   private String direccion;
-
-  @Pattern(regexp = "^[0-9-]{7,20}$", message = "Teléfono inválido")
   private String telefono;
-
-  @Email(message = "Email inválido")
   private String email;
-
   private String horario_atencion;
-
-  private Long encargadoId;
-
+  private UsuarioSimpleResponse encargado;
   private EstadoBiblioteca estado;
+  private Integer ejemplaresTotal;
+  private Integer ejemplaresDisponibles;
+
+  public Long getId_biblioteca() {
+    return id_biblioteca;
+  }
+
+  public void setId_biblioteca(Long id_biblioteca) {
+    this.id_biblioteca = id_biblioteca;
+  }
 
   public String getNombre() {
     return nombre;
@@ -49,12 +43,12 @@ public class BibliotecaRequest {
     this.tipoBiblioteca = tipoBiblioteca;
   }
 
-  public Long getCarreraId() {
-    return carreraId;
+  public CarreraSimpleResponse getCarrera() {
+    return carrera;
   }
 
-  public void setCarreraId(Long carreraId) {
-    this.carreraId = carreraId;
+  public void setCarrera(CarreraSimpleResponse carrera) {
+    this.carrera = carrera;
   }
 
   public String getDireccion() {
@@ -89,12 +83,12 @@ public class BibliotecaRequest {
     this.horario_atencion = horario_atencion;
   }
 
-  public Long getEncargadoId() {
-    return encargadoId;
+  public UsuarioSimpleResponse getEncargado() {
+    return encargado;
   }
 
-  public void setEncargadoId(Long encargadoId) {
-    this.encargadoId = encargadoId;
+  public void setEncargado(UsuarioSimpleResponse encargado) {
+    this.encargado = encargado;
   }
 
   public EstadoBiblioteca getEstado() {
@@ -103,6 +97,22 @@ public class BibliotecaRequest {
 
   public void setEstado(EstadoBiblioteca estado) {
     this.estado = estado;
+  }
+
+  public Integer getEjemplaresTotal() {
+    return ejemplaresTotal;
+  }
+
+  public void setEjemplaresTotal(Integer ejemplaresTotal) {
+    this.ejemplaresTotal = ejemplaresTotal;
+  }
+
+  public Integer getEjemplaresDisponibles() {
+    return ejemplaresDisponibles;
+  }
+
+  public void setEjemplaresDisponibles(Integer ejemplaresDisponibles) {
+    this.ejemplaresDisponibles = ejemplaresDisponibles;
   }
 
 }

@@ -16,9 +16,19 @@ public interface CategoriaLibroRepository extends JpaRepository<CategoriaLibro, 
 
   List<CategoriaLibro> findByNombreCategoriaContainingIgnoreCase(String nombreCategoria);
 
+  List<CategoriaLibro> findAllByOrderByNombreCategoriaAsc();
+
   boolean existsByCodigoDewey(String codigoDewey);
 
   @Query("SELECT c FROM CategoriaLibro c LEFT JOIN c.libros l " +
       "GROUP BY c ORDER BY COUNT(l) DESC")
   List<CategoriaLibro> findCategoriasOrderByLibrosCount();
+
+  @Query("SELECT c.id_categoria, c.nombre_categoria, COUNT(l) FROM CategoriaLibro c " +
+      "LEFT JOIN c.libros l GROUP BY c.id_categoria, c.nombre_categoria " +
+      "ORDER BY COUNT(l) DESC")
+  List<Object[]> findTopCategoriasConMasLibros();
+
+  @Query("SELECT COUNT(c) FROM CategoriaLibro c WHERE c.libros IS EMPTY")
+  Long countCategoriasSinLibros();
 }

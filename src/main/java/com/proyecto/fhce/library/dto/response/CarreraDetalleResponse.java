@@ -2,6 +2,8 @@ package com.proyecto.fhce.library.dto.response;
 
 import java.util.List;
 
+import com.proyecto.fhce.library.dto.response.library.BibliotecaSimpleResponse;
+
 public class CarreraDetalleResponse {
   private Long id_carrera;
   private String nombre_carrera;

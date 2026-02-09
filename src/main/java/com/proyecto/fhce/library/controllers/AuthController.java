@@ -18,12 +18,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.proyecto.fhce.library.dto.request.LoginRequest;
-import com.proyecto.fhce.library.dto.request.RegisterRequest;
+import com.proyecto.fhce.library.dto.request.users.LoginRequest;
+import com.proyecto.fhce.library.dto.request.users.RegisterRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.LoginResponse;
-import com.proyecto.fhce.library.dto.response.PersonaResponse;
-import com.proyecto.fhce.library.dto.response.UsuarioResponse;
+import com.proyecto.fhce.library.dto.response.users.PersonaResponse;
+import com.proyecto.fhce.library.dto.response.users.UsuarioResponse;
 import com.proyecto.fhce.library.entities.Persona;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.security.jwt.JwtTokenProvider;

@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.proyecto.fhce.library.dto.request.ChangePasswordRequest;
-import com.proyecto.fhce.library.dto.request.RegisterRequest;
-import com.proyecto.fhce.library.dto.request.UsuarioUpdateRequest;
+import com.proyecto.fhce.library.dto.request.users.ChangePasswordRequest;
+import com.proyecto.fhce.library.dto.request.users.RegisterRequest;
+import com.proyecto.fhce.library.dto.request.users.UsuarioUpdateRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
-import com.proyecto.fhce.library.dto.response.UsuarioResponse;
+import com.proyecto.fhce.library.dto.response.users.UsuarioResponse;
 import com.proyecto.fhce.library.services.users.UserService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;

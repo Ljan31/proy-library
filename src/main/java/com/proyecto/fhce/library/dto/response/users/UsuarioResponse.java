@@ -1,4 +1,4 @@
-package com.proyecto.fhce.library.dto.response;
+package com.proyecto.fhce.library.dto.response.users;
 
 import java.util.Set;
 

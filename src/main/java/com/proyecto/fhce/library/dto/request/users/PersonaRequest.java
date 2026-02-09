@@ -1,23 +1,33 @@
-package com.proyecto.fhce.library.dto.response;
+package com.proyecto.fhce.library.dto.request.users;
 
-public class PersonaResponse {
-  private Long id_persona;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+
+@Schema(description = "Datos de persona")
+public class PersonaRequest {
+  @NotBlank(message = "Nombre es requerido")
   private String nombre;
+
+  @NotBlank(message = "Apellido paterno es requerido")
   private String apellido_pat;
+
   private String apellido_mat;
-  private String nombreCompleto; // computed
+
+  @NotNull(message = "CI es requerido")
+  @Min(value = 1, message = "CI debe ser mayor a 0")
   private Integer ci;
+
+  @Pattern(regexp = "^[0-9]{7,8}$", message = "Celular debe tener 7-8 dígitos")
   private String celular;
+
+  @Email(message = "Email debe ser válido")
   private String email;
+
   private String matricula;
-
-  public Long getId_persona() {
-    return id_persona;
-  }
-
-  public void setId_persona(Long id_persona) {
-    this.id_persona = id_persona;
-  }
 
   public String getNombre() {
     return nombre;
@@ -41,14 +51,6 @@ public class PersonaResponse {
 
   public void setApellido_mat(String apellido_mat) {
     this.apellido_mat = apellido_mat;
-  }
-
-  public String getNombreCompleto() {
-    return nombreCompleto;
-  }
-
-  public void setNombreCompleto(String nombreCompleto) {
-    this.nombreCompleto = nombreCompleto;
   }
 
   public Integer getCi() {

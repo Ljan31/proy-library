@@ -12,11 +12,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.proyecto.fhce.library.dto.request.BibliotecaRequest;
-import com.proyecto.fhce.library.dto.response.BibliotecaResponse;
-import com.proyecto.fhce.library.dto.response.BibliotecaSimpleResponse;
+import com.proyecto.fhce.library.dto.request.library.BibliotecaRequest;
 import com.proyecto.fhce.library.dto.response.CarreraSimpleResponse;
-import com.proyecto.fhce.library.dto.response.UsuarioSimpleResponse;
+import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
+import com.proyecto.fhce.library.dto.response.library.BibliotecaSimpleResponse;
+import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.Carrera;
 import com.proyecto.fhce.library.entities.Usuario;

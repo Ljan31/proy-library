@@ -2,6 +2,8 @@ package com.proyecto.fhce.library.dto.response;
 
 import java.util.Set;
 
+import com.proyecto.fhce.library.dto.response.users.PersonaResponse;
+
 public class LoginResponse {
   private String token;
   private String type = "Bearer";

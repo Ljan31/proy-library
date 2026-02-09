@@ -1,4 +1,4 @@
-package com.proyecto.fhce.library.dto.request;
+package com.proyecto.fhce.library.dto.request.library;
 
 public class BusquedaLibroRequest {
   private String titulo;

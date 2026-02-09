@@ -11,12 +11,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.proyecto.fhce.library.dto.request.ChangePasswordRequest;
-import com.proyecto.fhce.library.dto.request.RegisterRequest;
-import com.proyecto.fhce.library.dto.request.UsuarioUpdateRequest;
-import com.proyecto.fhce.library.dto.response.PersonaResponse;
-import com.proyecto.fhce.library.dto.response.RoleSimpleResponse;
-import com.proyecto.fhce.library.dto.response.UsuarioResponse;
+import com.proyecto.fhce.library.dto.request.users.ChangePasswordRequest;
+import com.proyecto.fhce.library.dto.request.users.RegisterRequest;
+import com.proyecto.fhce.library.dto.request.users.UsuarioUpdateRequest;
+import com.proyecto.fhce.library.dto.response.users.PersonaResponse;
+import com.proyecto.fhce.library.dto.response.users.RoleSimpleResponse;
+import com.proyecto.fhce.library.dto.response.users.UsuarioResponse;
 import com.proyecto.fhce.library.entities.Persona;
 import com.proyecto.fhce.library.entities.Role;
 import com.proyecto.fhce.library.entities.Usuario;

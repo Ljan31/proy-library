@@ -2,8 +2,8 @@ package com.proyecto.fhce.library.services.library;
 
 import java.util.List;
 
-import com.proyecto.fhce.library.dto.request.BibliotecaRequest;
-import com.proyecto.fhce.library.dto.response.BibliotecaResponse;
+import com.proyecto.fhce.library.dto.request.library.BibliotecaRequest;
+import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
 

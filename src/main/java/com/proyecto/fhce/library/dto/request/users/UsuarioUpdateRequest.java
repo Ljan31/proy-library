@@ -1,33 +1,13 @@
-package com.proyecto.fhce.library.dto.request;
+package com.proyecto.fhce.library.dto.request.users;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-
-@Schema(description = "Datos de persona")
-public class PersonaRequest {
-  @NotBlank(message = "Nombre es requerido")
+public class UsuarioUpdateRequest {
   private String nombre;
-
-  @NotBlank(message = "Apellido paterno es requerido")
   private String apellido_pat;
-
   private String apellido_mat;
-
-  @NotNull(message = "CI es requerido")
-  @Min(value = 1, message = "CI debe ser mayor a 0")
-  private Integer ci;
-
-  @Pattern(regexp = "^[0-9]{7,8}$", message = "Celular debe tener 7-8 dígitos")
   private String celular;
-
-  @Email(message = "Email debe ser válido")
   private String email;
-
   private String matricula;
+  private Boolean enabled;
 
   public String getNombre() {
     return nombre;
@@ -53,14 +33,6 @@ public class PersonaRequest {
     this.apellido_mat = apellido_mat;
   }
 
-  public Integer getCi() {
-    return ci;
-  }
-
-  public void setCi(Integer ci) {
-    this.ci = ci;
-  }
-
   public String getCelular() {
     return celular;
   }
@@ -75,6 +47,14 @@ public class PersonaRequest {
 
   public void setEmail(String email) {
     this.email = email;
+  }
+
+  public Boolean getEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(Boolean enabled) {
+    this.enabled = enabled;
   }
 
   public String getMatricula() {
