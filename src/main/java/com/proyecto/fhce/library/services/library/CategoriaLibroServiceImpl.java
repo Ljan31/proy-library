@@ -176,18 +176,11 @@ public class CategoriaLibroServiceImpl implements CategoriaLibroService {
         : 0);
 
     // Categorías con más libros (Top 10)
-    List<Object[]> topCategorias = categoriaRepository.findTopCategoriasConMasLibros();
-    List<CategoriaConConteoResponse> top = topCategorias.stream()
+    List<CategoriaConConteoResponse> topCategorias = categoriaRepository.findTopCategoriasConMasLibros();
+
+    stats.setCategoriasConMasLibros(topCategorias.stream()
         .limit(10)
-        .map(arr -> {
-          CategoriaConConteoResponse cat = new CategoriaConConteoResponse();
-          cat.setId_categoria((Long) arr[0]);
-          cat.setNombre_categoria((String) arr[1]);
-          cat.setCantidadLibros((Long) arr[2]);
-          return cat;
-        })
-        .collect(Collectors.toList());
-    stats.setCategoriasConMasLibros(top);
+        .collect(Collectors.toList()));
 
     // Categorías sin libros
     Long categoriasSinLibros = categoriaRepository.countCategoriasSinLibros();

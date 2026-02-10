@@ -78,4 +78,11 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.FORBIDDEN)
         .body(ApiResponse.error("El usuario está deshabilitado"));
   }
+
+  @ExceptionHandler(DuplicateResourceException.class)
+  public ResponseEntity<ApiResponse<Void>> handleDuplicate(DuplicateResourceException ex) {
+    return ResponseEntity
+        .status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(ex.getMessage()));
+  }
 }

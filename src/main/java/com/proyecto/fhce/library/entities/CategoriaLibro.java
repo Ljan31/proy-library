@@ -15,34 +15,35 @@ import jakarta.persistence.Table;
 public class CategoriaLibro {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id_categoria;
+  @Column(name = "id_categoria")
+  private Long idCategoria;
 
-  @Column(nullable = false, length = 150)
-  private String nombre_categoria;
+  @Column(nullable = false, length = 150, name = "nombre_categoria")
+  private String nombreCategoria;
 
   @Column(length = 500)
   private String descripcion;
 
-  @Column(length = 20)
-  private String codigo_dewey;
+  @Column(length = 20, name = "codigo_dewey")
+  private String codigoDewey;
 
   @OneToMany(mappedBy = "categoria")
   private List<Libro> libros;
 
   public Long getId_categoria() {
-    return id_categoria;
+    return idCategoria;
   }
 
   public void setId_categoria(Long id_categoria) {
-    this.id_categoria = id_categoria;
+    this.idCategoria = id_categoria;
   }
 
   public String getNombre_categoria() {
-    return nombre_categoria;
+    return nombreCategoria;
   }
 
   public void setNombre_categoria(String nombre_categoria) {
-    this.nombre_categoria = nombre_categoria;
+    this.nombreCategoria = nombre_categoria;
   }
 
   public String getDescripcion() {
@@ -54,11 +55,11 @@ public class CategoriaLibro {
   }
 
   public String getCodigo_dewey() {
-    return codigo_dewey;
+    return codigoDewey;
   }
 
   public void setCodigo_dewey(String codigo_dewey) {
-    this.codigo_dewey = codigo_dewey;
+    this.codigoDewey = codigo_dewey;
   }
 
   public List<Libro> getLibros() {

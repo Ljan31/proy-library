@@ -82,6 +82,7 @@ public class SpringSecurityConfig {
             .requestMatchers("/api/auth/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/carreras/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/bibliotecas/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
             // .requestMatchers("/api/users/**").permitAll()
             // .requestMatchers("/api/personas/**").permitAll()
             // .requestMatchers("/api/libros/**").permitAll()

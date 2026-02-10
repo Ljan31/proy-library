@@ -101,7 +101,7 @@ public class CategoriaLibroController {
 
   @Operation(summary = "Crear nueva categoría", description = "Registra una nueva categoría de libros", security = @SecurityRequirement(name = "bearer-jwt"))
   @PostMapping
-  @PreAuthorize("hasAuthority('CATEGORIAS_CREAR') or hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<CategoriaLibroResponse>> create(
       @Valid @RequestBody CategoriaLibroRequest request) {
     CategoriaLibroResponse categoria = categoriaService.create(request);
@@ -111,7 +111,7 @@ public class CategoriaLibroController {
 
   @Operation(summary = "Actualizar categoría", description = "Actualiza la información de una categoría existente", security = @SecurityRequirement(name = "bearer-jwt"))
   @PutMapping("/{id}")
-  @PreAuthorize("hasAuthority('CATEGORIAS_EDITAR') or hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<CategoriaLibroResponse>> update(
       @PathVariable Long id,
       @Valid @RequestBody CategoriaLibroRequest request) {
@@ -121,7 +121,7 @@ public class CategoriaLibroController {
 
   @Operation(summary = "Eliminar categoría", description = "Elimina una categoría (solo si no tiene libros asociados)", security = @SecurityRequirement(name = "bearer-jwt"))
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasAuthority('CATEGORIAS_ELIMINAR') or hasRole('ADMIN')")
+  @PreAuthorize(" hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
     categoriaService.delete(id);
     return ResponseEntity.ok(ApiResponse.success("Categoría eliminada exitosamente", null));
