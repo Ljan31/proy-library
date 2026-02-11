@@ -1,5 +1,6 @@
 package com.proyecto.fhce.library.services;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -10,10 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.proyecto.fhce.library.dto.request.CarreraRequest;
 import com.proyecto.fhce.library.dto.response.CarreraDetalleResponse;
 import com.proyecto.fhce.library.dto.response.CarreraResponse;
+import com.proyecto.fhce.library.dto.response.library.BibliotecaSimpleResponse;
+import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.Carrera;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
+import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.CarreraRepository;
 
 @Service
@@ -21,8 +25,8 @@ public class CarreraServiceImpl implements CarreraService {
   @Autowired
   private CarreraRepository carreraRepository;
 
-  // @Autowired
-  // private BibliotecaRepository bibliotecaRepository;
+  @Autowired
+  private BibliotecaRepository bibliotecaRepository;
 
   // @Autowired
   // private AuditoriaService auditoriaService;
@@ -85,12 +89,11 @@ public class CarreraServiceImpl implements CarreraService {
     // }
 
     // Validar que no tenga bibliotecas
-    // List<Biblioteca> bibliotecas =
-    // bibliotecaRepository.findByCarrera_IdCarrera(id);
-    // if (!bibliotecas.isEmpty()) {
-    // throw new BusinessException("No se puede eliminar la carrera porque tiene " +
-    // bibliotecas.size() + " biblioteca(s) asociada(s)");
-    // }
+    List<Biblioteca> bibliotecas = bibliotecaRepository.findByCarrera_IdCarrera(id);
+    if (!bibliotecas.isEmpty()) {
+      throw new BusinessException("No se puede eliminar la carrera porque tiene " +
+          bibliotecas.size() + " biblioteca(s) asociada(s)");
+    }
 
     carreraRepository.delete(carrera);
 
@@ -142,18 +145,16 @@ public class CarreraServiceImpl implements CarreraService {
     // response.setEstudiantesActivos(activos != null ? activos.intValue() : 0);
 
     // Bibliotecas
-    // if (carrera.getBibliotecas() != null && !carrera.getBibliotecas().isEmpty())
-    // {
-    // List<BibliotecaSimpleResponse> bibliotecas =
-    // carrera.getBibliotecas().stream()
-    // .map(this::mapBibliotecaToSimple)
-    // .collect(Collectors.toList());
-    // response.setBibliotecas(bibliotecas);
-    // response.setBibliotecasCount(bibliotecas.size());
-    // } else {
-    // response.setBibliotecas(new ArrayList<>());
-    // response.setBibliotecasCount(0);
-    // }
+    if (carrera.getBibliotecas() != null && !carrera.getBibliotecas().isEmpty()) {
+      List<BibliotecaSimpleResponse> bibliotecas = carrera.getBibliotecas().stream()
+          .map(this::mapBibliotecaToSimple)
+          .collect(Collectors.toList());
+      response.setBibliotecas(bibliotecas);
+      response.setBibliotecasCount(bibliotecas.size());
+    } else {
+      response.setBibliotecas(new ArrayList<>());
+      response.setBibliotecasCount(0);
+    }
 
     return response;
   }
@@ -165,30 +166,28 @@ public class CarreraServiceImpl implements CarreraService {
     response.setCodigo_carrera(carrera.getCodigo_carrera());
 
     // Contar estudiantes activos
-    // Long estudiantesActivos = usuarioCarreraRepository
-    // .countEstudiantesByCarrera(carrera.getId_carrera());
+    // Long estudiantesActivos =
+    // usuarioCarreraRepository.countEstudiantesByCarrera(carrera.getId_carrera());
     // response.setEstudiantesActivos(estudiantesActivos != null ?
     // estudiantesActivos.intValue() : 0);
 
     // Contar bibliotecas
-    // if (carrera.getBibliotecas() != null) {
-    // response.setBibliotecasCount(carrera.getBibliotecas().size());
-    // } else {
-    // // Si no está cargada la relación, hacer query
-    // List<Biblioteca> bibliotecas =
-    // bibliotecaRepository.findByCarrera_IdCarrera(carrera.getId_carrera());
-    // response.setBibliotecasCount(bibliotecas.size());
-    // }
+    if (carrera.getBibliotecas() != null) {
+      response.setBibliotecasCount(carrera.getBibliotecas().size());
+    } else {
+      // Si no está cargada la relación, hacer query
+      List<Biblioteca> bibliotecas = bibliotecaRepository.findByCarrera_IdCarrera(carrera.getId_carrera());
+      response.setBibliotecasCount(bibliotecas.size());
+    }
 
     return response;
   }
 
-  // private BibliotecaSimpleResponse mapBibliotecaToSimple(Biblioteca biblioteca)
-  // {
-  // BibliotecaSimpleResponse response = new BibliotecaSimpleResponse();
-  // response.setId_biblioteca(biblioteca.getId_biblioteca());
-  // response.setNombre(biblioteca.getNombre());
-  // response.setTipoBiblioteca(biblioteca.getTipoBiblioteca());
-  // return response;
-  // }
+  private BibliotecaSimpleResponse mapBibliotecaToSimple(Biblioteca biblioteca) {
+    BibliotecaSimpleResponse response = new BibliotecaSimpleResponse();
+    response.setId_biblioteca(biblioteca.getId_biblioteca());
+    response.setNombre(biblioteca.getNombre());
+    response.setTipoBiblioteca(biblioteca.getTipoBiblioteca());
+    return response;
+  }
 }

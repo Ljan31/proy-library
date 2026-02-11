@@ -13,10 +13,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.proyecto.fhce.library.dto.request.CarreraRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
+import com.proyecto.fhce.library.dto.response.CarreraDetalleResponse;
 import com.proyecto.fhce.library.dto.response.CarreraResponse;
 import com.proyecto.fhce.library.services.CarreraService;
 
@@ -40,6 +42,26 @@ public class CarreraController {
   public ResponseEntity<ApiResponse<CarreraResponse>> findById(@PathVariable Long id) {
     CarreraResponse carrera = carreraService.findById(id);
     return ResponseEntity.ok(ApiResponse.success(carrera));
+  }
+
+  @GetMapping("/{id}/detalle")
+  public ResponseEntity<ApiResponse<CarreraDetalleResponse>> findDetalle(@PathVariable Long id) {
+    CarreraDetalleResponse detalle = carreraService.findByIdWithDetalle(id);
+    return ResponseEntity.ok(ApiResponse.success(detalle));
+  }
+
+  @GetMapping("/codigo/{codigo}")
+  public ResponseEntity<ApiResponse<CarreraResponse>> findByCodigo(@PathVariable String codigo) {
+    CarreraResponse carrera = carreraService.findByCodigo(codigo);
+    return ResponseEntity.ok(ApiResponse.success(carrera));
+  }
+
+  @GetMapping("/search")
+  public ResponseEntity<ApiResponse<List<CarreraResponse>>> search(
+      @RequestParam String nombre) {
+
+    List<CarreraResponse> carreras = carreraService.search(nombre);
+    return ResponseEntity.ok(ApiResponse.success(carreras));
   }
 
   @PostMapping
