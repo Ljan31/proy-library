@@ -23,6 +23,9 @@ public interface UserRepository extends JpaRepository<Usuario, Long> {
 
   List<Usuario> findByEnabledFalse();
 
+  @Query("SELECT u FROM Usuario u JOIN FETCH u.persona WHERE u.username = :username")
+  Optional<Usuario> findByUsernameWithPersona(@Param("username") String username);
+
   @Query("SELECT u FROM Usuario u JOIN u.roles r WHERE r.name = :roleName")
   List<Usuario> findByRoleName(@Param("roleName") String roleName);
 

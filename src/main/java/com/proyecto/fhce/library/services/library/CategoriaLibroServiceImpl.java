@@ -82,6 +82,7 @@ public class CategoriaLibroServiceImpl implements CategoriaLibroService {
     return mapToResponse(updated);
   }
 
+  @Transactional
   public void delete(Long id) {
     CategoriaLibro categoria = categoriaRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con id: " + id));
