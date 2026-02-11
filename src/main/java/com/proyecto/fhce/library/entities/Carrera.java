@@ -1,10 +1,13 @@
 package com.proyecto.fhce.library.entities;
 
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -21,8 +24,8 @@ public class Carrera {
   @Column(unique = true, nullable = false, length = 20, name = "codigo_carrera")
   private String codigoCarrera;
 
-  // @OneToMany(mappedBy = "carrera")
-  // private List<Biblioteca> bibliotecas;
+  @OneToMany(mappedBy = "carrera")
+  private List<Biblioteca> bibliotecas;
 
   public Long getId_carrera() {
     return idCarrera;
@@ -46,6 +49,30 @@ public class Carrera {
 
   public void setCodigo_carrera(String codigo_carrera) {
     this.codigoCarrera = codigo_carrera;
+  }
+
+  public Long getIdCarrera() {
+    return idCarrera;
+  }
+
+  public void setIdCarrera(Long idCarrera) {
+    this.idCarrera = idCarrera;
+  }
+
+  public String getCodigoCarrera() {
+    return codigoCarrera;
+  }
+
+  public void setCodigoCarrera(String codigoCarrera) {
+    this.codigoCarrera = codigoCarrera;
+  }
+
+  public List<Biblioteca> getBibliotecas() {
+    return bibliotecas;
+  }
+
+  public void setBibliotecas(List<Biblioteca> bibliotecas) {
+    this.bibliotecas = bibliotecas;
   }
 
   @Override

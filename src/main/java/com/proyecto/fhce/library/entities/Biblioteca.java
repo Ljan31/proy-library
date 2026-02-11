@@ -1,5 +1,7 @@
 package com.proyecto.fhce.library.entities;
 
+import java.util.List;
+
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
 
@@ -13,6 +15,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -20,8 +23,8 @@ import jakarta.persistence.Table;
 public class Biblioteca {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(unique = true, nullable = false)
-  private Long id_biblioteca;
+  @Column(unique = true, nullable = false, name = "id_biblioteca")
+  private Long idBiblioteca;
 
   @Column(nullable = false, length = 200)
   private String nombre;
@@ -53,12 +56,15 @@ public class Biblioteca {
   @Column(nullable = false)
   private EstadoBiblioteca estado;
 
+  @OneToMany(mappedBy = "biblioteca")
+  private List<Ejemplar> ejemplares;
+
   public Long getId_biblioteca() {
-    return id_biblioteca;
+    return idBiblioteca;
   }
 
   public void setId_biblioteca(Long id_biblioteca) {
-    this.id_biblioteca = id_biblioteca;
+    this.idBiblioteca = id_biblioteca;
   }
 
   public String getNombre() {
@@ -133,8 +139,21 @@ public class Biblioteca {
     this.estado = estado;
   }
 
-  // @OneToMany(mappedBy = "biblioteca")
-  // private List<Ejemplar> ejemplares;
+  public Long getIdBiblioteca() {
+    return idBiblioteca;
+  }
+
+  public void setIdBiblioteca(Long idBiblioteca) {
+    this.idBiblioteca = idBiblioteca;
+  }
+
+  public List<Ejemplar> getEjemplares() {
+    return ejemplares;
+  }
+
+  public void setEjemplares(List<Ejemplar> ejemplares) {
+    this.ejemplares = ejemplares;
+  }
 
   // @OneToMany(mappedBy = "biblioteca")
   // private List<Prestamo> prestamos;

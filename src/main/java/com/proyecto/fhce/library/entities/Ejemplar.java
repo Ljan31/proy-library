@@ -59,8 +59,8 @@ public class Ejemplar {
   @Column(columnDefinition = "TEXT")
   private String observaciones;
 
-  // @OneToMany(mappedBy = "ejemplar")
-  // private List<Prestamo> prestamos;
+  @OneToMany(mappedBy = "ejemplar")
+  private List<Prestamo> prestamos;
 
   @OneToMany(mappedBy = "ejemplar", cascade = CascadeType.ALL)
   private List<HistorialEstadoEjemplar> historialEstados;
@@ -157,6 +157,14 @@ public class Ejemplar {
 
   public void setHistorialEstados(List<HistorialEstadoEjemplar> historialEstados) {
     this.historialEstados = historialEstados;
+  }
+
+  public List<Prestamo> getPrestamos() {
+    return prestamos;
+  }
+
+  public void setPrestamos(List<Prestamo> prestamos) {
+    this.prestamos = prestamos;
   }
 
 }

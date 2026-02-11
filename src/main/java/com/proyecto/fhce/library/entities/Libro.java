@@ -22,8 +22,8 @@ import jakarta.persistence.Table;
 public class Libro {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(unique = true, nullable = false)
-  private Long id_libro;
+  @Column(unique = true, nullable = false, name = "id_libro")
+  private Long idLibro;
 
   @Column(unique = true, length = 20)
   private String isbn;
@@ -55,12 +55,15 @@ public class Libro {
   @Column(length = 500)
   private String imagen_portada;
 
+  @OneToMany(mappedBy = "libro", cascade = CascadeType.ALL)
+  private List<Ejemplar> ejemplares;
+
   public Long getId_libro() {
-    return id_libro;
+    return idLibro;
   }
 
   public void setId_libro(Long id_libro) {
-    this.id_libro = id_libro;
+    this.idLibro = id_libro;
   }
 
   public String getIsbn() {
@@ -143,6 +146,22 @@ public class Libro {
     this.imagen_portada = imagen_portada;
   }
 
+  public Long getIdLibro() {
+    return idLibro;
+  }
+
+  public void setIdLibro(Long idLibro) {
+    this.idLibro = idLibro;
+  }
+
+  public List<Ejemplar> getEjemplares() {
+    return ejemplares;
+  }
+
+  public void setEjemplares(List<Ejemplar> ejemplares) {
+    this.ejemplares = ejemplares;
+  }
+
   // @ManyToMany
   // @JoinTable(
   // name = "books_authors",
@@ -150,9 +169,6 @@ public class Libro {
   // inverseJoinColumns = @JoinColumn(name = "author_id")
   // )
   // private Set<Autor> autores;
-
-  // @OneToMany(mappedBy = "libro", cascade = CascadeType.ALL)
-  // private List<Ejemplar> ejemplares;
 
   // @OneToMany(mappedBy = "libro")
   // private List<Reserva> reservas;
