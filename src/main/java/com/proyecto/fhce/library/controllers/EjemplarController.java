@@ -39,7 +39,7 @@ public class EjemplarController {
 
   @Operation(summary = "Listar todos los ejemplares", description = "Obtiene el listado completo de ejemplares", security = @SecurityRequirement(name = "bearer-jwt"))
   @GetMapping
-  @PreAuthorize("hasAuthority('EJEMPLARES_VER') or hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<List<EjemplarResponse>>> findAll() {
     List<EjemplarResponse> ejemplares = ejemplarService.findAll();
     return ResponseEntity.ok(ApiResponse.success(ejemplares));
@@ -76,7 +76,7 @@ public class EjemplarController {
 
   @Operation(summary = "Filtrar ejemplares por estado", description = "Obtiene ejemplares filtrados por estado", security = @SecurityRequirement(name = "bearer-jwt"))
   @GetMapping("/estado/{estado}")
-  @PreAuthorize("hasAuthority('EJEMPLARES_VER') or hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<List<EjemplarResponse>>> findByEstado(@PathVariable EstadoEjemplar estado) {
     List<EjemplarResponse> ejemplares = ejemplarService.findByEstado(estado);
     return ResponseEntity.ok(ApiResponse.success(ejemplares));

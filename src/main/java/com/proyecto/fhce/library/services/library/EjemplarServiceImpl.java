@@ -27,6 +27,7 @@ import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.HistorialEstadoEjemplar;
 import com.proyecto.fhce.library.entities.Libro;
 import com.proyecto.fhce.library.entities.Prestamo;
+import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
@@ -36,6 +37,7 @@ import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.HistorialEstadoEjemplarRepository;
 import com.proyecto.fhce.library.repositories.LibroRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
+import com.proyecto.fhce.library.security.SecurityService;
 
 @Service
 @Transactional
@@ -55,8 +57,13 @@ public class EjemplarServiceImpl implements EjemplarService {
   @Autowired
   private PrestamoRepository prestamoRepository;
 
+  private final SecurityService securityService;
+
   // @Autowired
   // private AuditoriaService auditoriaService;
+  public EjemplarServiceImpl(SecurityService securityService) {
+    this.securityService = securityService;
+  }
 
   public EjemplarResponse create(EjemplarRequest request) {
     // Validar código único
@@ -168,7 +175,10 @@ public class EjemplarServiceImpl implements EjemplarService {
       throw new BusinessException("No se puede dar de baja un ejemplar prestado");
     }
 
+    // Validar que el estado no sea igual al nuevo
     EstadoEjemplar estadoAnterior = ejemplar.getEstadoEjemplar();
+    validarCambioEstado(ejemplar, EstadoEjemplar.BAJA);
+
     ejemplar.setEstadoEjemplar(EstadoEjemplar.BAJA);
 
     ejemplarRepository.save(ejemplar);
@@ -183,7 +193,10 @@ public class EjemplarServiceImpl implements EjemplarService {
     Ejemplar ejemplar = ejemplarRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Ejemplar no encontrado"));
 
+    // Validar que el estado no sea igual al nuevo
     EstadoEjemplar estadoAnterior = ejemplar.getEstadoEjemplar();
+    validarCambioEstado(ejemplar, EstadoEjemplar.PERDIDO);
+
     ejemplar.setEstadoEjemplar(EstadoEjemplar.PERDIDO);
 
     ejemplarRepository.save(ejemplar);
@@ -344,14 +357,23 @@ public class EjemplarServiceImpl implements EjemplarService {
 
   private void validarCambioEstado(Ejemplar ejemplar, EstadoEjemplar nuevoEstado) {
     EstadoEjemplar estadoActual = ejemplar.getEstadoEjemplar();
+    // 🔹 No permitir mismo estado
+    if (estadoActual == nuevoEstado) {
+      throw new BusinessException(
+          "El ejemplar ya se encuentra en estado " + estadoActual);
+    }
 
-    // Si está prestado, solo puede cambiar a: PRESTADO (mismo), PERDIDO, o ser
+    // 🔹 Si está dado de baja, no puede cambiar nunca
+    if (estadoActual == EstadoEjemplar.BAJA) {
+      throw new BusinessException(
+          "Un ejemplar dado de baja no puede cambiar de estado");
+    }
+    // Si está prestado, solo puede cambiar a:PERDIDO, o ser
     // devuelto (DISPONIBLE/EN_REPARACION)
     if (estadoActual == EstadoEjemplar.PRESTADO) {
       if (nuevoEstado != EstadoEjemplar.DISPONIBLE &&
           nuevoEstado != EstadoEjemplar.EN_REPARACION &&
-          nuevoEstado != EstadoEjemplar.PERDIDO &&
-          nuevoEstado != EstadoEjemplar.PRESTADO) {
+          nuevoEstado != EstadoEjemplar.PERDIDO) {
         throw new BusinessException("Un ejemplar prestado solo puede cambiar a DISPONIBLE, EN_REPARACION o PERDIDO");
       }
     }
@@ -369,7 +391,10 @@ public class EjemplarServiceImpl implements EjemplarService {
     historial.setEstadoAnterior(estadoAnterior);
     historial.setEstadoNuevo(estadoNuevo);
     historial.setMotivo(motivo);
-    // historial.setUsuarioCambio(SecurityUtils.getCurrentUser()); // Usuario actual
+    // Obtener el usuario actual
+
+    Usuario usuario = securityService.getCurrentUser();
+    historial.setUsuarioCambio(usuario);
 
     historialRepository.save(historial);
   }

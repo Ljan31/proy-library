@@ -23,6 +23,8 @@ public interface UserService {
 
   UsuarioResponse findById(Long id);
 
+  public Usuario findEntityById(Long id);
+
   List<UsuarioResponse> findByRoleName(String roleName);
 
   List<UsuarioResponse> search(String searchTerm);

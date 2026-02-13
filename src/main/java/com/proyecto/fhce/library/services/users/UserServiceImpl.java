@@ -156,6 +156,12 @@ public class UserServiceImpl implements UserService {
   }
 
   @Transactional(readOnly = true)
+  public Usuario findEntityById(Long id) {
+    return usuarioRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
+  }
+
+  @Transactional(readOnly = true)
   public List<UsuarioResponse> findAll() {
     return usuarioRepository.findAll().stream()
         .map(this::mapToResponse)

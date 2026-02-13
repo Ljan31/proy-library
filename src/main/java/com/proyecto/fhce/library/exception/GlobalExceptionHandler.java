@@ -1,7 +1,10 @@
 package com.proyecto.fhce.library.exception;
 
+import java.util.Arrays;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
@@ -9,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 
 @RestControllerAdvice
@@ -84,5 +88,37 @@ public class GlobalExceptionHandler {
     return ResponseEntity
         .status(HttpStatus.CONFLICT)
         .body(ApiResponse.error(ex.getMessage()));
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ApiResponse<Void>> handleJsonParseError(HttpMessageNotReadableException ex) {
+
+    String message = "JSON inválido";
+
+    Throwable cause = ex.getCause();
+
+    if (cause instanceof InvalidFormatException invalidFormatException) {
+
+      String fieldName = invalidFormatException.getPath()
+          .stream()
+          .map(ref -> ref.getFieldName())
+          .findFirst()
+          .orElse("campo desconocido");
+
+      if (invalidFormatException.getTargetType().isEnum()) {
+
+        String acceptedValues = Arrays.toString(
+            invalidFormatException.getTargetType().getEnumConstants());
+
+        message = fieldName + ": valor inválido. Valores permitidos: " + acceptedValues;
+
+      } else {
+        message = fieldName + ": formato inválido";
+      }
+    }
+
+    return ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
+        .body(ApiResponse.error(message));
   }
 }
