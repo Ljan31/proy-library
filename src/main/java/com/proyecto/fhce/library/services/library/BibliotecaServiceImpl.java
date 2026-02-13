@@ -16,17 +16,21 @@ import com.proyecto.fhce.library.dto.request.library.BibliotecaRequest;
 import com.proyecto.fhce.library.dto.response.CarreraSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaSimpleResponse;
+import com.proyecto.fhce.library.dto.response.library.EstadisticasBibliotecaResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.Carrera;
+import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
+import com.proyecto.fhce.library.enums.EstadoEjemplar;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.CarreraRepository;
+import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 import com.proyecto.fhce.library.security.UserDetailsImpl;
 
@@ -41,8 +45,8 @@ public class BibliotecaServiceImpl implements BibliotecaService {
   @Autowired
   private UserRepository usuarioRepository;
 
-  // @Autowired
-  // private EjemplarRepository ejemplarRepository;
+  @Autowired
+  private EjemplarRepository ejemplarRepository;
 
   // @Autowired
   // private PrestamoRepository prestamoRepository;
@@ -164,13 +168,12 @@ public class BibliotecaServiceImpl implements BibliotecaService {
         .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada con id: " + id));
 
     // Validar que no tenga ejemplares
-    // Long ejemplaresCount = ejemplarRepository.countByBibliotecaAndEstado(id,
-    // null);
-    // if (ejemplaresCount != null && ejemplaresCount > 0) {
-    // throw new BusinessException("No se puede eliminar la biblioteca porque tiene
-    // " +
-    // ejemplaresCount + " ejemplar(es) registrado(s)");
-    // }
+    Long ejemplaresCount = ejemplarRepository.countByBibliotecaAndEstado(id,
+        null);
+    if (ejemplaresCount != null && ejemplaresCount > 0) {
+      throw new BusinessException(
+          "No se puede eliminar la biblioteca porque tiene " + ejemplaresCount + " ejemplar(es) registrado(s)");
+    }
 
     bibliotecaRepository.delete(biblioteca);
 
@@ -283,83 +286,81 @@ public class BibliotecaServiceImpl implements BibliotecaService {
         .collect(Collectors.toList());
   }
 
-  // @Transactional(readOnly = true)
-  // public EstadisticasBibliotecaResponse obtenerEstadisticas(Long id) {
-  // Biblioteca biblioteca = bibliotecaRepository.findById(id)
-  // .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada
-  // con id: " + id));
+  @Transactional(readOnly = true)
+  public EstadisticasBibliotecaResponse obtenerEstadisticas(Long id) {
+    Biblioteca biblioteca = bibliotecaRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada con id: " + id));
 
-  // EstadisticasBibliotecaResponse stats = new EstadisticasBibliotecaResponse();
+    EstadisticasBibliotecaResponse stats = new EstadisticasBibliotecaResponse();
 
-  // BibliotecaSimpleResponse biblioResp = new BibliotecaSimpleResponse();
-  // biblioResp.setId_biblioteca(biblioteca.getId_biblioteca());
-  // biblioResp.setNombre(biblioteca.getNombre());
-  // biblioResp.setTipoBiblioteca(biblioteca.getTipoBiblioteca());
-  // stats.setBiblioteca(biblioResp);
+    BibliotecaSimpleResponse biblioResp = new BibliotecaSimpleResponse();
+    biblioResp.setId_biblioteca(biblioteca.getId_biblioteca());
+    biblioResp.setNombre(biblioteca.getNombre());
+    biblioResp.setTipoBiblioteca(biblioteca.getTipoBiblioteca());
+    stats.setBiblioteca(biblioResp);
 
-  // // Obtener ejemplares
-  // List<Ejemplar> ejemplares =
-  // ejemplarRepository.findByBiblioteca_IdBiblioteca(id);
-  // stats.setTotalEjemplares(ejemplares.size());
+    // Obtener ejemplares
+    List<Ejemplar> ejemplares = ejemplarRepository.findByBiblioteca_IdBiblioteca(id);
+    stats.setTotalEjemplares(ejemplares.size());
 
-  // long disponibles = ejemplares.stream()
-  // .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.DISPONIBLE)
-  // .count();
-  // stats.setEjemplaresDisponibles((int) disponibles);
+    long disponibles = ejemplares.stream()
+        .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.DISPONIBLE)
+        .count();
+    stats.setEjemplaresDisponibles((int) disponibles);
 
-  // long prestados = ejemplares.stream()
-  // .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.PRESTADO)
-  // .count();
-  // stats.setEjemplaresPrestados((int) prestados);
+    long prestados = ejemplares.stream()
+        .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.PRESTADO)
+        .count();
+    stats.setEjemplaresPrestados((int) prestados);
 
-  // // Contar libros únicos
-  // long librosUnicos = ejemplares.stream()
-  // .map(e -> e.getLibro().getId_libro())
-  // .distinct()
-  // .count();
-  // stats.setTotalLibros((int) librosUnicos);
+    // Contar libros únicos
+    long librosUnicos = ejemplares.stream()
+        .map(e -> e.getLibro().getId_libro())
+        .distinct()
+        .count();
+    stats.setTotalLibros((int) librosUnicos);
 
-  // // Préstamos activos
-  // List<Prestamo> prestamosActivos = prestamoRepository
-  // .findByBiblioteca_IdBibliotecaAndEstadoPrestamo(id, EstadoPrestamo.ACTIVO);
-  // stats.setPrestamosActivos(prestamosActivos.size());
+    // // Préstamos activos
+    // List<Prestamo> prestamosActivos = prestamoRepository
+    // .findByBiblioteca_IdBibliotecaAndEstadoPrestamo(id, EstadoPrestamo.ACTIVO);
+    // stats.setPrestamosActivos(prestamosActivos.size());
 
-  // // Préstamos vencidos
-  // List<Prestamo> vencidos =
-  // prestamoRepository.findPrestamosVencidos(LocalDate.now())
-  // .stream()
-  // .filter(p -> p.getBiblioteca().getId_biblioteca().equals(id))
-  // .collect(Collectors.toList());
-  // stats.setPrestamosVencidos(vencidos.size());
+    // // Préstamos vencidos
+    // List<Prestamo> vencidos =
+    // prestamoRepository.findPrestamosVencidos(LocalDate.now())
+    // .stream()
+    // .filter(p -> p.getBiblioteca().getId_biblioteca().equals(id))
+    // .collect(Collectors.toList());
+    // stats.setPrestamosVencidos(vencidos.size());
 
-  // // Reservas pendientes
-  // List<Reserva> reservas = reservaRepository
-  // .findByBiblioteca_IdBibliotecaAndEstadoReserva(id, EstadoReserva.PENDIENTE);
-  // stats.setReservasPendientes(reservas != null ? reservas.size() : 0);
+    // // Reservas pendientes
+    // List<Reserva> reservas = reservaRepository
+    // .findByBiblioteca_IdBibliotecaAndEstadoReserva(id, EstadoReserva.PENDIENTE);
+    // stats.setReservasPendientes(reservas != null ? reservas.size() : 0);
 
-  // // Usuarios activos (usuarios con préstamos en esta biblioteca)
-  // Long usuariosActivos =
-  // prestamoRepository.countUsuariosActivosByBiblioteca(id);
-  // stats.setUsuariosActivos(usuariosActivos != null ? usuariosActivos.intValue()
-  // : 0);
+    // // Usuarios activos (usuarios con préstamos en esta biblioteca)
+    // Long usuariosActivos =
+    // prestamoRepository.countUsuariosActivosByBiblioteca(id);
+    // stats.setUsuariosActivos(usuariosActivos != null ? usuariosActivos.intValue()
+    // : 0);
 
-  // // Libros más prestados
-  // List<Object[]> librosMasPrestados = prestamoRepository
-  // .findLibrosMasPrestadosByBiblioteca(id);
+    // // Libros más prestados
+    // List<Object[]> librosMasPrestados = prestamoRepository
+    // .findLibrosMasPrestadosByBiblioteca(id);
 
-  // List<LibroMasPrestadoResponse> topLibros = librosMasPrestados.stream()
-  // .limit(10)
-  // .map(arr -> {
-  // LibroMasPrestadoResponse libro = new LibroMasPrestadoResponse();
-  // libro.setTitulo((String) arr[0]);
-  // libro.setCantidadPrestamos((Long) arr[1]);
-  // return libro;
-  // })
-  // .collect(Collectors.toList());
-  // stats.setLibrosMasPrestados(topLibros);
+    // List<LibroMasPrestadoResponse> topLibros = librosMasPrestados.stream()
+    // .limit(10)
+    // .map(arr -> {
+    // LibroMasPrestadoResponse libro = new LibroMasPrestadoResponse();
+    // libro.setTitulo((String) arr[0]);
+    // libro.setCantidadPrestamos((Long) arr[1]);
+    // return libro;
+    // })
+    // .collect(Collectors.toList());
+    // stats.setLibrosMasPrestados(topLibros);
 
-  // return stats;
-  // }
+    return stats;
+  }
 
   // @Transactional(readOnly = true)
   // public InventarioBibliotecaResponse obtenerInventario(Long id) {
@@ -432,14 +433,12 @@ public class BibliotecaServiceImpl implements BibliotecaService {
     }
 
     // Calcular estadísticas básicas
-    // Long total = ejemplarRepository.countByBibliotecaAndEstado(
-    // biblioteca.getId_biblioteca(), null);
-    // response.setEjemplaresTotal(total != null ? total.intValue() : 0);
+    Long total = ejemplarRepository.countByBiblioteca_IdBiblioteca(biblioteca.getId_biblioteca());
+    response.setEjemplaresTotal(total != null ? total.intValue() : 0);
 
-    // Long disponibles = ejemplarRepository.countByBibliotecaAndEstado(
-    // biblioteca.getId_biblioteca(), EstadoEjemplar.DISPONIBLE);
-    // response.setEjemplaresDisponibles(disponibles != null ?
-    // disponibles.intValue() : 0);
+    Long disponibles = ejemplarRepository.countByBibliotecaAndEstado(
+        biblioteca.getId_biblioteca(), EstadoEjemplar.DISPONIBLE);
+    response.setEjemplaresDisponibles(disponibles != null ? disponibles.intValue() : 0);
 
     return response;
   }

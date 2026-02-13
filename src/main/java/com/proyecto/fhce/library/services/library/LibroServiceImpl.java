@@ -16,10 +16,13 @@ import com.proyecto.fhce.library.dto.response.PageResponse;
 import com.proyecto.fhce.library.dto.response.library.CategoriaLibroResponse;
 import com.proyecto.fhce.library.dto.response.library.LibroResponse;
 import com.proyecto.fhce.library.entities.CategoriaLibro;
+import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.Libro;
+import com.proyecto.fhce.library.enums.EstadoEjemplar;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.CategoriaLibroRepository;
+import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.LibroRepository;
 
 @Service
@@ -30,8 +33,9 @@ public class LibroServiceImpl implements LibroService {
   @Autowired
   private CategoriaLibroRepository categoriaRepository;
 
-  // @Autowired
-  // private EjemplarRepository ejemplarRepository;
+  @Autowired
+  private EjemplarRepository ejemplarRepository;
+
   @Transactional
   public LibroResponse create(LibroRequest request) {
     if (request.getIsbn() != null && libroRepository.existsByIsbn(request.getIsbn())) {
@@ -184,14 +188,12 @@ public class LibroServiceImpl implements LibroService {
     }
 
     // Calcular disponibilidad
-    // List<Ejemplar> ejemplares =
-    // ejemplarRepository.findByLibro_IdLibro(libro.getId_libro());
-    // response.setEjemplaresTotal(ejemplares.size());
-    // response.setEjemplaresDisponibles(
-    // (int) ejemplares.stream()
-    // .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.DISPONIBLE)
-    // .count()
-    // );
+    List<Ejemplar> ejemplares = ejemplarRepository.findByLibro_IdLibro(libro.getId_libro());
+    response.setEjemplaresTotal(ejemplares.size());
+    response.setEjemplaresDisponibles(
+        (int) ejemplares.stream()
+            .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.DISPONIBLE)
+            .count());
 
     return response;
   }
