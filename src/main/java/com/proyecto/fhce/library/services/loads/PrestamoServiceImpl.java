@@ -35,7 +35,7 @@ import com.proyecto.fhce.library.repositories.UserRepository;
 
 @Service
 @Transactional
-public class PrestamoServiceImpl {
+public class PrestamoServiceImpl implements PrestamoService {
 
   @Autowired
   private PrestamoRepository prestamoRepository;
