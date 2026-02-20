@@ -23,7 +23,8 @@ import jakarta.persistence.Table;
 public class CertificadoNoDeuda {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id_certificado;
+  @Column(name = "id_certificado")
+  private Long idCertificado;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
@@ -35,8 +36,8 @@ public class CertificadoNoDeuda {
   @Column(name = "fecha_vencimiento")
   private LocalDateTime fechaVencimiento;
 
-  @Column(unique = true, nullable = false, length = 100)
-  private String codigo_verificacion;
+  @Column(unique = true, nullable = false, length = 100, name = "codigo_verificacion")
+  private String codigoVerificacion;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "bibliotecario_id", nullable = false)
@@ -46,25 +47,25 @@ public class CertificadoNoDeuda {
   @Column(name = "estado_certificado", nullable = false)
   private EstadoCertificado estadoCertificado;
 
-  @Column(length = 500)
-  private String pdf_generado;
+  @Column(length = 500, name = "pdf_generado")
+  private String pdfGenerado;
 
   @PrePersist
   protected void onCreate() {
     fechaEmision = LocalDateTime.now();
     if (estadoCertificado == null)
       estadoCertificado = EstadoCertificado.VIGENTE;
-    if (codigo_verificacion == null) {
-      codigo_verificacion = UUID.randomUUID().toString();
+    if (codigoVerificacion == null) {
+      codigoVerificacion = UUID.randomUUID().toString();
     }
   }
 
   public Long getId_certificado() {
-    return id_certificado;
+    return idCertificado;
   }
 
   public void setId_certificado(Long id_certificado) {
-    this.id_certificado = id_certificado;
+    this.idCertificado = id_certificado;
   }
 
   public Usuario getUsuario() {
@@ -92,11 +93,11 @@ public class CertificadoNoDeuda {
   }
 
   public String getCodigo_verificacion() {
-    return codigo_verificacion;
+    return codigoVerificacion;
   }
 
   public void setCodigo_verificacion(String codigo_verificacion) {
-    this.codigo_verificacion = codigo_verificacion;
+    this.codigoVerificacion = codigo_verificacion;
   }
 
   public Usuario getBibliotecario() {
@@ -116,11 +117,11 @@ public class CertificadoNoDeuda {
   }
 
   public String getPdf_generado() {
-    return pdf_generado;
+    return pdfGenerado;
   }
 
   public void setPdf_generado(String pdf_generado) {
-    this.pdf_generado = pdf_generado;
+    this.pdfGenerado = pdf_generado;
   }
 
 }
