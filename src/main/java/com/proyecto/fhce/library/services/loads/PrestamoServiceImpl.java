@@ -2,11 +2,13 @@ package com.proyecto.fhce.library.services.loads;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ import com.proyecto.fhce.library.dto.response.loads.PrestamoResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.Ejemplar;
+import com.proyecto.fhce.library.entities.HistorialEstadoEjemplar;
 import com.proyecto.fhce.library.entities.Prestamo;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
@@ -30,6 +33,7 @@ import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
+import com.proyecto.fhce.library.repositories.HistorialEstadoEjemplarRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 
@@ -51,6 +55,9 @@ public class PrestamoServiceImpl implements PrestamoService {
 
   @Autowired
   private PrestamoProperties prestamoProperties;
+
+  @Autowired
+  private HistorialEstadoEjemplarRepository historialRepository;
   // @Autowired
   // private ConfiguracionPrestamoRepository configuracionRepository;
 
@@ -152,9 +159,7 @@ public class PrestamoServiceImpl implements PrestamoService {
     Biblioteca biblioteca = bibliotecaRepository.findById(request.getBibliotecaId())
         .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada"));
 
-    Usuario bibliotecario = usuarioRepository.findById(bibliotecarioId)
-        .orElseThrow(() -> new ResourceNotFoundException("Bibliotecario no encontrado"));
-
+    Usuario bibliotecario = validarEncargadoBiblioteca(bibliotecarioId, biblioteca);
     // // Validate no active sanctions
     // if (sancionRepository.hasUsuarioSancionesActivas(usuario.getId_usuario())) {
     // throw new BusinessException("El usuario tiene sanciones activas y no puede
@@ -229,8 +234,7 @@ public class PrestamoServiceImpl implements PrestamoService {
           + prestamo.getEstadoPrestamo());
     }
 
-    Usuario bibliotecario = usuarioRepository.findById(bibliotecarioId)
-        .orElseThrow(() -> new ResourceNotFoundException("Bibliotecario no encontrado"));
+    Usuario bibliotecario = validarEncargadoBiblioteca(bibliotecarioId, prestamo.getBiblioteca());
 
     // Register return
     prestamo.setFechaDevolucionReal(LocalDateTime.now());
@@ -245,12 +249,14 @@ public class PrestamoServiceImpl implements PrestamoService {
 
     // Update copy state
     Ejemplar ejemplar = prestamo.getEjemplar();
+    EstadoEjemplar estadoAnterior = ejemplar.getEstadoEjemplar();
     EstadoEjemplar nuevoEstado = request.getEstadoEjemplar() != null
         ? request.getEstadoEjemplar()
         : EstadoEjemplar.DISPONIBLE;
     ejemplar.setEstadoEjemplar(nuevoEstado);
     ejemplarRepository.save(ejemplar);
 
+    registrarCambioEstado(ejemplar, estadoAnterior, nuevoEstado, request.getObservaciones(), bibliotecario);
     // Check for overdue and create sanction if needed
     // if (LocalDate.now().isAfter(prestamo.getFechaDevolucionEstimada())) {
     // crearSancionPorRetraso(prestamo);
@@ -269,9 +275,33 @@ public class PrestamoServiceImpl implements PrestamoService {
     return mapToResponse(updated);
   }
 
-  public PrestamoResponse renovarPrestamo(RenovacionRequest request) {
+  public PrestamoResponse renovarPrestamo(RenovacionRequest request, Long userId,
+      Collection<? extends GrantedAuthority> authorities) {
     Prestamo prestamo = prestamoRepository.findById(request.getPrestamoId())
         .orElseThrow(() -> new ResourceNotFoundException("Préstamo no encontrado"));
+
+    boolean esBibliotecario = authorities.stream()
+        .anyMatch(a -> a.getAuthority().equals("ROLE_BIBLIOTECARIO"));
+
+    System.out.println("===== DEBUG RENOVACION =====");
+    System.out.println("User ID: " + userId);
+
+    System.out.println("Roles del usuario:");
+    authorities.forEach(auth -> System.out.println(" - " + auth.getAuthority()));
+
+    System.out.println("============================");
+
+    boolean esPropietario = prestamo.getUsuario()
+        .getId_usuario()
+        .equals(userId);
+
+    if (!esPropietario) {
+      if (esBibliotecario) {
+        validarEncargadoBiblioteca(userId, prestamo.getBiblioteca());
+      } else {
+        throw new BusinessException("No está autorizado para renovar este préstamo");
+      }
+    }
 
     if (prestamo.getEstadoPrestamo() != EstadoPrestamo.ACTIVO
         && prestamo.getEstadoPrestamo() != EstadoPrestamo.RENOVADO) {
@@ -393,6 +423,33 @@ public class PrestamoServiceImpl implements PrestamoService {
   // #"
   // + prestamo.getId_prestamo());
   // }
+
+  private Usuario validarEncargadoBiblioteca(Long bibliotecarioId, Biblioteca biblioteca) {
+    Usuario bibliotecario = usuarioRepository.findById(bibliotecarioId)
+        .orElseThrow(() -> new ResourceNotFoundException("Bibliotecario no encontrado"));
+
+    if (biblioteca.getEncargado() == null ||
+        !biblioteca.getEncargado().getId_usuario().equals(bibliotecario.getId_usuario())) {
+
+      throw new BusinessException(
+          "El bibliotecario no está autorizado para operar en esta biblioteca");
+    }
+
+    return bibliotecario;
+  }
+
+  private void registrarCambioEstado(Ejemplar ejemplar, EstadoEjemplar estadoAnterior,
+      EstadoEjemplar estadoNuevo, String motivo, Usuario usuario) {
+    HistorialEstadoEjemplar historial = new HistorialEstadoEjemplar();
+    historial.setEjemplar(ejemplar);
+    historial.setEstadoAnterior(estadoAnterior);
+    historial.setEstadoNuevo(estadoNuevo);
+    historial.setMotivo(motivo);
+    // Obtener el usuario actual
+    historial.setUsuarioCambio(usuario);
+
+    historialRepository.save(historial);
+  }
 
   private PrestamoResponse mapToResponse(Prestamo prestamo) {
     PrestamoResponse response = new PrestamoResponse();

@@ -1,6 +1,9 @@
 package com.proyecto.fhce.library.services.loads;
 
+import java.util.Collection;
 import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
 
 import com.proyecto.fhce.library.dto.request.loads.DevolucionRequest;
 import com.proyecto.fhce.library.dto.request.loads.FiltroPrestamoRequest;
@@ -28,7 +31,8 @@ public interface PrestamoService {
 
   public PrestamoResponse realizarDevolucion(DevolucionRequest request, Long bibliotecarioId);
 
-  public PrestamoResponse renovarPrestamo(RenovacionRequest request);
+  public PrestamoResponse renovarPrestamo(RenovacionRequest request, Long userId,
+      Collection<? extends GrantedAuthority> authorities);
 
   public void procesarPrestamosVencidos();
 
