@@ -86,10 +86,10 @@ public class SpringSecurityConfig {
             .requestMatchers(HttpMethod.GET, "/api/libros/**").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/libros/busqueda-avanzada").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/ejemplares/**").permitAll()
+            .requestMatchers("/api/certificados/validar/**").permitAll()
             // .requestMatchers("/api/users/**").permitAll()
             // .requestMatchers("/api/personas/**").permitAll()
             // .requestMatchers("/api/roles/**").permitAll()
-            // .requestMatchers("/api/certificados/validar/**").permitAll()
             // Swagger/OpenAPI
             .requestMatchers("/v3/api-docs/**").permitAll()
             .requestMatchers("/swagger-ui/**").permitAll()

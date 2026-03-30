@@ -44,7 +44,7 @@ public class Usuario {
 
   private Boolean enabled;
 
-  @OneToOne(fetch = FetchType.LAZY)
+  @OneToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "persona_id", nullable = false, unique = true)
   private Persona persona;
 

@@ -1,17 +1,20 @@
 package com.proyecto.fhce.library.dto.response;
 
+import java.util.Optional;
 import java.util.Set;
 
+import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
 import com.proyecto.fhce.library.dto.response.users.PersonaResponse;
 
 public class LoginResponse {
   private String token;
-  private String type = "Bearer";
+  // private String type = "Bearer";
   private Long id;
   private String username;
   private String email;
   private Set<String> roles;
   private PersonaResponse persona;
+  private Optional<BibliotecaResponse> biblioteca;
 
   public String getToken() {
     return token;
@@ -21,13 +24,13 @@ public class LoginResponse {
     this.token = token;
   }
 
-  public String getType() {
-    return type;
-  }
+  // public String getType() {
+  // return type;
+  // }
 
-  public void setType(String type) {
-    this.type = type;
-  }
+  // public void setType(String type) {
+  // this.type = type;
+  // }
 
   public Long getId() {
     return id;
@@ -67,6 +70,14 @@ public class LoginResponse {
 
   public void setPersona(PersonaResponse persona) {
     this.persona = persona;
+  }
+
+  public Optional<BibliotecaResponse> getBiblioteca() {
+    return biblioteca;
+  }
+
+  public void setBiblioteca(Optional<BibliotecaResponse> biblioteca) {
+    this.biblioteca = biblioteca;
   }
 
 }

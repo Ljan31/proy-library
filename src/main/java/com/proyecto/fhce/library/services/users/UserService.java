@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.proyecto.fhce.library.dto.request.users.ChangePasswordRequest;
 import com.proyecto.fhce.library.dto.request.users.RegisterRequest;
 import com.proyecto.fhce.library.dto.request.users.UsuarioUpdateRequest;
+import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioResponse;
 import com.proyecto.fhce.library.entities.Usuario;
 
@@ -31,6 +32,7 @@ public interface UserService {
 
   Optional<Usuario> findByUsername(String username);
 
+  public Optional<BibliotecaResponse> findBibliotecaByUsuarioId(Long usuarioId);
   // Usuario save(Usuario user);
 
   // Optional<Usuario> update(Usuario user, Long id);

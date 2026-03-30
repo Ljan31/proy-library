@@ -29,10 +29,19 @@ public interface UserRepository extends JpaRepository<Usuario, Long> {
   @Query("SELECT u FROM Usuario u JOIN u.roles r WHERE r.name = :roleName")
   List<Usuario> findByRoleName(@Param("roleName") String roleName);
 
-  @Query("SELECT u FROM Usuario u WHERE u.persona.nombre LIKE %:searchTerm% " +
-      "OR u.persona.apellido_pat LIKE %:searchTerm% " +
-      "OR u.username LIKE %:searchTerm% " +
-      "OR u.persona.matricula LIKE %:searchTerm%")
+  // @Query("SELECT u FROM Usuario u WHERE u.persona.nombre LIKE %:searchTerm% " +
+  // "OR u.persona.apellido_pat LIKE %:searchTerm% " +
+  // "OR u.username LIKE %:searchTerm% " +
+  // "OR u.persona.matricula LIKE %:searchTerm%")
+  // List<Usuario> searchUsuarios(@Param("searchTerm") String searchTerm);
+
+  @Query("SELECT u FROM Usuario u WHERE " +
+      "LOWER(u.persona.nombre) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+      "LOWER(u.persona.apellido_pat) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+      "LOWER(u.persona.apellido_mat) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+      "LOWER(u.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+      "LOWER(u.persona.matricula) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+      "CAST(u.persona.ci AS string) LIKE CONCAT('%', :searchTerm, '%')")
   List<Usuario> searchUsuarios(@Param("searchTerm") String searchTerm);
 
   @Query("SELECT COUNT(u) FROM Usuario u JOIN u.roles r WHERE r.name = :roleName")

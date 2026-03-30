@@ -73,4 +73,10 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
                         "AND p.estadoPrestamo = 'ACTIVO'")
         Optional<Prestamo> findPrestamoActivoByEjemplar(@Param("ejemplarId") Long ejemplarId);
 
+        @Query("SELECT COUNT(p) FROM Prestamo p " +
+                        "WHERE p.usuario.idUsuario = :usuarioId " +
+                        "AND p.estadoPrestamo = :estado")
+        Long countPrestamosConEstadoByUsuario(
+                        @Param("usuarioId") Long usuarioId,
+                        @Param("estado") EstadoPrestamo estado);
 }

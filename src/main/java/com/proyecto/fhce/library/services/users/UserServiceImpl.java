@@ -14,15 +14,18 @@ import org.springframework.transaction.annotation.Transactional;
 import com.proyecto.fhce.library.dto.request.users.ChangePasswordRequest;
 import com.proyecto.fhce.library.dto.request.users.RegisterRequest;
 import com.proyecto.fhce.library.dto.request.users.UsuarioUpdateRequest;
+import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
 import com.proyecto.fhce.library.dto.response.users.PersonaResponse;
 import com.proyecto.fhce.library.dto.response.users.RoleSimpleResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioResponse;
+import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.Persona;
 import com.proyecto.fhce.library.entities.Role;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.exception.BadRequestException;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
+import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.PersonaRepository;
 import com.proyecto.fhce.library.repositories.RoleRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
@@ -41,6 +44,9 @@ public class UserServiceImpl implements UserService {
 
   @Autowired
   private RoleRepository roleRepository;
+
+  @Autowired
+  private BibliotecaRepository bibliotecaRepository;
 
   @Autowired
   private PasswordEncoder passwordEncoder;
@@ -201,7 +207,10 @@ public class UserServiceImpl implements UserService {
         })
         .collect(Collectors.toSet());
     response.setRoles(rolesResponse);
+    // 🔥 AQUÍ agregas la biblioteca
+    Optional<BibliotecaResponse> biblioteca = findBibliotecaByUsuarioId(usuario.getId_usuario());
 
+    response.setBiblioteca(biblioteca);
     return response;
   }
 
@@ -209,6 +218,24 @@ public class UserServiceImpl implements UserService {
   @Transactional(readOnly = true)
   public Optional<Usuario> findByUsername(String username) {
     return usuarioRepository.findByUsernameWithPersona(username);
+  }
+
+  @Transactional(readOnly = true)
+  public Optional<BibliotecaResponse> findBibliotecaByUsuarioId(Long usuarioId) {
+
+    return bibliotecaRepository.findByEncargado_IdUsuario(usuarioId)
+        .stream()
+        .findFirst()
+        .map(this::mapToBibliotecaResponse);
+  }
+
+  private BibliotecaResponse mapToBibliotecaResponse(Biblioteca b) {
+    BibliotecaResponse response = new BibliotecaResponse();
+    response.setId_biblioteca(b.getIdBiblioteca());
+    response.setNombre(b.getNombre());
+    response.setTipoBiblioteca(b.getTipoBiblioteca());
+    response.setEstado(b.getEstado());
+    return response;
   }
   // @Override
   // @Transactional

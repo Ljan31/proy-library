@@ -90,6 +90,7 @@ public class UserController {
   public ResponseEntity<ApiResponse<List<UsuarioResponse>>> findAll() {
 
     List<UsuarioResponse> response = userService.findAll();
+
     return ResponseEntity.ok(ApiResponse.success(response));
   }
 
@@ -105,7 +106,7 @@ public class UserController {
 
   // ===================== SEARCH =====================
   @GetMapping("/search")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<List<UsuarioResponse>>> search(
       @RequestParam String q) {
 

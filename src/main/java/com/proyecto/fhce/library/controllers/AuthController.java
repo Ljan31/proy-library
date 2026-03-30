@@ -1,5 +1,6 @@
 package com.proyecto.fhce.library.controllers;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ import com.proyecto.fhce.library.dto.request.users.LoginRequest;
 import com.proyecto.fhce.library.dto.request.users.RegisterRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.LoginResponse;
+import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
 import com.proyecto.fhce.library.dto.response.users.PersonaResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioResponse;
 import com.proyecto.fhce.library.entities.Persona;
@@ -89,6 +91,8 @@ public class AuthController {
       personaResponse.setEmail(persona.getEmail());
       response.setPersona(personaResponse);
 
+      Optional<BibliotecaResponse> bibliotecaOpt = usuarioService.findBibliotecaByUsuarioId(usuario.getId_usuario());
+      response.setBiblioteca(bibliotecaOpt);
       // usuarioService.resetFailedAttempts(usuario.getId_usuario());
 
       return ResponseEntity.ok(ApiResponse.success("Login exitoso", response));
@@ -125,26 +129,9 @@ public class AuthController {
 
     Usuario usuario = usuarioService.findByUsername(username)
         .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-    // return ResponseEntity.ok(ApiResponse.success(usuario));
-    UsuarioResponse response = new UsuarioResponse();
-    response.setId_usuario(usuario.getId_usuario());
-    response.setUsername(usuario.getUsername());
-    response.setEnabled(usuario.isEnabled());
-
-    // Persona
-    PersonaResponse persona = new PersonaResponse();
-    persona.setNombre(usuario.getPersona().getNombre());
-    persona.setApellido_pat(usuario.getPersona().getApellido_pat());
-    persona.setApellido_mat(usuario.getPersona().getApellido_mat());
-    persona.setEmail(usuario.getPersona().getEmail());
-    response.setPersona(persona);
-
-    // Roles
-    // Set<RoleSimpleResponse> roles = usuario.getRoles().stream()
-    // .map(role -> new RoleSimpleResponse(
-    // role.getId_role(),
-    // role.getName()))
-    // .collect(Collectors.toSet());
+    UsuarioResponse response = usuarioService.findById(usuario.getId_usuario());
+    Optional<BibliotecaResponse> bibliotecaOpt = usuarioService.findBibliotecaByUsuarioId(usuario.getId_usuario());
+    response.setBiblioteca(bibliotecaOpt);
 
     return ResponseEntity.ok(
         ApiResponse.success("Usuario autenticado", response));

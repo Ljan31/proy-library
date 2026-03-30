@@ -1,11 +1,14 @@
 package com.proyecto.fhce.library.services.loads;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +18,7 @@ import com.proyecto.fhce.library.dto.response.loads.ValidacionCertificadoRespons
 import com.proyecto.fhce.library.entities.CertificadoNoDeuda;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoCertificado;
+import com.proyecto.fhce.library.enums.EstadoPrestamo;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.CertificadoNoDeudaRepository;
@@ -37,6 +41,28 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
   // private NotificacionService notificacionService;
   // @Autowired
   // private AuditoriaService auditoriaService;
+
+  public List<CertificadoResponse> findByUsuario(
+      Long requesterId,
+      Long usuarioId,
+      Collection<? extends GrantedAuthority> authorities) {
+
+    boolean esBibliotecario = authorities.stream()
+        .anyMatch(a -> a.getAuthority().equals("ROLE_BIBLIOTECARIO"));
+
+    boolean esAdmin = authorities.stream()
+        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+    if (!usuarioId.equals(requesterId) && !esBibliotecario && !esAdmin) {
+      throw new BusinessException("No autorizado para ver estos certificados");
+    }
+
+    return certificadoRepository.findByUsuario_IdUsuario(usuarioId)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
+  }
+
   public CertificadoResponse generar(CertificadoRequest request, Long bibliotecarioId) {
     Usuario usuario = usuarioRepository.findById(request.getUsuarioId())
         .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
@@ -49,6 +75,20 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
       throw new BusinessException("El usuario tiene " + prestamosActivos + " préstamo(s) activo(s)");
     }
 
+    Long prestamosVencidos = prestamoRepository.countPrestamosConEstadoByUsuario(
+        usuario.getId_usuario(),
+        EstadoPrestamo.VENCIDO);
+
+    if (prestamosVencidos > 0) {
+      throw new BusinessException("El usuario tiene " + prestamosVencidos + " préstamo(s) vencidos(s)");
+    }
+    Long prestamosRenovados = prestamoRepository.countPrestamosConEstadoByUsuario(
+        usuario.getId_usuario(),
+        EstadoPrestamo.RENOVADO);
+
+    if (prestamosRenovados > 0) {
+      throw new BusinessException("El usuario tiene " + prestamosRenovados + " préstamo(s) renovados(s)");
+    }
     // ** Validar que no tenga sanciones activas
     // if (sancionRepository.hasUsuarioSancionesActivas(usuario.getId_usuario())) {
     // BigDecimal montoDeuda =
@@ -146,5 +186,12 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     response.setPdf_generado(certificado.getPdf_generado());
     response.setUrlDescarga("/api/certificados/" + certificado.getId_certificado() + "/download");
     return response;
+  }
+
+  @Transactional(readOnly = true)
+  public CertificadoResponse findById(Long id) {
+    CertificadoNoDeuda certificado = certificadoRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("certificado no encontrado con id: " + id));
+    return mapToResponse(certificado);
   }
 }
