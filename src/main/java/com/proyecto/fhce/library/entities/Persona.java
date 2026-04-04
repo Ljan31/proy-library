@@ -26,9 +26,6 @@ public class Persona {
   @Column(unique = true)
   private String email;
 
-  @Column(unique = true, length = 50)
-  private String matricula;
-
   public Long getId_persona() {
     return id_persona;
   }
@@ -89,14 +86,6 @@ public class Persona {
     this.ci = ci;
   }
 
-  public String getMatricula() {
-    return matricula;
-  }
-
-  public void setMatricula(String matricula) {
-    this.matricula = matricula;
-  }
-
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -106,7 +95,6 @@ public class Persona {
     result = prime * result + ((ci == null) ? 0 : ci.hashCode());
     result = prime * result + ((celular == null) ? 0 : celular.hashCode());
     result = prime * result + ((email == null) ? 0 : email.hashCode());
-    result = prime * result + ((matricula == null) ? 0 : matricula.hashCode());
     return result;
   }
 
@@ -143,11 +131,6 @@ public class Persona {
       if (other.email != null)
         return false;
     } else if (!email.equals(other.email))
-      return false;
-    if (matricula == null) {
-      if (other.matricula != null)
-        return false;
-    } else if (!matricula.equals(other.matricula))
       return false;
     return true;
   }

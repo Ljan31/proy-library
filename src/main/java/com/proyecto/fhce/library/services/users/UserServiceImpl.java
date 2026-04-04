@@ -108,8 +108,6 @@ public class UserServiceImpl implements UserService {
       persona.setCelular(request.getCelular());
     if (request.getEmail() != null)
       persona.setEmail(request.getEmail());
-    if (request.getMatricula() != null)
-      persona.setMatricula(request.getMatricula());
     if (request.getEnabled() != null)
       usuario.setEnabled(request.getEnabled());
 
