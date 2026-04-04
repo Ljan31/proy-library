@@ -9,7 +9,6 @@ public class PersonaResponse {
   private Integer ci;
   private String celular;
   private String email;
-  private String matricula;
 
   public Long getId_persona() {
     return id_persona;
@@ -73,14 +72,6 @@ public class PersonaResponse {
 
   public void setEmail(String email) {
     this.email = email;
-  }
-
-  public String getMatricula() {
-    return matricula;
-  }
-
-  public void setMatricula(String matricula) {
-    this.matricula = matricula;
   }
 
 }

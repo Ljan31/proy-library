@@ -27,8 +27,6 @@ public class PersonaRequest {
   @Email(message = "Email debe ser válido")
   private String email;
 
-  private String matricula;
-
   public String getNombre() {
     return nombre;
   }
@@ -75,14 +73,6 @@ public class PersonaRequest {
 
   public void setEmail(String email) {
     this.email = email;
-  }
-
-  public String getMatricula() {
-    return matricula;
-  }
-
-  public void setMatricula(String matricula) {
-    this.matricula = matricula;
   }
 
 }

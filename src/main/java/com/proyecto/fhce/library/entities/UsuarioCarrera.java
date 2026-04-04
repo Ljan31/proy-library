@@ -32,9 +32,6 @@ public class UsuarioCarrera {
   @Column(length = 50)
   private String matricula;
 
-  @Column(name = "ano_ingreso")
-  private Integer anoIngreso;
-
   @Column(name = "fecha_asignacion")
   private LocalDateTime fechaAsignacion;
 
@@ -42,4 +39,45 @@ public class UsuarioCarrera {
   protected void onCreate() {
     fechaAsignacion = LocalDateTime.now();
   }
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public Usuario getUsuario() {
+    return usuario;
+  }
+
+  public void setUsuario(Usuario usuario) {
+    this.usuario = usuario;
+  }
+
+  public Carrera getCarrera() {
+    return carrera;
+  }
+
+  public void setCarrera(Carrera carrera) {
+    this.carrera = carrera;
+  }
+
+  public String getMatricula() {
+    return matricula;
+  }
+
+  public void setMatricula(String matricula) {
+    this.matricula = matricula;
+  }
+
+  public LocalDateTime getFechaAsignacion() {
+    return fechaAsignacion;
+  }
+
+  public void setFechaAsignacion(LocalDateTime fechaAsignacion) {
+    this.fechaAsignacion = fechaAsignacion;
+  }
+
 }
