@@ -1,6 +1,7 @@
 package com.proyecto.fhce.library.entities;
 
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,6 +27,9 @@ public class Carrera {
 
   @OneToMany(mappedBy = "carrera")
   private List<Biblioteca> bibliotecas;
+
+  @OneToMany(mappedBy = "carrera")
+  private Set<UsuarioCarrera> usuariosCarrera;
 
   public Long getId_carrera() {
     return idCarrera;

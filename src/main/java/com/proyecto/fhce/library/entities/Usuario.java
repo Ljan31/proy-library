@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -48,9 +49,8 @@ public class Usuario {
   @JoinColumn(name = "persona_id", nullable = false, unique = true)
   private Persona persona;
 
-  @Transient
-  // @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-  private boolean admin;
+  @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL)
+  private Set<UsuarioCarrera> carreras;
 
   @PrePersist
   public void prePersist() {
@@ -100,14 +100,6 @@ public class Usuario {
 
   public void setEnabled(Boolean enabled) {
     this.enabled = enabled;
-  }
-
-  public boolean isAdmin() {
-    return admin;
-  }
-
-  public void setAdmin(boolean admin) {
-    this.admin = admin;
   }
 
   public Persona getPersona() {
