@@ -80,6 +80,7 @@ public class SpringSecurityConfig {
         .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/users/estudiante").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/carreras/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/bibliotecas/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()

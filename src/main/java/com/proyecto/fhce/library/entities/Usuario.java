@@ -141,4 +141,12 @@ public class Usuario {
     return true;
   }
 
+  public Set<UsuarioCarrera> getCarreras() {
+    return carreras;
+  }
+
+  public void setCarreras(Set<UsuarioCarrera> carreras) {
+    this.carreras = carreras;
+  }
+
 }

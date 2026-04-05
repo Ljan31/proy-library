@@ -13,24 +13,35 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.proyecto.fhce.library.dto.request.users.ChangePasswordRequest;
 import com.proyecto.fhce.library.dto.request.users.RegisterRequest;
+import com.proyecto.fhce.library.dto.request.users.RegisterRequestEst;
+import com.proyecto.fhce.library.dto.request.users.UsuarioCarreraRequest;
+import com.proyecto.fhce.library.dto.request.users.UsuarioCarreraRequestEst;
 import com.proyecto.fhce.library.dto.request.users.UsuarioUpdateRequest;
+import com.proyecto.fhce.library.dto.response.CarreraSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
 import com.proyecto.fhce.library.dto.response.users.PersonaResponse;
 import com.proyecto.fhce.library.dto.response.users.RoleSimpleResponse;
+import com.proyecto.fhce.library.dto.response.users.UsuarioCarreraResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioResponse;
+import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
+import com.proyecto.fhce.library.entities.Carrera;
 import com.proyecto.fhce.library.entities.Persona;
 import com.proyecto.fhce.library.entities.Role;
 import com.proyecto.fhce.library.entities.Usuario;
+import com.proyecto.fhce.library.entities.UsuarioCarrera;
 import com.proyecto.fhce.library.exception.BadRequestException;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
+import com.proyecto.fhce.library.repositories.CarreraRepository;
 import com.proyecto.fhce.library.repositories.PersonaRepository;
 import com.proyecto.fhce.library.repositories.RoleRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.UsuarioCarreraService;
 
 @Service
+@Transactional
 public class UserServiceImpl implements UserService {
 
   @Autowired
@@ -47,6 +58,9 @@ public class UserServiceImpl implements UserService {
 
   @Autowired
   private BibliotecaRepository bibliotecaRepository;
+
+  @Autowired
+  private CarreraRepository carreraRepository;
 
   @Autowired
   private PasswordEncoder passwordEncoder;
@@ -89,6 +103,74 @@ public class UserServiceImpl implements UserService {
     // auditoriaService.registrar("CREATE_USER", "users", saved.getId_usuario(),
     // null, saved.getUsername());
 
+    return mapToResponse(saved);
+  }
+
+  public UsuarioResponse createEst(RegisterRequestEst request) {
+    if (usuarioRepository.existsByUsername(request.getUsername())) {
+      throw new DuplicateResourceException("Username ya existe: " + request.getUsername());
+    }
+
+    // Crear persona
+    PersonaResponse personaResponse = personaService.create(request.getPersona());
+    // Persona persona = new Persona();
+    // persona.setId_persona(personaResponse.getId_persona());
+    Persona persona = personaRepository.findById(personaResponse.getId_persona())
+        .orElseThrow(() -> new RuntimeException("Persona no encontrada"));
+
+    // Crear usuario
+    Usuario usuario = new Usuario();
+    usuario.setUsername(request.getUsername());
+    usuario.setPassword(passwordEncoder.encode(request.getPassword()));
+    usuario.setEnabled(true);
+    usuario.setPersona(persona);
+
+    // Asignar roles
+    Set<Role> roles = new HashSet<>();
+    Role defaultRole = roleRepository.findByName("ROLE_ESTUDIANTE")
+        .orElseThrow(() -> new ResourceNotFoundException("Rol por defecto no encontrado"));
+    roles.add(defaultRole);
+    usuario.setRoles(roles);
+
+    Usuario saved = usuarioRepository.save(usuario);
+    // auditoriaService.registrar("CREATE_USER", "users", saved.getId_usuario(),
+    // null, saved.getUsername());
+    // if (request.getUserCarreras() != null &&
+    // !request.getUserCarreras().isEmpty()) {
+
+    // for (UsuarioCarreraRequestEst ucReq : request.getUserCarreras()) {
+
+    // UsuarioCarreraRequest carreraRequest = new UsuarioCarreraRequest();
+    // carreraRequest.setUsuarioId(saved.getId_usuario());
+    // carreraRequest.setCarreraId(ucReq.getCarreraId());
+    // carreraRequest.setMatricula(ucReq.getMatricula());
+
+    // userCarreraService.asignarCarrera(carreraRequest);
+    // }
+    // }
+    if (request.getUserCarreras() != null && !request.getUserCarreras().isEmpty()) {
+
+      Set<UsuarioCarrera> carreras = new HashSet<>();
+      Set<Long> carrerasIds = new HashSet<>();
+      for (UsuarioCarreraRequestEst ucReq : request.getUserCarreras()) {
+        if (!carrerasIds.add(ucReq.getCarreraId())) {
+          throw new DuplicateResourceException(
+              "Carrera duplicada en el request: " + ucReq.getCarreraId());
+        }
+        Carrera carrera = carreraRepository.findById(ucReq.getCarreraId())
+            .orElseThrow(() -> new RuntimeException("Carrera no encontrada"));
+
+        UsuarioCarrera uc = new UsuarioCarrera();
+        uc.setUsuario(saved);
+        uc.setCarrera(carrera);
+        uc.setMatricula(ucReq.getMatricula());
+
+        carreras.add(uc);
+      }
+      saved.setCarreras(carreras);
+    }
+
+    usuarioRepository.save(saved);
     return mapToResponse(saved);
   }
 
@@ -205,10 +287,11 @@ public class UserServiceImpl implements UserService {
         })
         .collect(Collectors.toSet());
     response.setRoles(rolesResponse);
-    // 🔥 AQUÍ agregas la biblioteca
     Optional<BibliotecaResponse> biblioteca = findBibliotecaByUsuarioId(usuario.getId_usuario());
 
     response.setBiblioteca(biblioteca);
+    response.setUserCarrera(mapCarreras(usuario.getCarreras()));
+
     return response;
   }
 
@@ -233,6 +316,39 @@ public class UserServiceImpl implements UserService {
     response.setNombre(b.getNombre());
     response.setTipoBiblioteca(b.getTipoBiblioteca());
     response.setEstado(b.getEstado());
+    return response;
+  }
+
+  private Set<UsuarioCarreraResponse> mapCarreras(Set<UsuarioCarrera> carreras) {
+    if (carreras == null)
+      return new HashSet<>();
+
+    return carreras.stream()
+        .map(this::mapUsuarioCarreraToResponse)
+        .collect(Collectors.toSet());
+  }
+
+  private UsuarioCarreraResponse mapUsuarioCarreraToResponse(UsuarioCarrera uc) {
+
+    UsuarioCarreraResponse response = new UsuarioCarreraResponse();
+
+    response.setId(uc.getId());
+
+    // Usuario simple
+    UsuarioSimpleResponse usuarioSimple = new UsuarioSimpleResponse();
+    usuarioSimple.setId_usuario(uc.getUsuario().getId_usuario());
+    usuarioSimple.setUsername(uc.getUsuario().getUsername());
+    response.setUsuario(usuarioSimple);
+
+    // Carrera simple
+    CarreraSimpleResponse carreraSimple = new CarreraSimpleResponse();
+    carreraSimple.setId_carrera(uc.getCarrera().getIdCarrera());
+    carreraSimple.setNombre_carrera(uc.getCarrera().getNombre_carrera());
+    response.setCarrera(carreraSimple);
+
+    response.setMatricula(uc.getMatricula());
+    response.setFechaAsignacion(uc.getFechaAsignacion());
+
     return response;
   }
   // @Override

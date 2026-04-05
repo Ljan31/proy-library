@@ -13,9 +13,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "users_careers")
+@Table(name = "users_careers", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "career_id" }))
 public class UsuarioCarrera {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -13,6 +13,7 @@ public class UsuarioResponse {
   private PersonaResponse persona;
   private Set<RoleSimpleResponse> roles;
   private Optional<BibliotecaResponse> biblioteca;
+  private Set<UsuarioCarreraResponse> userCarrera;
 
   // private List<CarreraSimpleResponse> carreras;
   // private LocalDateTime fechaRegistro;
@@ -70,6 +71,14 @@ public class UsuarioResponse {
 
   public void setBiblioteca(Optional<BibliotecaResponse> biblioteca) {
     this.biblioteca = biblioteca;
+  }
+
+  public Set<UsuarioCarreraResponse> getUserCarrera() {
+    return userCarrera;
+  }
+
+  public void setUserCarrera(Set<UsuarioCarreraResponse> userCarrera) {
+    this.userCarrera = userCarrera;
   }
 
 }

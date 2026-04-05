@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.proyecto.fhce.library.dto.request.users.ChangePasswordRequest;
 import com.proyecto.fhce.library.dto.request.users.RegisterRequest;
+import com.proyecto.fhce.library.dto.request.users.RegisterRequestEst;
 import com.proyecto.fhce.library.dto.request.users.UsuarioUpdateRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioResponse;
@@ -41,6 +42,15 @@ public class UserController {
     UsuarioResponse response = userService.create(request);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success("Usuario creado correctamente", response));
+  }
+
+  @PostMapping("/estudiante")
+  public ResponseEntity<ApiResponse<UsuarioResponse>> createEstudiante(
+      @RequestBody RegisterRequestEst request) {
+
+    UsuarioResponse response = userService.createEst(request);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.success("Usuario Estudiante creado correctamente", response));
   }
 
   // ===================== UPDATE =====================

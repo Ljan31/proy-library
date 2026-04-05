@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public class RegisterRequest {
+public class RegisterRequestEst {
   @NotBlank(message = "Username es requerido")
   @Size(min = 4, max = 50, message = "Username debe tener entre 4 y 50 caracteres")
   private String username;
@@ -18,9 +18,7 @@ public class RegisterRequest {
   @NotNull(message = "Datos de persona son requeridos")
   private PersonaRequest persona;
 
-  private Set<Long> roleIds;
-
-  private UsuarioCarreraRequest userCarrera;
+  private Set<UsuarioCarreraRequestEst> userCarreras;
 
   public String getUsername() {
     return username;
@@ -46,20 +44,12 @@ public class RegisterRequest {
     this.persona = persona;
   }
 
-  public Set<Long> getRoleIds() {
-    return roleIds;
+  public Set<UsuarioCarreraRequestEst> getUserCarreras() {
+    return userCarreras;
   }
 
-  public void setRoleIds(Set<Long> roleIds) {
-    this.roleIds = roleIds;
-  }
-
-  public UsuarioCarreraRequest getUserCarrera() {
-    return userCarrera;
-  }
-
-  public void setUserCarrera(UsuarioCarreraRequest userCarrera) {
-    this.userCarrera = userCarrera;
+  public void setUserCarreras(Set<UsuarioCarreraRequestEst> userCarreras) {
+    this.userCarreras = userCarreras;
   }
 
 }

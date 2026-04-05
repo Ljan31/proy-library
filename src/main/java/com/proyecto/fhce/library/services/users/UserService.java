@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.proyecto.fhce.library.dto.request.users.ChangePasswordRequest;
 import com.proyecto.fhce.library.dto.request.users.RegisterRequest;
+import com.proyecto.fhce.library.dto.request.users.RegisterRequestEst;
 import com.proyecto.fhce.library.dto.request.users.UsuarioUpdateRequest;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioResponse;
@@ -13,6 +14,8 @@ import com.proyecto.fhce.library.entities.Usuario;
 public interface UserService {
 
   UsuarioResponse create(RegisterRequest request);
+
+  public UsuarioResponse createEst(RegisterRequestEst request);
 
   UsuarioResponse update(Long id, UsuarioUpdateRequest request);
 
