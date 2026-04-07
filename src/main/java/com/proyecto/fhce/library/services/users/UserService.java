@@ -35,7 +35,7 @@ public interface UserService {
 
   Optional<Usuario> findByUsername(String username);
 
-  public Optional<BibliotecaResponse> findBibliotecaByUsuarioId(Long usuarioId);
+  public List<BibliotecaResponse> findBibliotecaByUsuarioId(Long usuarioId);
   // Usuario save(Usuario user);
 
   // Optional<Usuario> update(Usuario user, Long id);

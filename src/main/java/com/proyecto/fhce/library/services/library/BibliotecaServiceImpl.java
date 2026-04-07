@@ -1,8 +1,11 @@
 package com.proyecto.fhce.library.services.library;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,17 +20,21 @@ import com.proyecto.fhce.library.dto.response.CarreraSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.EstadisticasBibliotecaResponse;
+import com.proyecto.fhce.library.dto.response.users.EncargadoSimpleResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
+import com.proyecto.fhce.library.entities.BibliotecaEncargado;
 import com.proyecto.fhce.library.entities.Carrera;
 import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
+import com.proyecto.fhce.library.enums.RolEncargado;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
+import com.proyecto.fhce.library.repositories.BibliotecaEncargadoRepository;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.CarreraRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
@@ -47,6 +54,9 @@ public class BibliotecaServiceImpl implements BibliotecaService {
 
   @Autowired
   private EjemplarRepository ejemplarRepository;
+
+  @Autowired
+  private BibliotecaEncargadoRepository encargadoRepository;
 
   // @Autowired
   // private PrestamoRepository prestamoRepository;
@@ -101,11 +111,7 @@ public class BibliotecaServiceImpl implements BibliotecaService {
     }
 
     // Asignar encargado
-    if (request.getEncargadoId() != null) {
-      Usuario encargado = usuarioRepository.findById(request.getEncargadoId())
-          .orElseThrow(() -> new ResourceNotFoundException("Encargado no encontrado"));
-      biblioteca.setEncargado(encargado);
-    }
+    asignarEncargados(biblioteca, request.getEncargadosIds());
 
     Biblioteca saved = bibliotecaRepository.save(biblioteca);
 
@@ -148,11 +154,7 @@ public class BibliotecaServiceImpl implements BibliotecaService {
     }
 
     // Actualizar encargado
-    if (request.getEncargadoId() != null) {
-      Usuario encargado = usuarioRepository.findById(request.getEncargadoId())
-          .orElseThrow(() -> new ResourceNotFoundException("Encargado no encontrado"));
-      biblioteca.setEncargado(encargado);
-    }
+    asignarEncargados(biblioteca, request.getEncargadosIds());
 
     Biblioteca updated = bibliotecaRepository.save(biblioteca);
 
@@ -160,6 +162,68 @@ public class BibliotecaServiceImpl implements BibliotecaService {
     // updated.getId_biblioteca(), nombreAnterior, updated.getNombre());
 
     return mapToResponse(updated);
+  }
+
+  private void asignarEncargados(Biblioteca biblioteca, List<Long> encargadosIds) {
+
+    if (encargadosIds == null || encargadosIds.isEmpty()) {
+      return;
+    }
+
+    // ✅ Validar duplicados
+    Set<Long> idsUnicos = new HashSet<>(encargadosIds);
+    if (idsUnicos.size() != encargadosIds.size()) {
+      throw new BusinessException("Existen IDs de encargados duplicados");
+    }
+
+    // ✅ Obtener usuarios
+    List<Usuario> usuarios = usuarioRepository.findAllById(idsUnicos);
+    if (usuarios.size() != idsUnicos.size()) {
+      throw new ResourceNotFoundException("Uno o más encargados no existen");
+    }
+
+    // ✅ Limpiar encargados antiguos
+    biblioteca.getEncargados().clear();
+
+    boolean yaHayPrincipal = false;
+
+    for (Usuario usuario : usuarios) {
+      // Determinar rol del sistema
+      boolean esBibliotecario = usuario.getRoles().stream()
+          .anyMatch(r -> r.getName().equals("ROLE_BIBLIOTECARIO"));
+      boolean esAuxiliar = usuario.getRoles().stream()
+          .anyMatch(r -> r.getName().equals("ROLE_AUXILIAR"));
+
+      if (!esBibliotecario && !esAuxiliar) {
+        throw new BusinessException(
+            "El usuario " + usuario.getUsername() + " no tiene rol válido para ser encargado");
+      }
+
+      RolEncargado rolEncargado;
+
+      if (esBibliotecario) {
+        if (yaHayPrincipal) {
+          throw new BusinessException("Solo puede existir un encargado PRINCIPAL por biblioteca");
+        }
+        rolEncargado = RolEncargado.PRINCIPAL;
+        yaHayPrincipal = true;
+      } else {
+        rolEncargado = RolEncargado.AUXILIAR;
+      }
+
+      BibliotecaEncargado be = new BibliotecaEncargado();
+      be.setBiblioteca(biblioteca);
+      be.setUsuario(usuario);
+      be.setActivo(true);
+      be.setRolEncargado(rolEncargado);
+      be.setFechaAsignacion(LocalDate.now());
+
+      biblioteca.getEncargados().add(be);
+    }
+
+    if (!yaHayPrincipal) {
+      throw new BusinessException("Debe existir al menos un encargado PRINCIPAL");
+    }
   }
 
   @Transactional
@@ -196,11 +260,18 @@ public class BibliotecaServiceImpl implements BibliotecaService {
 
     // Si NO es admin, debe ser el encargado
     if (!esAdmin) {
-      if (biblioteca.getEncargado() == null ||
-          !biblioteca.getEncargado().getId_usuario().equals(userDetails.getId())) {
+      // if (biblioteca.getEncargado() == null ||
+      // !biblioteca.getEncargado().getId_usuario().equals(userDetails.getId())) {
 
-        throw new AccessDeniedException(
-            "No tiene permiso para cambiar el estado de esta biblioteca");
+      // throw new AccessDeniedException(
+      // "No tiene permiso para cambiar el estado de esta biblioteca");
+      // }
+      boolean esEncargado = encargadoRepository
+          .existsByBiblioteca_IdBibliotecaAndUsuario_IdUsuarioAndActivoTrue(
+              biblioteca.getIdBiblioteca(), userDetails.getId());
+
+      if (!esEncargado) {
+        throw new AccessDeniedException("No tiene permiso para cambiar el estado de esta biblioteca");
       }
     }
 
@@ -213,23 +284,56 @@ public class BibliotecaServiceImpl implements BibliotecaService {
   }
 
   @Transactional
-  public void asignarEncargado(Long bibliotecaId, Long usuarioId) {
+  public void asignarEncargado(Long bibliotecaId, List<Long> usuariosIds, long usuarioActualId) {
     Biblioteca biblioteca = bibliotecaRepository.findById(bibliotecaId)
         .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada"));
+    Usuario usuarioActual = usuarioRepository.findById(usuarioActualId)
+        .orElseThrow(() -> new ResourceNotFoundException("Usuario autenticado no encontrado"));
 
-    Usuario encargado = usuarioRepository.findById(usuarioId)
-        .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+    boolean esAdmin = usuarioActual.getRoles().stream()
+        .anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
 
-    // Verificar que el usuario tenga rol de bibliotecario
-    boolean esBibliotecario = encargado.getRoles().stream()
-        .anyMatch(role -> role.getName().equals("ROLE_BIBLIOTECARIO") ||
-            role.getName().equals("ROLE_ADMIN"));
+    boolean esBibliotecario = usuarioActual.getRoles().stream()
+        .anyMatch(r -> r.getName().equals("ROLE_BIBLIOTECARIO"));
 
-    if (!esBibliotecario) {
-      throw new BusinessException("El usuario debe tener rol de BIBLIOTECARIO o ADMIN");
+    if (!esAdmin && !esBibliotecario) {
+      throw new BusinessException("No tienes permisos para asignar encargados");
     }
+    for (Long usuarioId : usuariosIds) {
+      Usuario usuario = usuarioRepository.findById(usuarioId)
+          .orElseThrow(() -> new ResourceNotFoundException(
+              "Usuario no encontrado con id: " + usuarioId));
 
-    biblioteca.setEncargado(encargado);
+      // Verificar rol válido
+      boolean esBibliotecarioEst = usuario.getRoles().stream()
+          .anyMatch(role -> role.getName().equals("ROLE_BIBLIOTECARIO") ||
+              role.getName().equals("ROLE_ESTUDIANTE"));
+      if (!esBibliotecarioEst) {
+        throw new BusinessException(
+            "El usuario " + usuario.getUsername() +
+                " debe tener rol de BIBLIOTECARIO o ESTUDIANTE");
+      }
+
+      // Evitar duplicados activos
+      boolean yaAsignado = biblioteca.getEncargados().stream()
+          .anyMatch(be -> be.getUsuario().getId_usuario().equals(usuarioId) && be.getActivo());
+      if (yaAsignado) {
+        continue; // Si ya está activo, saltar al siguiente
+      }
+
+      // Asignar rol automático
+      RolEncargado rol = usuario.getRoles().stream()
+          .anyMatch(r -> r.getName().equals("ROLE_BIBLIOTECARIO")) ? RolEncargado.PRINCIPAL : RolEncargado.AUXILIAR;
+
+      BibliotecaEncargado be = new BibliotecaEncargado();
+      be.setBiblioteca(biblioteca);
+      be.setUsuario(usuario);
+      be.setActivo(true);
+      be.setRolEncargado(rol);
+      be.setFechaAsignacion(LocalDate.now());
+
+      biblioteca.getEncargados().add(be);
+    }
     bibliotecaRepository.save(biblioteca);
 
     // auditoriaService.registrar("ASSIGN_LIBRARY_MANAGER", "libraries",
@@ -422,15 +526,32 @@ public class BibliotecaServiceImpl implements BibliotecaService {
     }
 
     // Encargado
-    if (biblioteca.getEncargado() != null) {
-      UsuarioSimpleResponse encargado = new UsuarioSimpleResponse();
-      encargado.setId_usuario(biblioteca.getEncargado().getId_usuario());
-      encargado.setUsername(biblioteca.getEncargado().getUsername());
-      encargado.setNombreCompleto(
-          biblioteca.getEncargado().getPersona().getNombre() + " " +
-              biblioteca.getEncargado().getPersona().getApellido_pat());
-      response.setEncargado(encargado);
-    }
+    // if (biblioteca.getEncargado() != null) {
+    // UsuarioSimpleResponse encargado = new UsuarioSimpleResponse();
+    // encargado.setId_usuario(biblioteca.getEncargado().getId_usuario());
+    // encargado.setUsername(biblioteca.getEncargado().getUsername());
+    // encargado.setNombreCompleto(
+    // biblioteca.getEncargado().getPersona().getNombre() + " " +
+    // biblioteca.getEncargado().getPersona().getApellido_pat());
+    // response.setEncargado(encargado);
+    // }
+
+    List<BibliotecaEncargado> encargadosActivos = encargadoRepository
+        .findEncargadosActivosConDetalle(biblioteca.getIdBiblioteca());
+
+    List<EncargadoSimpleResponse> encargados = encargadosActivos.stream()
+        .map(be -> {
+          EncargadoSimpleResponse e = new EncargadoSimpleResponse();
+          e.setIdUsuario(be.getUsuario().getId_usuario());
+          e.setUsername(be.getUsuario().getUsername());
+          var p = be.getUsuario().getPersona();
+          e.setNombreCompleto(p.getNombre() + " " + p.getApellido_pat() + " " + p.getApellido_mat());
+          e.setRol(be.getRolEncargado().name());
+          return e;
+        })
+        .collect(Collectors.toList());
+
+    response.setEncargados(encargados);
 
     // Calcular estadísticas básicas
     Long total = ejemplarRepository.countByBiblioteca_IdBiblioteca(biblioteca.getId_biblioteca());

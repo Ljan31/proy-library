@@ -1,5 +1,7 @@
 package com.proyecto.fhce.library.dto.request.library;
 
+import java.util.List;
+
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
 
@@ -21,15 +23,16 @@ public class BibliotecaRequest {
 
   private String direccion;
 
-  @Pattern(regexp = "^[0-9-]{7,20}$", message = "Teléfono inválido")
+  @Pattern(regexp = "^$|^[0-9-]{7,20}$", message = "Teléfono inválido")
   private String telefono;
 
   @Email(message = "Email inválido")
+  @Pattern(regexp = "^$|.+", message = "Email inválido")
   private String email;
 
   private String horario_atencion;
 
-  private Long encargadoId;
+  private List<Long> encargadosIds;
 
   private EstadoBiblioteca estado;
 
@@ -89,20 +92,20 @@ public class BibliotecaRequest {
     this.horario_atencion = horario_atencion;
   }
 
-  public Long getEncargadoId() {
-    return encargadoId;
-  }
-
-  public void setEncargadoId(Long encargadoId) {
-    this.encargadoId = encargadoId;
-  }
-
   public EstadoBiblioteca getEstado() {
     return estado;
   }
 
   public void setEstado(EstadoBiblioteca estado) {
     this.estado = estado;
+  }
+
+  public List<Long> getEncargadosIds() {
+    return encargadosIds;
+  }
+
+  public void setEncargadosIds(List<Long> encargadosIds) {
+    this.encargadosIds = encargadosIds;
   }
 
 }

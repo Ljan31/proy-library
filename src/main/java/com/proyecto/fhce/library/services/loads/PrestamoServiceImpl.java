@@ -31,6 +31,7 @@ import com.proyecto.fhce.library.enums.EstadoEjemplar;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
+import com.proyecto.fhce.library.repositories.BibliotecaEncargadoRepository;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.HistorialEstadoEjemplarRepository;
@@ -58,6 +59,9 @@ public class PrestamoServiceImpl implements PrestamoService {
 
   @Autowired
   private HistorialEstadoEjemplarRepository historialRepository;
+
+  @Autowired
+  private BibliotecaEncargadoRepository bibliotecaEncargadoRepository;
   // @Autowired
   // private ConfiguracionPrestamoRepository configuracionRepository;
 
@@ -428,8 +432,19 @@ public class PrestamoServiceImpl implements PrestamoService {
     Usuario bibliotecario = usuarioRepository.findById(bibliotecarioId)
         .orElseThrow(() -> new ResourceNotFoundException("Bibliotecario no encontrado"));
 
-    if (biblioteca.getEncargado() == null ||
-        !biblioteca.getEncargado().getId_usuario().equals(bibliotecario.getId_usuario())) {
+    // if (biblioteca.getEncargado() == null ||
+    // !biblioteca.getEncargado().getId_usuario().equals(bibliotecario.getId_usuario()))
+    // {
+
+    // throw new BusinessException(
+    // "El bibliotecario no está autorizado para operar en esta biblioteca");
+    // }
+
+    boolean esEncargado = bibliotecaEncargadoRepository
+        .existsByBiblioteca_IdBibliotecaAndUsuario_IdUsuarioAndActivoTrue(
+            biblioteca.getIdBiblioteca(), bibliotecario.getId_usuario());
+
+    if (!esEncargado) {
 
       throw new BusinessException(
           "El bibliotecario no está autorizado para operar en esta biblioteca");

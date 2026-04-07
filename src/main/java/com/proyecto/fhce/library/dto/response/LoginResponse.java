@@ -1,5 +1,6 @@
 package com.proyecto.fhce.library.dto.response;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -14,7 +15,7 @@ public class LoginResponse {
   private String email;
   private Set<String> roles;
   private PersonaResponse persona;
-  private Optional<BibliotecaResponse> biblioteca;
+  private List<BibliotecaResponse> bibliotecas;
 
   public String getToken() {
     return token;
@@ -72,12 +73,12 @@ public class LoginResponse {
     this.persona = persona;
   }
 
-  public Optional<BibliotecaResponse> getBiblioteca() {
-    return biblioteca;
+  public List<BibliotecaResponse> getBibliotecas() {
+    return bibliotecas;
   }
 
-  public void setBiblioteca(Optional<BibliotecaResponse> biblioteca) {
-    this.biblioteca = biblioteca;
+  public void setBibliotecas(List<BibliotecaResponse> bibliotecas) {
+    this.bibliotecas = bibliotecas;
   }
 
 }

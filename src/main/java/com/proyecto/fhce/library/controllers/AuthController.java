@@ -1,5 +1,6 @@
 package com.proyecto.fhce.library.controllers;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -91,8 +92,8 @@ public class AuthController {
       personaResponse.setEmail(persona.getEmail());
       response.setPersona(personaResponse);
 
-      Optional<BibliotecaResponse> bibliotecaOpt = usuarioService.findBibliotecaByUsuarioId(usuario.getId_usuario());
-      response.setBiblioteca(bibliotecaOpt);
+      List<BibliotecaResponse> bibliotecaOpt = usuarioService.findBibliotecaByUsuarioId(usuario.getId_usuario());
+      response.setBibliotecas(bibliotecaOpt);
       // usuarioService.resetFailedAttempts(usuario.getId_usuario());
 
       return ResponseEntity.ok(ApiResponse.success("Login exitoso", response));
@@ -130,7 +131,7 @@ public class AuthController {
     Usuario usuario = usuarioService.findByUsername(username)
         .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     UsuarioResponse response = usuarioService.findById(usuario.getId_usuario());
-    Optional<BibliotecaResponse> bibliotecaOpt = usuarioService.findBibliotecaByUsuarioId(usuario.getId_usuario());
+    List<BibliotecaResponse> bibliotecaOpt = usuarioService.findBibliotecaByUsuarioId(usuario.getId_usuario());
     response.setBiblioteca(bibliotecaOpt);
 
     return ResponseEntity.ok(

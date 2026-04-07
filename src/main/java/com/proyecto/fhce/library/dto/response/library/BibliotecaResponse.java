@@ -1,6 +1,9 @@
 package com.proyecto.fhce.library.dto.response.library;
 
+import java.util.List;
+
 import com.proyecto.fhce.library.dto.response.CarreraSimpleResponse;
+import com.proyecto.fhce.library.dto.response.users.EncargadoSimpleResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
@@ -14,7 +17,8 @@ public class BibliotecaResponse {
   private String telefono;
   private String email;
   private String horario_atencion;
-  private UsuarioSimpleResponse encargado;
+  // private UsuarioSimpleResponse encargado;
+  private List<EncargadoSimpleResponse> encargados;
   private EstadoBiblioteca estado;
   private Integer ejemplaresTotal;
   private Integer ejemplaresDisponibles;
@@ -83,14 +87,6 @@ public class BibliotecaResponse {
     this.horario_atencion = horario_atencion;
   }
 
-  public UsuarioSimpleResponse getEncargado() {
-    return encargado;
-  }
-
-  public void setEncargado(UsuarioSimpleResponse encargado) {
-    this.encargado = encargado;
-  }
-
   public EstadoBiblioteca getEstado() {
     return estado;
   }
@@ -113,6 +109,14 @@ public class BibliotecaResponse {
 
   public void setEjemplaresDisponibles(Integer ejemplaresDisponibles) {
     this.ejemplaresDisponibles = ejemplaresDisponibles;
+  }
+
+  public List<EncargadoSimpleResponse> getEncargados() {
+    return encargados;
+  }
+
+  public void setEncargados(List<EncargadoSimpleResponse> encargados) {
+    this.encargados = encargados;
   }
 
 }

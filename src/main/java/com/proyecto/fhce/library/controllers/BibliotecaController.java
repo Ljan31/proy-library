@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,7 +21,9 @@ import com.proyecto.fhce.library.dto.request.library.BibliotecaRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
+import com.proyecto.fhce.library.enums.RolEncargado;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
+import com.proyecto.fhce.library.security.UserDetailsImpl;
 import com.proyecto.fhce.library.services.library.BibliotecaService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -145,12 +148,14 @@ public class BibliotecaController {
   }
 
   @Operation(summary = "Asignar encargado a biblioteca", description = "Asigna un usuario como encargado de la biblioteca", security = @SecurityRequirement(name = "bearer-jwt"))
-  @PutMapping("/{bibliotecaId}/encargado/{usuarioId}")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PutMapping("/{bibliotecaId}/encargados")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<Void>> asignarEncargado(
       @PathVariable Long bibliotecaId,
-      @PathVariable Long usuarioId) {
-    bibliotecaService.asignarEncargado(bibliotecaId, usuarioId);
+      @RequestBody List<Long> encargadosIds,
+      Authentication authentication) {
+    Long usuarioActualId = obtenerUsuarioId(authentication);
+    bibliotecaService.asignarEncargado(bibliotecaId, encargadosIds, usuarioActualId);
     return ResponseEntity.ok(ApiResponse.success("Encargado asignado exitosamente", null));
   }
 
@@ -160,5 +165,11 @@ public class BibliotecaController {
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
     bibliotecaService.delete(id);
     return ResponseEntity.ok(ApiResponse.success("Biblioteca eliminada exitosamente", null));
+  }
+
+  private Long obtenerUsuarioId(Authentication authentication) {
+    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+    return userDetails.getId();
+
   }
 }

@@ -25,6 +25,7 @@ import com.proyecto.fhce.library.dto.response.users.UsuarioCarreraResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
+import com.proyecto.fhce.library.entities.BibliotecaEncargado;
 import com.proyecto.fhce.library.entities.Carrera;
 import com.proyecto.fhce.library.entities.Persona;
 import com.proyecto.fhce.library.entities.Role;
@@ -33,12 +34,11 @@ import com.proyecto.fhce.library.entities.UsuarioCarrera;
 import com.proyecto.fhce.library.exception.BadRequestException;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
-import com.proyecto.fhce.library.repositories.BibliotecaRepository;
+import com.proyecto.fhce.library.repositories.BibliotecaEncargadoRepository;
 import com.proyecto.fhce.library.repositories.CarreraRepository;
 import com.proyecto.fhce.library.repositories.PersonaRepository;
 import com.proyecto.fhce.library.repositories.RoleRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
-import com.proyecto.fhce.library.services.UsuarioCarreraService;
 
 @Service
 @Transactional
@@ -57,7 +57,7 @@ public class UserServiceImpl implements UserService {
   private RoleRepository roleRepository;
 
   @Autowired
-  private BibliotecaRepository bibliotecaRepository;
+  BibliotecaEncargadoRepository bibliotecaEncargadoRepository;
 
   @Autowired
   private CarreraRepository carreraRepository;
@@ -287,7 +287,7 @@ public class UserServiceImpl implements UserService {
         })
         .collect(Collectors.toSet());
     response.setRoles(rolesResponse);
-    Optional<BibliotecaResponse> biblioteca = findBibliotecaByUsuarioId(usuario.getId_usuario());
+    List<BibliotecaResponse> biblioteca = findBibliotecaByUsuarioId(usuario.getId_usuario());
 
     response.setBiblioteca(biblioteca);
     response.setUserCarrera(mapCarreras(usuario.getCarreras()));
@@ -302,12 +302,16 @@ public class UserServiceImpl implements UserService {
   }
 
   @Transactional(readOnly = true)
-  public Optional<BibliotecaResponse> findBibliotecaByUsuarioId(Long usuarioId) {
+  public List<BibliotecaResponse> findBibliotecaByUsuarioId(Long usuarioId) {
 
-    return bibliotecaRepository.findByEncargado_IdUsuario(usuarioId)
+    // return bibliotecaRepository.findByEncargado_IdUsuario(usuarioId)
+    return bibliotecaEncargadoRepository
+        .findByUsuario_IdUsuarioAndActivoTrue(usuarioId)
         .stream()
-        .findFirst()
-        .map(this::mapToBibliotecaResponse);
+        .map(BibliotecaEncargado::getBiblioteca)
+        .map(this::mapToBibliotecaResponse)
+        .collect(Collectors.toList());
+
   }
 
   private BibliotecaResponse mapToBibliotecaResponse(Biblioteca b) {

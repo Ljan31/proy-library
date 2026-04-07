@@ -1,6 +1,6 @@
 package com.proyecto.fhce.library.dto.response.users;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.Set;
 
 import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
@@ -12,7 +12,7 @@ public class UsuarioResponse {
   private Integer intentosLogin;
   private PersonaResponse persona;
   private Set<RoleSimpleResponse> roles;
-  private Optional<BibliotecaResponse> biblioteca;
+  private List<BibliotecaResponse> biblioteca;
   private Set<UsuarioCarreraResponse> userCarrera;
 
   // private List<CarreraSimpleResponse> carreras;
@@ -65,11 +65,11 @@ public class UsuarioResponse {
     this.roles = roles;
   }
 
-  public Optional<BibliotecaResponse> getBiblioteca() {
+  public List<BibliotecaResponse> getBiblioteca() {
     return biblioteca;
   }
 
-  public void setBiblioteca(Optional<BibliotecaResponse> biblioteca) {
+  public void setBiblioteca(List<BibliotecaResponse> biblioteca) {
     this.biblioteca = biblioteca;
   }
 

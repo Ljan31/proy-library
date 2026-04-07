@@ -1,10 +1,12 @@
 package com.proyecto.fhce.library.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -48,9 +50,8 @@ public class Biblioteca {
   @Column(length = 500)
   private String horario_atencion;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "encargado_id")
-  private Usuario encargado;
+  @OneToMany(mappedBy = "biblioteca", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<BibliotecaEncargado> encargados = new ArrayList<>();
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
@@ -123,14 +124,6 @@ public class Biblioteca {
     this.horario_atencion = horario_atencion;
   }
 
-  public Usuario getEncargado() {
-    return encargado;
-  }
-
-  public void setEncargado(Usuario encargado) {
-    this.encargado = encargado;
-  }
-
   public EstadoBiblioteca getEstado() {
     return estado;
   }
@@ -153,6 +146,14 @@ public class Biblioteca {
 
   public void setEjemplares(List<Ejemplar> ejemplares) {
     this.ejemplares = ejemplares;
+  }
+
+  public List<BibliotecaEncargado> getEncargados() {
+    return encargados;
+  }
+
+  public void setEncargados(List<BibliotecaEncargado> encargados) {
+    this.encargados = encargados;
   }
 
   // @OneToMany(mappedBy = "biblioteca")
