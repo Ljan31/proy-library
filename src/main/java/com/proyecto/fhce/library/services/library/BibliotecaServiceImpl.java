@@ -440,7 +440,8 @@ public class BibliotecaServiceImpl implements BibliotecaService {
 
     // Contar libros únicos
     long librosUnicos = ejemplares.stream()
-        .map(e -> e.getLibro().getId_libro())
+        .map(e -> e.getEdicion().getLibro().getIdLibro())
+        // .map(e -> e.getLibro().getId_libro())
         .distinct()
         .count();
     stats.setTotalLibros((int) librosUnicos);

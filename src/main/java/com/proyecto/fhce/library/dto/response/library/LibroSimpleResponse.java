@@ -1,7 +1,7 @@
 package com.proyecto.fhce.library.dto.response.library;
 
 public class LibroSimpleResponse {
-  private Long id_libro;
+  private Long idLibro;
   private String isbn;
   private String titulo;
   private String autores; // concatenado
@@ -9,12 +9,12 @@ public class LibroSimpleResponse {
   private Integer anoPublicacion;
   private String imagen_portada;
 
-  public Long getId_libro() {
-    return id_libro;
+  public Long getIdLibro() {
+    return idLibro;
   }
 
-  public void setId_libro(Long id_libro) {
-    this.id_libro = id_libro;
+  public void setIdLibro(Long idLibro) {
+    this.idLibro = idLibro;
   }
 
   public String getIsbn() {

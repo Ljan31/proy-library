@@ -41,6 +41,6 @@ public interface EjemplarService {
 
   public List<HistorialEstadoResponse> obtenerHistorial(Long ejemplarId);
 
+  // public DisponibilidadLibroResponse verificarDisponibilidad(Long libroId);
   public DisponibilidadLibroResponse verificarDisponibilidad(Long libroId);
-
 }

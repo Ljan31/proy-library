@@ -19,6 +19,7 @@ public class EjemplarResponse {
   private EdicionSimpleResponse edicion;
   private BibliotecaSimpleResponse biblioteca;
   private PrestamoActivoResponse prestamoActivo; // si está prestado
+  private LibroSimpleResponse libro;
 
   public Long getId_ejemplar() {
     return id_ejemplar;
@@ -106,6 +107,14 @@ public class EjemplarResponse {
 
   public void setEdicion(EdicionSimpleResponse edicion) {
     this.edicion = edicion;
+  }
+
+  public LibroSimpleResponse getLibro() {
+    return libro;
+  }
+
+  public void setLibro(LibroSimpleResponse libro) {
+    this.libro = libro;
   }
 
 }

@@ -159,7 +159,9 @@ public class CategoriaLibroServiceImpl implements CategoriaLibroService {
     response.setLibrosCount(librosCount != null ? librosCount.intValue() : 0);
 
     // Obtener libros de la categoría (limitados a 10 más recientes)
-    List<Libro> libros = libroRepository.findTop10ByCategoria_IdCategoriaOrderByAnoPublicacionDesc(id);
+    // List<Libro> libros =
+    // libroRepository.findTop10ByCategoria_IdCategoriaOrderByAnoPublicacionDesc(id);
+    List<Libro> libros = libroRepository.findTop10ByCategoria_IdCategoriaOrderByIdLibroDesc(id);
     List<LibroSimpleResponse> librosResponse = libros.stream()
         .map(this::mapLibroToSimple)
         .collect(Collectors.toList());
@@ -269,13 +271,10 @@ public class CategoriaLibroServiceImpl implements CategoriaLibroService {
 
   private LibroSimpleResponse mapLibroToSimple(Libro libro) {
     LibroSimpleResponse response = new LibroSimpleResponse();
-    response.setId_libro(libro.getId_libro());
-    response.setIsbn(libro.getIsbn());
+    response.setIdLibro(libro.getId_libro());
     response.setTitulo(libro.getTitulo());
-    response.setEditorial(libro.getEditorial());
-    response.setAnoPublicacion(libro.getAnoPublicacion());
-    response.setImagen_portada(libro.getImagen_portada());
 
+    // * agregar */
     // // Autores concatenados
     // if (libro.getAutores() != null && !libro.getAutores().isEmpty()) {
     // String autores = libro.getAutores().stream()

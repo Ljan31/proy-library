@@ -14,14 +14,17 @@ import com.proyecto.fhce.library.dto.request.library.BusquedaLibroRequest;
 import com.proyecto.fhce.library.dto.request.library.LibroRequest;
 import com.proyecto.fhce.library.dto.response.PageResponse;
 import com.proyecto.fhce.library.dto.response.library.CategoriaLibroResponse;
+import com.proyecto.fhce.library.dto.response.library.EdicionResponse;
 import com.proyecto.fhce.library.dto.response.library.LibroResponse;
 import com.proyecto.fhce.library.entities.CategoriaLibro;
+import com.proyecto.fhce.library.entities.Edicion;
 import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.Libro;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.CategoriaLibroRepository;
+import com.proyecto.fhce.library.repositories.EdicionRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.LibroRepository;
 
@@ -36,32 +39,23 @@ public class LibroServiceImpl implements LibroService {
   @Autowired
   private EjemplarRepository ejemplarRepository;
 
+  @Autowired
+  private EdicionRepository edicionRepository;
+
   @Transactional
   public LibroResponse create(LibroRequest request) {
-    if (request.getIsbn() != null && libroRepository.existsByIsbn(request.getIsbn())) {
-      throw new DuplicateResourceException("Ya existe un libro con ISBN: " + request.getIsbn());
-    }
-
     Libro libro = new Libro();
-    libro.setIsbn(request.getIsbn());
     libro.setTitulo(request.getTitulo());
-    libro.setEditorial(request.getEditorial());
-    libro.setAnoPublicacion(request.getAnoPublicacion());
-    libro.setEdicion(request.getEdicion());
-    libro.setNumero_paginas(request.getNumero_paginas());
     libro.setIdioma(request.getIdioma());
     libro.setDescripcion(request.getDescripcion());
-    libro.setImagen_portada(request.getImagen_portada());
 
-    // Asignar categoría
     if (request.getCategoriaId() != null) {
       CategoriaLibro categoria = categoriaRepository.findById(request.getCategoriaId())
           .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada"));
       libro.setCategoria(categoria);
     }
 
-    Libro saved = libroRepository.save(libro);
-    return mapToResponse(saved);
+    return mapToResponse(libroRepository.save(libro));
   }
 
   @Transactional
@@ -69,22 +63,9 @@ public class LibroServiceImpl implements LibroService {
     Libro libro = libroRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Libro no encontrado con id: " + id));
 
-    // Validar ISBN si cambió
-    if (request.getIsbn() != null &&
-        !request.getIsbn().equals(libro.getIsbn()) &&
-        libroRepository.existsByIsbn(request.getIsbn())) {
-      throw new DuplicateResourceException("Ya existe un libro con ISBN: " + request.getIsbn());
-    }
-
-    libro.setIsbn(request.getIsbn());
     libro.setTitulo(request.getTitulo());
-    libro.setEditorial(request.getEditorial());
-    libro.setAnoPublicacion(request.getAnoPublicacion());
-    libro.setEdicion(request.getEdicion());
-    libro.setNumero_paginas(request.getNumero_paginas());
     libro.setIdioma(request.getIdioma());
     libro.setDescripcion(request.getDescripcion());
-    libro.setImagen_portada(request.getImagen_portada());
 
     if (request.getCategoriaId() != null) {
       CategoriaLibro categoria = categoriaRepository.findById(request.getCategoriaId())
@@ -92,8 +73,7 @@ public class LibroServiceImpl implements LibroService {
       libro.setCategoria(categoria);
     }
 
-    Libro updated = libroRepository.save(libro);
-    return mapToResponse(updated);
+    return mapToResponse(libroRepository.save(libro));
   }
 
   @Transactional(readOnly = true)
@@ -132,20 +112,23 @@ public class LibroServiceImpl implements LibroService {
           "%" + request.getTitulo().toLowerCase() + "%"));
     }
 
-    if (request.getIsbn() != null) {
-      spec = spec.and((root, query, cb) -> cb.equal(root.get("isbn"), request.getIsbn()));
-    }
-
     if (request.getCategoriaId() != null) {
       spec = spec.and((root, query, cb) -> cb.equal(root.get("categoria").get("idCategoria"),
           request.getCategoriaId()));
     }
 
+    // ✅ isbn y editorial ahora viven en Edicion — se buscan por join
+    if (request.getIsbn() != null) {
+      spec = spec.and((root, query, cb) -> {
+        query.distinct(true);
+        return cb.equal(root.join("ediciones").get("isbn"), request.getIsbn());
+      });
+    }
     // ResultadoBusquedaLibroResponse response = new
     // ResultadoBusquedaLibroResponse();
     // response.setLibros(libros.stream().map(this::mapToResponse).collect(Collectors.toList()));
     // response.setTotalResultados(libros.size());
-    Page<Libro> page = libroRepository.findAll(spec, pageable);
+    // Page<Libro> page = libroRepository.findAll(spec, pageable);
 
     // ResultadoBusquedaLibroResponse response = new
     // ResultadoBusquedaLibroResponse();
@@ -155,9 +138,8 @@ public class LibroServiceImpl implements LibroService {
     // .collect(Collectors.toList())
     // );
     // response.setTotalResultados(page.getTotalElements());
-    Page<LibroResponse> dtoPage = page.map(this::mapToResponse);
-    // return response;
-    return new PageResponse<>(dtoPage);
+    Page<LibroResponse> page = libroRepository.findAll(spec, pageable).map(this::mapToResponse);
+    return new PageResponse<>(page);
   }
 
   @Transactional
@@ -171,27 +153,34 @@ public class LibroServiceImpl implements LibroService {
 
   private LibroResponse mapToResponse(Libro libro) {
     LibroResponse response = new LibroResponse();
-    response.setId_libro(libro.getId_libro());
-    response.setIsbn(libro.getIsbn());
+    response.setIdLibro(libro.getIdLibro());
     response.setTitulo(libro.getTitulo());
-    response.setEditorial(libro.getEditorial());
-    response.setAnoPublicacion(libro.getAnoPublicacion());
-    response.setEdicion(libro.getEdicion());
-    response.setNumero_paginas(libro.getNumero_paginas());
     response.setIdioma(libro.getIdioma());
     response.setDescripcion(libro.getDescripcion());
-    response.setImagen_portada(libro.getImagen_portada());
 
     // Categoría
     if (libro.getCategoria() != null) {
       response.setCategoria(mapCategoriaToResponse(libro.getCategoria()));
     }
 
-    // Calcular disponibilidad
-    List<Ejemplar> ejemplares = ejemplarRepository.findByLibro_IdLibro(libro.getId_libro());
-    response.setEjemplaresTotal(ejemplares.size());
+    // ✅ Ediciones del libro
+    List<Edicion> ediciones = edicionRepository.findByLibro_IdLibro(libro.getIdLibro());
+    response.setEdiciones(ediciones.stream().map(ed -> {
+      EdicionResponse er = new EdicionResponse();
+      er.setIdEdicion(ed.getIdEdicion());
+      er.setIsbn(ed.getIsbn());
+      er.setEditorial(ed.getEditorial());
+      er.setAnoPublicacion(ed.getAnoPublicacion());
+      er.setEdicion(ed.getEdicion());
+      er.setImagenPortada(ed.getImagenPortada());
+      return er;
+    }).collect(Collectors.toList()));
+
+    // ✅ Totales agregados de todos los ejemplares del libro (via ediciones)
+    List<Ejemplar> todosEjemplares = ejemplarRepository.findByLibroId(libro.getIdLibro());
+    response.setEjemplaresTotal(todosEjemplares.size());
     response.setEjemplaresDisponibles(
-        (int) ejemplares.stream()
+        (int) todosEjemplares.stream()
             .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.DISPONIBLE)
             .count());
 

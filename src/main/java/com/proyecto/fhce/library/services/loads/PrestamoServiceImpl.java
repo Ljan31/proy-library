@@ -480,13 +480,14 @@ public class PrestamoServiceImpl implements PrestamoService {
     if (prestamo.getEjemplar() != null) {
       EjemplarResponse ejemplarResponse = new EjemplarResponse();
       ejemplarResponse.setId_ejemplar(prestamo.getEjemplar().getIdEjemplar());
-      ejemplarResponse.setCodigo_ejemplar(prestamo.getEjemplar().getCodigoEjemplar());
+      ejemplarResponse.setCodigoEjemplar(prestamo.getEjemplar().getCodigoEjemplar());
       ejemplarResponse.setEstadoEjemplar(prestamo.getEjemplar().getEstadoEjemplar());
 
-      if (prestamo.getEjemplar().getLibro() != null) {
+      if (prestamo.getEjemplar().getEdicion().getLibro() != null
+          && prestamo.getEjemplar().getEdicion().getLibro() != null) {
         LibroSimpleResponse libroResponse = new LibroSimpleResponse();
-        libroResponse.setId_libro(prestamo.getEjemplar().getLibro().getIdLibro());
-        libroResponse.setTitulo(prestamo.getEjemplar().getLibro().getTitulo());
+        libroResponse.setIdLibro(prestamo.getEjemplar().getEdicion().getLibro().getIdLibro());
+        libroResponse.setTitulo(prestamo.getEjemplar().getEdicion().getLibro().getTitulo());
         ejemplarResponse.setLibro(libroResponse);
       }
 

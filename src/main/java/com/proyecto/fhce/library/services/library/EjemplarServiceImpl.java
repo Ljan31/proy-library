@@ -17,12 +17,14 @@ import com.proyecto.fhce.library.dto.request.library.EjemplarUpdateEstadoRequest
 import com.proyecto.fhce.library.dto.response.library.BibliotecaSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.DisponibilidadLibroResponse;
 import com.proyecto.fhce.library.dto.response.library.DisponibilidadPorBibliotecaResponse;
+import com.proyecto.fhce.library.dto.response.library.EdicionSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.EjemplarResponse;
 import com.proyecto.fhce.library.dto.response.library.LibroSimpleResponse;
 import com.proyecto.fhce.library.dto.response.loads.HistorialEstadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.PrestamoActivoResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
+import com.proyecto.fhce.library.entities.Edicion;
 import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.HistorialEstadoEjemplar;
 import com.proyecto.fhce.library.entities.Libro;
@@ -33,6 +35,7 @@ import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
+import com.proyecto.fhce.library.repositories.EdicionRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.HistorialEstadoEjemplarRepository;
 import com.proyecto.fhce.library.repositories.LibroRepository;
@@ -45,6 +48,8 @@ public class EjemplarServiceImpl implements EjemplarService {
   @Autowired
   private EjemplarRepository ejemplarRepository;
 
+  @Autowired
+  private EdicionRepository edicionRepository;
   @Autowired
   private LibroRepository libroRepository;
 
@@ -67,29 +72,27 @@ public class EjemplarServiceImpl implements EjemplarService {
 
   public EjemplarResponse create(EjemplarRequest request) {
     // Validar código único
-    if (ejemplarRepository.existsByCodigoEjemplar(request.getCodigo_ejemplar())) {
-      throw new DuplicateResourceException("Ya existe un ejemplar con código: " +
-          request.getCodigo_ejemplar());
+    if (ejemplarRepository.existsByCodigoEjemplar(request.getCodigoEjemplar())) {
+      throw new DuplicateResourceException("Ya existe un ejemplar con código: " + request.getCodigoEjemplar());
     }
-
-    Libro libro = libroRepository.findById(request.getLibroId())
-        .orElseThrow(() -> new ResourceNotFoundException("Libro no encontrado con id: " + request.getLibroId()));
+    Edicion edicion = edicionRepository.findById(request.getEdicionId())
+        .orElseThrow(() -> new ResourceNotFoundException("Edición no encontrada con id: " + request.getEdicionId()));
 
     Biblioteca biblioteca = bibliotecaRepository.findById(request.getBibliotecaId())
         .orElseThrow(
             () -> new ResourceNotFoundException("Biblioteca no encontrada con id: " + request.getBibliotecaId()));
 
     Ejemplar ejemplar = new Ejemplar();
-    ejemplar.setLibro(libro);
+    ejemplar.setEdicion(edicion); // ✅
     ejemplar.setBiblioteca(biblioteca);
-    ejemplar.setCodigoEjemplar(request.getCodigo_ejemplar());
-    ejemplar.setCodigoTopografico(request.getCodigo_topografico());
-    ejemplar.setUbicacionFisica(request.getUbicacion_fisica());
+    ejemplar.setCodigoEjemplar(request.getCodigoEjemplar());
+    ejemplar.setCodigoTopografico(request.getCodigoTopografico());
+    ejemplar.setUbicacionFisica(request.getUbicacionFisica());
     ejemplar.setEstadoEjemplar(
         request.getEstadoEjemplar() != null ? request.getEstadoEjemplar() : EstadoEjemplar.DISPONIBLE);
-    ejemplar
-        .setFechaAdquisicion(request.getFechaAdquisicion() != null ? request.getFechaAdquisicion() : LocalDate.now());
-    ejemplar.setPrecioCompra(request.getPrecio_compra());
+    ejemplar.setFechaAdquisicion(
+        request.getFechaAdquisicion() != null ? request.getFechaAdquisicion() : LocalDate.now());
+    ejemplar.setPrecioCompra(request.getPrecioCompra());
     ejemplar.setObservaciones(request.getObservaciones());
 
     Ejemplar saved = ejemplarRepository.save(ejemplar);
@@ -107,27 +110,26 @@ public class EjemplarServiceImpl implements EjemplarService {
     Ejemplar ejemplar = ejemplarRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Ejemplar no encontrado con id: " + id));
 
-    // Validar código único si cambió
-    if (!ejemplar.getCodigoEjemplar().equals(request.getCodigo_ejemplar()) &&
-        ejemplarRepository.existsByCodigoEjemplar(request.getCodigo_ejemplar())) {
-      throw new DuplicateResourceException("Ya existe un ejemplar con código: " +
-          request.getCodigo_ejemplar());
+    if (!ejemplar.getCodigoEjemplar().equals(request.getCodigoEjemplar()) &&
+        ejemplarRepository.existsByCodigoEjemplar(request.getCodigoEjemplar())) {
+      throw new DuplicateResourceException("Ya existe un ejemplar con código: " + request.getCodigoEjemplar());
     }
 
-    ejemplar.setCodigoEjemplar(request.getCodigo_ejemplar());
-    ejemplar.setCodigoTopografico(request.getCodigo_topografico());
-    ejemplar.setUbicacionFisica(request.getUbicacion_fisica());
+    ejemplar.setCodigoEjemplar(request.getCodigoEjemplar());
+    ejemplar.setCodigoTopografico(request.getCodigoTopografico());
+    ejemplar.setUbicacionFisica(request.getUbicacionFisica());
     ejemplar.setObservaciones(request.getObservaciones());
 
-    if (request.getPrecio_compra() != null) {
-      ejemplar.setPrecioCompra(request.getPrecio_compra());
+    if (request.getPrecioCompra() != null) {
+      ejemplar.setPrecioCompra(request.getPrecioCompra());
     }
 
     // Actualizar libro y biblioteca si cambiaron
-    if (request.getLibroId() != null && !ejemplar.getLibro().getId_libro().equals(request.getLibroId())) {
-      Libro libro = libroRepository.findById(request.getLibroId())
-          .orElseThrow(() -> new ResourceNotFoundException("Libro no encontrado"));
-      ejemplar.setLibro(libro);
+    if (request.getEdicionId() != null &&
+        !ejemplar.getEdicion().getIdEdicion().equals(request.getEdicionId())) {
+      Edicion edicion = edicionRepository.findById(request.getEdicionId())
+          .orElseThrow(() -> new ResourceNotFoundException("Edición no encontrada"));
+      ejemplar.setEdicion(edicion);
     }
 
     if (request.getBibliotecaId() != null
@@ -252,8 +254,15 @@ public class EjemplarServiceImpl implements EjemplarService {
   }
 
   @Transactional(readOnly = true)
+  public List<EjemplarResponse> findByEdicion(Long edicionId) {
+    return ejemplarRepository.findByEdicion_IdEdicion(edicionId).stream()
+        .map(this::mapToResponse)
+        .collect(Collectors.toList());
+  }
+
+  @Transactional(readOnly = true)
   public List<EjemplarResponse> findByLibro(Long libroId) {
-    return ejemplarRepository.findByLibro_IdLibro(libroId).stream()
+    return ejemplarRepository.findByLibroId(libroId).stream()
         .map(this::mapToResponse)
         .collect(Collectors.toList());
   }
@@ -289,45 +298,26 @@ public class EjemplarServiceImpl implements EjemplarService {
   }
 
   @Transactional(readOnly = true)
-  public List<HistorialEstadoResponse> obtenerHistorial(Long ejemplarId) {
-    List<HistorialEstadoEjemplar> historial = historialRepository
-        .findByEjemplarOrderByFechaDesc(ejemplarId);
-
-    return historial.stream()
-        .map(this::mapHistorialToResponse)
-        .collect(Collectors.toList());
-  }
-
-  @Transactional(readOnly = true)
   public DisponibilidadLibroResponse verificarDisponibilidad(Long libroId) {
-    Libro libro = libroRepository.findById(libroId)
-        .orElseThrow(() -> new ResourceNotFoundException("Libro no encontrado"));
-
-    List<Ejemplar> ejemplares = ejemplarRepository.findByLibro_IdLibro(libroId);
+    // ✅ Recupera todos los ejemplares del libro via sus ediciones
+    List<Ejemplar> ejemplares = ejemplarRepository.findByLibroId(libroId);
 
     DisponibilidadLibroResponse disponibilidad = new DisponibilidadLibroResponse();
     disponibilidad.setLibroId(libroId);
-    disponibilidad.setTituloLibro(libro.getTitulo());
     disponibilidad.setTotalEjemplares(ejemplares.size());
 
     long disponibles = ejemplares.stream()
-        .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.DISPONIBLE)
-        .count();
-    disponibilidad.setEjemplaresDisponibles((int) disponibles);
-
+        .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.DISPONIBLE).count();
     long prestados = ejemplares.stream()
-        .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.PRESTADO)
-        .count();
-    disponibilidad.setEjemplaresPrestados((int) prestados);
-
+        .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.PRESTADO).count();
     long reservados = ejemplares.stream()
-        .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.RESERVADO)
-        .count();
-    disponibilidad.setEjemplaresReservados((int) reservados);
+        .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.RESERVADO).count();
 
+    disponibilidad.setEjemplaresDisponibles((int) disponibles);
+    disponibilidad.setEjemplaresPrestados((int) prestados);
+    disponibilidad.setEjemplaresReservados((int) reservados);
     disponibilidad.setHayDisponibles(disponibles > 0);
 
-    // Agrupar por biblioteca
     Map<Biblioteca, List<Ejemplar>> porBiblioteca = ejemplares.stream()
         .collect(Collectors.groupingBy(Ejemplar::getBiblioteca));
 
@@ -335,24 +325,29 @@ public class EjemplarServiceImpl implements EjemplarService {
         .map(entry -> {
           DisponibilidadPorBibliotecaResponse db = new DisponibilidadPorBibliotecaResponse();
           BibliotecaSimpleResponse biblio = new BibliotecaSimpleResponse();
-          biblio.setId_biblioteca(entry.getKey().getId_biblioteca());
+          biblio.setId_biblioteca(entry.getKey().getIdBiblioteca());
           biblio.setNombre(entry.getKey().getNombre());
           biblio.setTipoBiblioteca(entry.getKey().getTipoBiblioteca());
           db.setBiblioteca(biblio);
-
           db.setTotal(entry.getValue().size());
           long disp = entry.getValue().stream()
-              .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.DISPONIBLE)
-              .count();
+              .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.DISPONIBLE).count();
           db.setDisponibles((int) disp);
-
           return db;
-        })
-        .collect(Collectors.toList());
+        }).collect(Collectors.toList());
 
     disponibilidad.setPorBiblioteca(porBiblio);
-
     return disponibilidad;
+  }
+
+  @Transactional(readOnly = true)
+  public List<HistorialEstadoResponse> obtenerHistorial(Long ejemplarId) {
+    List<HistorialEstadoEjemplar> historial = historialRepository
+        .findByEjemplarOrderByFechaDesc(ejemplarId);
+
+    return historial.stream()
+        .map(this::mapHistorialToResponse)
+        .collect(Collectors.toList());
   }
 
   private void validarCambioEstado(Ejemplar ejemplar, EstadoEjemplar nuevoEstado) {
@@ -402,27 +397,31 @@ public class EjemplarServiceImpl implements EjemplarService {
   private EjemplarResponse mapToResponse(Ejemplar ejemplar) {
     EjemplarResponse response = new EjemplarResponse();
     response.setId_ejemplar(ejemplar.getIdEjemplar());
-    response.setCodigo_ejemplar(ejemplar.getCodigoEjemplar());
-    response.setCodigo_topografico(ejemplar.getCodigoTopografico());
-    response.setUbicacion_fisica(ejemplar.getUbicacionFisica());
+    response.setCodigoEjemplar(ejemplar.getCodigoEjemplar());
+    response.setCodigoTopografico(ejemplar.getCodigoTopografico());
+    response.setUbicacionFisica(ejemplar.getUbicacionFisica());
     response.setEstadoEjemplar(ejemplar.getEstadoEjemplar());
     response.setFechaAdquisicion(ejemplar.getFechaAdquisicion());
-    response.setPrecio_compra(ejemplar.getPrecioCompra());
+    response.setPrecioCompra(ejemplar.getPrecioCompra());
     response.setObservaciones(ejemplar.getObservaciones());
 
     // Libro
-    if (ejemplar.getLibro() != null) {
-      LibroSimpleResponse libro = new LibroSimpleResponse();
-      libro.setId_libro(ejemplar.getLibro().getId_libro());
-      libro.setIsbn(ejemplar.getLibro().getIsbn());
-      libro.setTitulo(ejemplar.getLibro().getTitulo());
-      libro.setEditorial(ejemplar.getLibro().getEditorial());
-      libro.setAnoPublicacion(ejemplar.getLibro().getAnoPublicacion());
-      libro.setImagen_portada(ejemplar.getLibro().getImagen_portada());
+    if (ejemplar.getEdicion() != null) {
+      EdicionSimpleResponse ed = new EdicionSimpleResponse();
+      ed.setIdEdicion(ejemplar.getEdicion().getIdEdicion());
+      ed.setIsbn(ejemplar.getEdicion().getIsbn());
+      ed.setEditorial(ejemplar.getEdicion().getEditorial());
+      ed.setAnoPublicacion(ejemplar.getEdicion().getAnoPublicacion());
+      ed.setEdicion(ejemplar.getEdicion().getEdicion());
+      ed.setImagenPortada(ejemplar.getEdicion().getImagenPortada());
 
-      // Autores
+      // ✅ Datos del libro padre dentro de la edición
+      if (ejemplar.getEdicion().getLibro() != null) {
+        ed.setIdLibro(ejemplar.getEdicion().getLibro().getIdLibro());
+        ed.setTitulo(ejemplar.getEdicion().getLibro().getTitulo());
+      }
 
-      response.setLibro(libro);
+      response.setEdicion(ed);
     }
 
     // Biblioteca
