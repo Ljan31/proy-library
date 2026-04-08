@@ -1,7 +1,6 @@
 package com.proyecto.fhce.library.entities;
 
 import java.util.List;
-import java.util.Set;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -11,8 +10,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -25,22 +22,8 @@ public class Libro {
   @Column(unique = true, nullable = false, name = "id_libro")
   private Long idLibro;
 
-  @Column(unique = true, length = 20)
-  private String isbn;
-
   @Column(nullable = false, length = 500)
   private String titulo;
-
-  @Column(length = 200)
-  private String editorial;
-
-  @Column(name = "ano_publicacion")
-  private Integer anoPublicacion;
-
-  @Column(length = 50)
-  private String edicion;
-
-  private Integer numero_paginas;
 
   @Column(length = 50)
   private String idioma;
@@ -52,11 +35,8 @@ public class Libro {
   @Column(columnDefinition = "TEXT")
   private String descripcion;
 
-  @Column(length = 500)
-  private String imagen_portada;
-
   @OneToMany(mappedBy = "libro", cascade = CascadeType.ALL)
-  private List<Ejemplar> ejemplares;
+  private List<Edicion> ediciones;
 
   public Long getId_libro() {
     return idLibro;
@@ -66,52 +46,12 @@ public class Libro {
     this.idLibro = id_libro;
   }
 
-  public String getIsbn() {
-    return isbn;
-  }
-
-  public void setIsbn(String isbn) {
-    this.isbn = isbn;
-  }
-
   public String getTitulo() {
     return titulo;
   }
 
   public void setTitulo(String titulo) {
     this.titulo = titulo;
-  }
-
-  public String getEditorial() {
-    return editorial;
-  }
-
-  public void setEditorial(String editorial) {
-    this.editorial = editorial;
-  }
-
-  public Integer getAnoPublicacion() {
-    return anoPublicacion;
-  }
-
-  public void setAnoPublicacion(Integer anoPublicacion) {
-    this.anoPublicacion = anoPublicacion;
-  }
-
-  public String getEdicion() {
-    return edicion;
-  }
-
-  public void setEdicion(String edicion) {
-    this.edicion = edicion;
-  }
-
-  public Integer getNumero_paginas() {
-    return numero_paginas;
-  }
-
-  public void setNumero_paginas(Integer numero_paginas) {
-    this.numero_paginas = numero_paginas;
   }
 
   public String getIdioma() {
@@ -138,14 +78,6 @@ public class Libro {
     this.descripcion = descripcion;
   }
 
-  public String getImagen_portada() {
-    return imagen_portada;
-  }
-
-  public void setImagen_portada(String imagen_portada) {
-    this.imagen_portada = imagen_portada;
-  }
-
   public Long getIdLibro() {
     return idLibro;
   }
@@ -154,12 +86,12 @@ public class Libro {
     this.idLibro = idLibro;
   }
 
-  public List<Ejemplar> getEjemplares() {
-    return ejemplares;
+  public List<Edicion> getEdiciones() {
+    return ediciones;
   }
 
-  public void setEjemplares(List<Ejemplar> ejemplares) {
-    this.ejemplares = ejemplares;
+  public void setEdiciones(List<Edicion> ediciones) {
+    this.ediciones = ediciones;
   }
 
   // @ManyToMany

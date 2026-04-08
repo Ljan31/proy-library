@@ -30,8 +30,8 @@ public class Ejemplar {
   private Long idEjemplar;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "book_id", nullable = false)
-  private Libro libro;
+  @JoinColumn(name = "edicion_id", nullable = false)
+  private Edicion edicion;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "library_id", nullable = false)
@@ -77,14 +77,6 @@ public class Ejemplar {
 
   public void setIdEjemplar(Long idEjemplar) {
     this.idEjemplar = idEjemplar;
-  }
-
-  public Libro getLibro() {
-    return libro;
-  }
-
-  public void setLibro(Libro libro) {
-    this.libro = libro;
   }
 
   public Biblioteca getBiblioteca() {
@@ -165,6 +157,14 @@ public class Ejemplar {
 
   public void setPrestamos(List<Prestamo> prestamos) {
     this.prestamos = prestamos;
+  }
+
+  public Edicion getEdicion() {
+    return edicion;
+  }
+
+  public void setEdicion(Edicion edicion) {
+    this.edicion = edicion;
   }
 
 }
