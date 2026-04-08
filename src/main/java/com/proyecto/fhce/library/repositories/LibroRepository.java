@@ -14,17 +14,9 @@ import com.proyecto.fhce.library.entities.Libro;
 @Repository
 public interface LibroRepository extends JpaRepository<Libro, Long>, JpaSpecificationExecutor<Libro> {
 
-  Optional<Libro> findByIsbn(String isbn);
-
   List<Libro> findByTituloContainingIgnoreCase(String titulo);
 
   List<Libro> findByCategoria_IdCategoria(Long categoriaId);
-
-  List<Libro> findByEditorialContainingIgnoreCase(String editorial);
-
-  List<Libro> findByAnoPublicacion(Integer anoPublicacion);
-
-  boolean existsByIsbn(String isbn);
 
   // @Query("SELECT l FROM Libro l LEFT JOIN FETCH l.ejemplares e " +
   // "WHERE l.id_libro = :id")
@@ -36,11 +28,12 @@ public interface LibroRepository extends JpaRepository<Libro, Long>, JpaSpecific
   // @Param("nombre") String nombre,
   // @Param("apellido") String apellido);
 
-  @Query("SELECT l FROM Libro l WHERE " +
-      "LOWER(l.titulo) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-      "LOWER(l.isbn) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-      "LOWER(l.editorial) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-  List<Libro> searchLibros(@Param("searchTerm") String searchTerm);
+  @Query("SELECT DISTINCT l FROM Libro l " +
+      "LEFT JOIN l.ediciones ed " +
+      "WHERE LOWER(l.titulo) LIKE LOWER(CONCAT('%', :q, '%')) " +
+      "OR LOWER(ed.isbn) LIKE LOWER(CONCAT('%', :q, '%')) " +
+      "OR LOWER(ed.editorial) LIKE LOWER(CONCAT('%', :q, '%'))")
+  List<Libro> searchLibros(@Param("q") String q);
 
   // @Query("SELECT l FROM Libro l JOIN l.ejemplares e " +
   // "WHERE e.biblioteca.id_biblioteca = :bibliotecaId " +
@@ -50,5 +43,8 @@ public interface LibroRepository extends JpaRepository<Libro, Long>, JpaSpecific
   @Query("SELECT COUNT(l) FROM Libro l WHERE l.categoria.idCategoria = :categoriaId")
   Long countByCategoria_IdCategoria(@Param("categoriaId") Long categoriaId);
 
-  List<Libro> findTop10ByCategoria_IdCategoriaOrderByAnoPublicacionDesc(Long categoriaId);
+  @Query("SELECT COUNT(l) FROM Libro l WHERE l.categoria.idCategoria = :categoriaId")
+  Long countByCategoria(@Param("categoriaId") Long categoriaId);
+
+  List<Libro> findTop10ByCategoria_IdCategoriaOrderByIdLibroDesc(Long categoriaId);
 }

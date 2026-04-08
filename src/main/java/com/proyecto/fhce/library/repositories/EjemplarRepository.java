@@ -16,7 +16,11 @@ public interface EjemplarRepository extends JpaRepository<Ejemplar, Long> {
 
         Optional<Ejemplar> findByCodigoEjemplar(String codigoEjemplar);
 
-        List<Ejemplar> findByLibro_IdLibro(Long libroId);
+        List<Ejemplar> findByEdicion_IdEdicion(Long edicionId);
+
+        // List<Ejemplar> findByLibro_IdLibro(Long libroId);
+        @Query("SELECT e FROM Ejemplar e WHERE e.edicion.libro.idLibro = :libroId")
+        List<Ejemplar> findByLibroId(@Param("libroId") Long libroId);
 
         List<Ejemplar> findByBiblioteca_IdBiblioteca(Long bibliotecaId);
 
@@ -24,7 +28,7 @@ public interface EjemplarRepository extends JpaRepository<Ejemplar, Long> {
 
         boolean existsByCodigoEjemplar(String codigoEjemplar);
 
-        @Query("SELECT e FROM Ejemplar e WHERE e.libro.idLibro = :libroId " +
+        @Query("SELECT e FROM Ejemplar e WHERE e.edicion.libro.idLibro = :libroId " +
                         "AND e.biblioteca.idBiblioteca = :bibliotecaId " +
                         "AND e.estadoEjemplar = :estado")
         List<Ejemplar> findByLibroAndBibliotecaAndEstado(
@@ -32,9 +36,14 @@ public interface EjemplarRepository extends JpaRepository<Ejemplar, Long> {
                         @Param("bibliotecaId") Long bibliotecaId,
                         @Param("estado") EstadoEjemplar estado);
 
-        @Query("SELECT e FROM Ejemplar e WHERE e.libro.idLibro = :libroId " +
+        @Query("SELECT e FROM Ejemplar e WHERE e.edicion.libro.idLibro = :libroId " +
                         "AND e.estadoEjemplar = 'DISPONIBLE'")
         List<Ejemplar> findEjemplaresDisponiblesByLibro(@Param("libroId") Long libroId);
+
+        @Query("SELECT e FROM Ejemplar e " +
+                        "WHERE e.edicion.idEdicion = :edicionId " +
+                        "AND e.estadoEjemplar = 'DISPONIBLE'")
+        List<Ejemplar> findDisponiblesByEdicion(@Param("edicionId") Long edicionId);
 
         @Query("SELECT COUNT(e) FROM Ejemplar e WHERE e.biblioteca.idBiblioteca = :bibliotecaId " +
                         "AND e.estadoEjemplar = :estado")
@@ -50,7 +59,9 @@ public interface EjemplarRepository extends JpaRepository<Ejemplar, Long> {
                         @Param("bibliotecaId") Long bibliotecaId,
                         @Param("estados") List<EstadoEjemplar> estados);
 
-        @Query("SELECT e FROM Ejemplar e LEFT JOIN FETCH e.libro l " +
+        @Query("SELECT e FROM Ejemplar e " +
+                        "LEFT JOIN FETCH e.edicion ed " +
+                        "LEFT JOIN FETCH ed.libro " +
                         "WHERE e.idEjemplar = :id")
         Optional<Ejemplar> findByIdWithLibro(@Param("id") Long id);
 }
