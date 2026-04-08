@@ -8,15 +8,16 @@ import com.proyecto.fhce.library.enums.EstadoEjemplar;
 
 public class EjemplarResponse {
   private Long id_ejemplar;
-  private LibroSimpleResponse libro;
-  private BibliotecaSimpleResponse biblioteca;
-  private String codigo_ejemplar;
-  private String codigo_topografico;
-  private String ubicacion_fisica;
+  private String codigoEjemplar;
+  private String codigoTopografico;
+  private String ubicacionFisica;
   private EstadoEjemplar estadoEjemplar;
   private LocalDate fechaAdquisicion;
-  private BigDecimal precio_compra;
+  private BigDecimal precioCompra;
   private String observaciones;
+
+  private EdicionSimpleResponse edicion;
+  private BibliotecaSimpleResponse biblioteca;
   private PrestamoActivoResponse prestamoActivo; // si está prestado
 
   public Long getId_ejemplar() {
@@ -27,44 +28,12 @@ public class EjemplarResponse {
     this.id_ejemplar = id_ejemplar;
   }
 
-  public LibroSimpleResponse getLibro() {
-    return libro;
-  }
-
-  public void setLibro(LibroSimpleResponse libro) {
-    this.libro = libro;
-  }
-
   public BibliotecaSimpleResponse getBiblioteca() {
     return biblioteca;
   }
 
   public void setBiblioteca(BibliotecaSimpleResponse biblioteca) {
     this.biblioteca = biblioteca;
-  }
-
-  public String getCodigo_ejemplar() {
-    return codigo_ejemplar;
-  }
-
-  public void setCodigo_ejemplar(String codigo_ejemplar) {
-    this.codigo_ejemplar = codigo_ejemplar;
-  }
-
-  public String getCodigo_topografico() {
-    return codigo_topografico;
-  }
-
-  public void setCodigo_topografico(String codigo_topografico) {
-    this.codigo_topografico = codigo_topografico;
-  }
-
-  public String getUbicacion_fisica() {
-    return ubicacion_fisica;
-  }
-
-  public void setUbicacion_fisica(String ubicacion_fisica) {
-    this.ubicacion_fisica = ubicacion_fisica;
   }
 
   public EstadoEjemplar getEstadoEjemplar() {
@@ -83,14 +52,6 @@ public class EjemplarResponse {
     this.fechaAdquisicion = fechaAdquisicion;
   }
 
-  public BigDecimal getPrecio_compra() {
-    return precio_compra;
-  }
-
-  public void setPrecio_compra(BigDecimal precio_compra) {
-    this.precio_compra = precio_compra;
-  }
-
   public String getObservaciones() {
     return observaciones;
   }
@@ -105,6 +66,46 @@ public class EjemplarResponse {
 
   public void setPrestamoActivo(PrestamoActivoResponse prestamoActivo) {
     this.prestamoActivo = prestamoActivo;
+  }
+
+  public String getCodigoEjemplar() {
+    return codigoEjemplar;
+  }
+
+  public void setCodigoEjemplar(String codigoEjemplar) {
+    this.codigoEjemplar = codigoEjemplar;
+  }
+
+  public String getCodigoTopografico() {
+    return codigoTopografico;
+  }
+
+  public void setCodigoTopografico(String codigoTopografico) {
+    this.codigoTopografico = codigoTopografico;
+  }
+
+  public String getUbicacionFisica() {
+    return ubicacionFisica;
+  }
+
+  public void setUbicacionFisica(String ubicacionFisica) {
+    this.ubicacionFisica = ubicacionFisica;
+  }
+
+  public BigDecimal getPrecioCompra() {
+    return precioCompra;
+  }
+
+  public void setPrecioCompra(BigDecimal precioCompra) {
+    this.precioCompra = precioCompra;
+  }
+
+  public EdicionSimpleResponse getEdicion() {
+    return edicion;
+  }
+
+  public void setEdicion(EdicionSimpleResponse edicion) {
+    this.edicion = edicion;
   }
 
 }

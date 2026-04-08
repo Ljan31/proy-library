@@ -5,46 +5,35 @@ import java.time.LocalDate;
 
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
 
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 
 public class EjemplarRequest {
-  @NotNull(message = "Libro ID es requerido")
-  private Long libroId;
-
-  @NotNull(message = "Biblioteca ID es requerido")
-  private Long bibliotecaId;
-
-  @NotBlank(message = "Código de ejemplar es requerido")
+  @NotBlank(message = "El código del ejemplar es obligatorio")
   @Size(max = 50)
-  private String codigo_ejemplar;
+  private String codigoEjemplar;
 
   @Size(max = 100)
-  private String codigo_topografico;
+  private String codigoTopografico;
 
   @Size(max = 200)
-  private String ubicacion_fisica;
+  private String ubicacionFisica;
+
+  // ✅ Ahora apunta a una edición, no directamente al libro
+  @NotNull(message = "La edición es obligatoria")
+  private Long edicionId;
+
+  @NotNull(message = "La biblioteca es obligatoria")
+  private Long bibliotecaId;
 
   private EstadoEjemplar estadoEjemplar;
 
-  @PastOrPresent(message = "Fecha de adquisición no puede ser futura")
   private LocalDate fechaAdquisicion;
 
-  @DecimalMin(value = "0.0", inclusive = false, message = "Precio debe ser mayor a 0")
-  private BigDecimal precio_compra;
+  private BigDecimal precioCompra;
 
   private String observaciones;
-
-  public Long getLibroId() {
-    return libroId;
-  }
-
-  public void setLibroId(Long libroId) {
-    this.libroId = libroId;
-  }
 
   public Long getBibliotecaId() {
     return bibliotecaId;
@@ -52,30 +41,6 @@ public class EjemplarRequest {
 
   public void setBibliotecaId(Long bibliotecaId) {
     this.bibliotecaId = bibliotecaId;
-  }
-
-  public String getCodigo_ejemplar() {
-    return codigo_ejemplar;
-  }
-
-  public void setCodigo_ejemplar(String codigo_ejemplar) {
-    this.codigo_ejemplar = codigo_ejemplar;
-  }
-
-  public String getCodigo_topografico() {
-    return codigo_topografico;
-  }
-
-  public void setCodigo_topografico(String codigo_topografico) {
-    this.codigo_topografico = codigo_topografico;
-  }
-
-  public String getUbicacion_fisica() {
-    return ubicacion_fisica;
-  }
-
-  public void setUbicacion_fisica(String ubicacion_fisica) {
-    this.ubicacion_fisica = ubicacion_fisica;
   }
 
   public EstadoEjemplar getEstadoEjemplar() {
@@ -94,20 +59,52 @@ public class EjemplarRequest {
     this.fechaAdquisicion = fechaAdquisicion;
   }
 
-  public BigDecimal getPrecio_compra() {
-    return precio_compra;
-  }
-
-  public void setPrecio_compra(BigDecimal precio_compra) {
-    this.precio_compra = precio_compra;
-  }
-
   public String getObservaciones() {
     return observaciones;
   }
 
   public void setObservaciones(String observaciones) {
     this.observaciones = observaciones;
+  }
+
+  public String getCodigoEjemplar() {
+    return codigoEjemplar;
+  }
+
+  public void setCodigoEjemplar(String codigoEjemplar) {
+    this.codigoEjemplar = codigoEjemplar;
+  }
+
+  public String getCodigoTopografico() {
+    return codigoTopografico;
+  }
+
+  public void setCodigoTopografico(String codigoTopografico) {
+    this.codigoTopografico = codigoTopografico;
+  }
+
+  public String getUbicacionFisica() {
+    return ubicacionFisica;
+  }
+
+  public void setUbicacionFisica(String ubicacionFisica) {
+    this.ubicacionFisica = ubicacionFisica;
+  }
+
+  public Long getEdicionId() {
+    return edicionId;
+  }
+
+  public void setEdicionId(Long edicionId) {
+    this.edicionId = edicionId;
+  }
+
+  public BigDecimal getPrecioCompra() {
+    return precioCompra;
+  }
+
+  public void setPrecioCompra(BigDecimal precioCompra) {
+    this.precioCompra = precioCompra;
   }
 
 }
