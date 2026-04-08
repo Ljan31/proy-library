@@ -59,11 +59,16 @@ public class EjemplarController {
     return ResponseEntity.ok(ApiResponse.success(ejemplar));
   }
 
-  @Operation(summary = "Obtener ejemplares de un libro", description = "Lista todos los ejemplares físicos de un libro")
+  @Operation(summary = "Obtener ejemplares de una edición")
+  @GetMapping("/edicion/{edicionId}")
+  public ResponseEntity<ApiResponse<List<EjemplarResponse>>> findByEdicion(@PathVariable Long edicionId) {
+    return ResponseEntity.ok(ApiResponse.success(ejemplarService.findByEdicion(edicionId)));
+  }
+
+  @Operation(summary = "Obtener todos los ejemplares de un libro (todas sus ediciones)")
   @GetMapping("/libro/{libroId}")
   public ResponseEntity<ApiResponse<List<EjemplarResponse>>> findByLibro(@PathVariable Long libroId) {
-    List<EjemplarResponse> ejemplares = ejemplarService.findByLibro(libroId);
-    return ResponseEntity.ok(ApiResponse.success(ejemplares));
+    return ResponseEntity.ok(ApiResponse.success(ejemplarService.findByLibro(libroId)));
   }
 
   @Operation(summary = "Obtener ejemplares de una biblioteca", description = "Lista todos los ejemplares de una biblioteca", security = @SecurityRequirement(name = "bearer-jwt"))

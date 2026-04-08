@@ -31,6 +31,8 @@ public interface EjemplarService {
 
   public List<EjemplarResponse> findByLibro(Long libroId);
 
+  public List<EjemplarResponse> findByEdicion(Long edicionId);
+
   public List<EjemplarResponse> findByBiblioteca(Long bibliotecaId);
 
   public List<EjemplarResponse> findByEstado(EstadoEjemplar estado);
