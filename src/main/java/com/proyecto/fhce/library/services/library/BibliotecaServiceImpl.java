@@ -1,6 +1,5 @@
 package com.proyecto.fhce.library.services.library;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -26,6 +25,7 @@ import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.BibliotecaEncargado;
 import com.proyecto.fhce.library.entities.Carrera;
 import com.proyecto.fhce.library.entities.Ejemplar;
+import com.proyecto.fhce.library.entities.Role;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
@@ -38,6 +38,7 @@ import com.proyecto.fhce.library.repositories.BibliotecaEncargadoRepository;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.CarreraRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
+import com.proyecto.fhce.library.repositories.RoleRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 import com.proyecto.fhce.library.security.UserDetailsImpl;
 
@@ -57,6 +58,9 @@ public class BibliotecaServiceImpl implements BibliotecaService {
 
   @Autowired
   private BibliotecaEncargadoRepository encargadoRepository;
+
+  @Autowired
+  private RoleRepository roleRepository;
 
   // @Autowired
   // private PrestamoRepository prestamoRepository;
@@ -216,7 +220,7 @@ public class BibliotecaServiceImpl implements BibliotecaService {
       be.setUsuario(usuario);
       be.setActivo(true);
       be.setRolEncargado(rolEncargado);
-      be.setFechaAsignacion(LocalDate.now());
+      be.setFechaAsignacion(LocalDateTime.now());
 
       biblioteca.getEncargados().add(be);
     }
@@ -325,12 +329,29 @@ public class BibliotecaServiceImpl implements BibliotecaService {
       RolEncargado rol = usuario.getRoles().stream()
           .anyMatch(r -> r.getName().equals("ROLE_BIBLIOTECARIO")) ? RolEncargado.PRINCIPAL : RolEncargado.AUXILIAR;
 
+      boolean esEstudiante = usuario.getRoles().stream()
+          .anyMatch(r -> r.getName().equals("ROLE_ESTUDIANTE"));
+
+      if (esEstudiante) {
+        Role rolAuxiliar = roleRepository.findByName("ROLE_AUXILIAR")
+            .orElseThrow(() -> new ResourceNotFoundException("Rol AUXILIAR no encontrado"));
+
+        // Evitar duplicar el rol
+        boolean yaTieneAuxiliar = usuario.getRoles().stream()
+            .anyMatch(r -> r.getName().equals("ROLE_AUXILIAR"));
+
+        if (!yaTieneAuxiliar) {
+          usuario.getRoles().add(rolAuxiliar);
+          usuarioRepository.save(usuario); // importante persistir cambio
+        }
+      }
+
       BibliotecaEncargado be = new BibliotecaEncargado();
       be.setBiblioteca(biblioteca);
       be.setUsuario(usuario);
       be.setActivo(true);
       be.setRolEncargado(rol);
-      be.setFechaAsignacion(LocalDate.now());
+      be.setFechaAsignacion(LocalDateTime.now());
 
       biblioteca.getEncargados().add(be);
     }

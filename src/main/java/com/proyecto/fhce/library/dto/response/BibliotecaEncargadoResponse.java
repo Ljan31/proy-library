@@ -1,6 +1,6 @@
 package com.proyecto.fhce.library.dto.response;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.enums.RolEncargado;
@@ -9,7 +9,7 @@ public class BibliotecaEncargadoResponse {
   private Long id;
   private UsuarioSimpleResponse usuario;
   private RolEncargado rolEncargado;
-  private LocalDate fechaAsignacion;
+  private LocalDateTime fechaAsignacion;
   private Boolean activo;
 
   public Long getId() {
@@ -36,11 +36,11 @@ public class BibliotecaEncargadoResponse {
     this.rolEncargado = rolEncargado;
   }
 
-  public LocalDate getFechaAsignacion() {
+  public LocalDateTime getFechaAsignacion() {
     return fechaAsignacion;
   }
 
-  public void setFechaAsignacion(LocalDate fechaAsignacion) {
+  public void setFechaAsignacion(LocalDateTime fechaAsignacion) {
     this.fechaAsignacion = fechaAsignacion;
   }
 

@@ -1,6 +1,6 @@
 package com.proyecto.fhce.library.entities;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.proyecto.fhce.library.enums.RolEncargado;
 
@@ -15,12 +15,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "biblioteca_encargados", uniqueConstraints = {
-    @UniqueConstraint(columnNames = { "biblioteca_id", "usuario_id" })
-})
+@Table(name = "biblioteca_encargados")
 public class BibliotecaEncargado {
 
   @Id
@@ -40,10 +37,10 @@ public class BibliotecaEncargado {
   private RolEncargado rolEncargado; // PRINCIPAL, AUXILIAR
 
   @Column(name = "fecha_asignacion", nullable = false)
-  private LocalDate fechaAsignacion;
+  private LocalDateTime fechaAsignacion;
 
   @Column(name = "fecha_fin")
-  private LocalDate fechaFin; // null = activo
+  private LocalDateTime fechaFin; // null = activo
 
   @Column(nullable = false)
   private Boolean activo = true;
@@ -80,19 +77,19 @@ public class BibliotecaEncargado {
     this.rolEncargado = rolEncargado;
   }
 
-  public LocalDate getFechaAsignacion() {
+  public LocalDateTime getFechaAsignacion() {
     return fechaAsignacion;
   }
 
-  public void setFechaAsignacion(LocalDate fechaAsignacion) {
+  public void setFechaAsignacion(LocalDateTime fechaAsignacion) {
     this.fechaAsignacion = fechaAsignacion;
   }
 
-  public LocalDate getFechaFin() {
+  public LocalDateTime getFechaFin() {
     return fechaFin;
   }
 
-  public void setFechaFin(LocalDate fechaFin) {
+  public void setFechaFin(LocalDateTime fechaFin) {
     this.fechaFin = fechaFin;
   }
 

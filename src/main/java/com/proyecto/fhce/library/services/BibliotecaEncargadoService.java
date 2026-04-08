@@ -1,6 +1,6 @@
 package com.proyecto.fhce.library.services;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -13,6 +13,7 @@ import com.proyecto.fhce.library.dto.response.BibliotecaEncargadoResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.BibliotecaEncargado;
+import com.proyecto.fhce.library.entities.Role;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.RolEncargado;
 import com.proyecto.fhce.library.exception.BusinessException;
@@ -20,6 +21,7 @@ import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaEncargadoRepository;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
+import com.proyecto.fhce.library.repositories.RoleRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 
 @Service
@@ -31,6 +33,8 @@ public class BibliotecaEncargadoService {
   private BibliotecaRepository bibliotecaRepository;
   @Autowired
   private UserRepository usuarioRepository;
+  @Autowired
+  private RoleRepository roleRepository;
 
   @Transactional
   public BibliotecaEncargadoResponse asignarEncargado(Long bibliotecaId, AsignarEncargadoRequest request) {
@@ -66,7 +70,7 @@ public class BibliotecaEncargadoService {
     encargado.setBiblioteca(biblioteca);
     encargado.setUsuario(usuario);
     encargado.setRolEncargado(request.getRolEncargado());
-    encargado.setFechaAsignacion(LocalDate.now());
+    encargado.setFechaAsignacion(LocalDateTime.now());
     encargado.setActivo(true);
 
     return mapToResponse(encargadoRepository.save(encargado));
@@ -80,7 +84,30 @@ public class BibliotecaEncargadoService {
             "El usuario no es encargado activo de esta biblioteca"));
 
     // Soft delete: desactivar, no borrar
-    encargadoRepository.desactivarEncargado(bibliotecaId, usuarioId, LocalDate.now());
+    Usuario usuario = encargado.getUsuario();
+    // 1. Desactivar encargado
+    encargadoRepository.desactivarEncargado(bibliotecaId, usuarioId, LocalDateTime.now());
+
+    // 2. Verificar si era AUXILIAR
+    boolean eraAuxiliar = encargado.getRolEncargado() == RolEncargado.AUXILIAR;
+
+    if (eraAuxiliar) {
+
+      // 3. Verificar si aún tiene otras bibliotecas activas
+      boolean tieneOtrosEncargos = encargadoRepository
+          .existsByUsuario_IdUsuarioAndActivoTrue(usuarioId);
+
+      // 4. Si ya no tiene ninguno → quitar ROLE_AUXILIAR
+      if (!tieneOtrosEncargos) {
+
+        Role rolAuxiliar = roleRepository.findByName("ROLE_AUXILIAR")
+            .orElseThrow(() -> new ResourceNotFoundException("Rol AUXILIAR no encontrado"));
+
+        usuario.getRoles().removeIf(r -> r.getName().equals("ROLE_AUXILIAR"));
+
+        usuarioRepository.save(usuario);
+      }
+    }
   }
 
   @Transactional(readOnly = true)
