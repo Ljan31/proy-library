@@ -95,7 +95,7 @@ public class SpringSecurityConfig {
             .requestMatchers("/v3/api-docs/**").permitAll()
             .requestMatchers("/swagger-ui/**").permitAll()
             .requestMatchers("/swagger-ui.html").permitAll()
-            .requestMatchers("/api/seed/**").hasRole("ADMIN")
+            .requestMatchers("/api/seed/**").permitAll()
             .anyRequest().authenticated());
     // http.authenticationProvider(authenticationProvider());
     http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

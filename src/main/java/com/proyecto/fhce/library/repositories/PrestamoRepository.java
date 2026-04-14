@@ -45,7 +45,9 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
         Long countPrestamosActivosByUsuario(@Param("usuarioId") Long usuarioId);
 
         @Query("SELECT p FROM Prestamo p LEFT JOIN FETCH p.ejemplar e " +
-                        "LEFT JOIN FETCH e.libro WHERE p.usuario.idUsuario = :usuarioId " +
+                        "LEFT JOIN FETCH e.edicion ed " +
+                        "LEFT JOIN FETCH ed.libro " +
+                        "WHERE p.usuario.idUsuario = :usuarioId " +
                         "AND p.estadoPrestamo = 'ACTIVO'")
         List<Prestamo> findPrestamosActivosWithDetalles(@Param("usuarioId") Long usuarioId);
 
@@ -56,9 +58,9 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
                         @Param("fechaInicio") LocalDateTime fechaInicio,
                         @Param("fechaFin") LocalDateTime fechaFin);
 
-        @Query("SELECT p.ejemplar.libro.titulo, COUNT(p) FROM Prestamo p " +
+        @Query("SELECT p.ejemplar.edicion.libro.titulo, COUNT(p) FROM Prestamo p " +
                         "WHERE p.biblioteca.idBiblioteca = :bibliotecaId " +
-                        "GROUP BY p.ejemplar.libro.idLibro, p.ejemplar.libro.titulo " +
+                        "GROUP BY p.ejemplar.edicion.libro.idLibro, p.ejemplar.edicion.libro.titulo " +
                         "ORDER BY COUNT(p) DESC")
         List<Object[]> findLibrosMasPrestadosByBiblioteca(@Param("bibliotecaId") Long bibliotecaId);
 

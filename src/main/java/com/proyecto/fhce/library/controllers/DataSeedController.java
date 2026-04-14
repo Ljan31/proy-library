@@ -20,7 +20,7 @@ public class DataSeedController {
 
   // ⚠️ Este endpoint solo para desarrollo/test
   @PostMapping
-  @PreAuthorize("hasRole('ADMIN')")
+  // @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<String>> runSeed() {
     try {
       String data = dataSeedService.seed(); // Ejecuta la carga de datos inicial
