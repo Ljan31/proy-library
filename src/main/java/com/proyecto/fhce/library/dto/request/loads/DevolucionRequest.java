@@ -1,5 +1,6 @@
 package com.proyecto.fhce.library.dto.request.loads;
 
+import com.proyecto.fhce.library.enums.CondicionFisicaLibro;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
 
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +12,9 @@ public class DevolucionRequest {
   private String observaciones;
 
   private EstadoEjemplar estadoEjemplar; // Por si viene dañado
+
+  @NotNull(message = "La condición física del ejemplar al recibirlo es obligatoria")
+  private CondicionFisicaLibro condicionDevolucion;
 
   public Long getPrestamoId() {
     return prestamoId;
@@ -34,6 +38,14 @@ public class DevolucionRequest {
 
   public void setEstadoEjemplar(EstadoEjemplar estadoEjemplar) {
     this.estadoEjemplar = estadoEjemplar;
+  }
+
+  public CondicionFisicaLibro getCondicionDevolucion() {
+    return condicionDevolucion;
+  }
+
+  public void setCondicionDevolucion(CondicionFisicaLibro condicionDevolucion) {
+    this.condicionDevolucion = condicionDevolucion;
   }
 
 }

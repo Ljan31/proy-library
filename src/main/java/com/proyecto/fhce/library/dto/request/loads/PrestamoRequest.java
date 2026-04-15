@@ -2,8 +2,12 @@ package com.proyecto.fhce.library.dto.request.loads;
 
 import java.time.LocalDate;
 
+import com.proyecto.fhce.library.enums.CondicionFisicaLibro;
+import com.proyecto.fhce.library.enums.TipoDocumentoGarantia;
+
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public class PrestamoRequest {
   @NotNull(message = "Ejemplar ID es requerido")
@@ -19,6 +23,12 @@ public class PrestamoRequest {
   private LocalDate fechaDevolucionEstimada;
 
   private String observaciones;
+
+  @NotNull(message = "El tipo de documento de garantía es obligatorio")
+  private TipoDocumentoGarantia tipoDocumentoGarantia;
+
+  @NotNull(message = "La condición física del ejemplar al entregarlo es obligatoria")
+  private CondicionFisicaLibro condicionEntrega;
 
   public Long getEjemplarId() {
     return ejemplarId;
@@ -58,6 +68,22 @@ public class PrestamoRequest {
 
   public void setObservaciones(String observaciones) {
     this.observaciones = observaciones;
+  }
+
+  public TipoDocumentoGarantia getTipoDocumentoGarantia() {
+    return tipoDocumentoGarantia;
+  }
+
+  public void setTipoDocumentoGarantia(TipoDocumentoGarantia tipoDocumentoGarantia) {
+    this.tipoDocumentoGarantia = tipoDocumentoGarantia;
+  }
+
+  public CondicionFisicaLibro getCondicionEntrega() {
+    return condicionEntrega;
+  }
+
+  public void setCondicionEntrega(CondicionFisicaLibro condicionEntrega) {
+    this.condicionEntrega = condicionEntrega;
   }
 
 }

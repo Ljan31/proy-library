@@ -6,7 +6,9 @@ import java.time.LocalDateTime;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.EjemplarResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
+import com.proyecto.fhce.library.enums.CondicionFisicaLibro;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
+import com.proyecto.fhce.library.enums.TipoDocumentoGarantia;
 
 public class PrestamoResponse {
   private Long id_prestamo;
@@ -23,6 +25,9 @@ public class PrestamoResponse {
   private Integer renovaciones;
   private Integer diasVencidos; // computed
   private Boolean vencido; // computed
+  private TipoDocumentoGarantia tipoDocumentoGarantia;
+  private CondicionFisicaLibro condicionEntrega;
+  private CondicionFisicaLibro condicionDevolucion;
   // private SancionResponse sancion;
 
   public Long getId_prestamo() {
@@ -135,6 +140,30 @@ public class PrestamoResponse {
 
   public void setVencido(Boolean vencido) {
     this.vencido = vencido;
+  }
+
+  public TipoDocumentoGarantia getTipoDocumentoGarantia() {
+    return tipoDocumentoGarantia;
+  }
+
+  public void setTipoDocumentoGarantia(TipoDocumentoGarantia tipoDocumentoGarantia) {
+    this.tipoDocumentoGarantia = tipoDocumentoGarantia;
+  }
+
+  public CondicionFisicaLibro getCondicionEntrega() {
+    return condicionEntrega;
+  }
+
+  public void setCondicionEntrega(CondicionFisicaLibro condicionEntrega) {
+    this.condicionEntrega = condicionEntrega;
+  }
+
+  public CondicionFisicaLibro getCondicionDevolucion() {
+    return condicionDevolucion;
+  }
+
+  public void setCondicionDevolucion(CondicionFisicaLibro condicionDevolucion) {
+    this.condicionDevolucion = condicionDevolucion;
   }
 
 }

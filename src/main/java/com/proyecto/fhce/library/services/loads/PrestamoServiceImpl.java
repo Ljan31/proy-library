@@ -18,6 +18,7 @@ import com.proyecto.fhce.library.dto.request.loads.FiltroPrestamoRequest;
 import com.proyecto.fhce.library.dto.request.loads.PrestamoRequest;
 import com.proyecto.fhce.library.dto.request.loads.RenovacionRequest;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaSimpleResponse;
+import com.proyecto.fhce.library.dto.response.library.EdicionSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.EjemplarResponse;
 import com.proyecto.fhce.library.dto.response.library.LibroSimpleResponse;
 import com.proyecto.fhce.library.dto.response.loads.PrestamoResponse;
@@ -210,7 +211,8 @@ public class PrestamoServiceImpl implements PrestamoService {
     prestamo.setObservaciones(request.getObservaciones());
     prestamo.setEstadoPrestamo(EstadoPrestamo.ACTIVO);
     prestamo.setRenovaciones(0);
-
+    prestamo.setTipoDocumentoGarantia(request.getTipoDocumentoGarantia());
+    prestamo.setCondicionEntrega(request.getCondicionEntrega());
     // Update copy state
     ejemplar.setEstadoEjemplar(EstadoEjemplar.PRESTADO);
     ejemplarRepository.save(ejemplar);
@@ -244,11 +246,21 @@ public class PrestamoServiceImpl implements PrestamoService {
     prestamo.setFechaDevolucionReal(LocalDateTime.now());
     prestamo.setBibliotecarioDevolucion(bibliotecario);
     prestamo.setEstadoPrestamo(EstadoPrestamo.DEVUELTO);
+    prestamo.setCondicionDevolucion(request.getCondicionDevolucion());
 
     if (request.getObservaciones() != null) {
       prestamo.setObservaciones(
           (prestamo.getObservaciones() != null ? prestamo.getObservaciones() + ". " : "")
               + request.getObservaciones());
+    }
+
+    if (prestamo.getCondicionEntrega() != null &&
+        request.getCondicionDevolucion().ordinal() > prestamo.getCondicionEntrega().ordinal()) {
+      // La condición empeoró — podrías registrar en observaciones automáticamente
+      String alertaDeterioro = "[ALERTA] El ejemplar fue devuelto en peor condición que la entregada. " +
+          "Entrega: " + prestamo.getCondicionEntrega() + " → Devolución: " + request.getCondicionDevolucion();
+      prestamo.setObservaciones(
+          (prestamo.getObservaciones() != null ? prestamo.getObservaciones() + ". " : "") + alertaDeterioro);
     }
 
     // Update copy state
@@ -482,13 +494,30 @@ public class PrestamoServiceImpl implements PrestamoService {
       ejemplarResponse.setId_ejemplar(prestamo.getEjemplar().getIdEjemplar());
       ejemplarResponse.setCodigoEjemplar(prestamo.getEjemplar().getCodigoEjemplar());
       ejemplarResponse.setEstadoEjemplar(prestamo.getEjemplar().getEstadoEjemplar());
-
       if (prestamo.getEjemplar().getEdicion().getLibro() != null
           && prestamo.getEjemplar().getEdicion().getLibro() != null) {
         LibroSimpleResponse libroResponse = new LibroSimpleResponse();
         libroResponse.setIdLibro(prestamo.getEjemplar().getEdicion().getLibro().getIdLibro());
         libroResponse.setTitulo(prestamo.getEjemplar().getEdicion().getLibro().getTitulo());
         ejemplarResponse.setLibro(libroResponse);
+      }
+
+      if (prestamo.getEjemplar().getEdicion() != null) {
+        EdicionSimpleResponse ed = new EdicionSimpleResponse();
+        ed.setIdEdicion(prestamo.getEjemplar().getEdicion().getIdEdicion());
+        ed.setIsbn(prestamo.getEjemplar().getEdicion().getIsbn());
+        ed.setEditorial(prestamo.getEjemplar().getEdicion().getEditorial());
+        ed.setAnoPublicacion(prestamo.getEjemplar().getEdicion().getAnoPublicacion());
+        ed.setEdicion(prestamo.getEjemplar().getEdicion().getEdicion());
+        ed.setImagenPortada(prestamo.getEjemplar().getEdicion().getImagenPortada());
+
+        // ✅ Datos del libro padre dentro de la edición
+        if (prestamo.getEjemplar().getEdicion().getLibro() != null) {
+          ed.setIdLibro(prestamo.getEjemplar().getEdicion().getLibro().getIdLibro());
+          ed.setTitulo(prestamo.getEjemplar().getEdicion().getLibro().getTitulo());
+        }
+
+        ejemplarResponse.setEdicion(ed);
       }
 
       response.setEjemplar(ejemplarResponse);
@@ -501,7 +530,7 @@ public class PrestamoServiceImpl implements PrestamoService {
       usuarioResponse.setNombreCompleto(
           prestamo.getUsuario().getPersona().getApellido_pat() + " " + prestamo.getUsuario().getPersona().getNombre());
       usuarioResponse.setUsername(prestamo.getUsuario().getUsername());
-
+      usuarioResponse.setCi(prestamo.getUsuario().getPersona().getCi());
       response.setUsuario(usuarioResponse);
     }
     // ===================== BIBLIOTECA =====================
@@ -543,7 +572,9 @@ public class PrestamoServiceImpl implements PrestamoService {
     } else {
       response.setVencido(false);
     }
-
+    response.setTipoDocumentoGarantia(prestamo.getTipoDocumentoGarantia());
+    response.setCondicionEntrega(prestamo.getCondicionEntrega());
+    response.setCondicionDevolucion(prestamo.getCondicionDevolucion());
     return response;
   }
 }

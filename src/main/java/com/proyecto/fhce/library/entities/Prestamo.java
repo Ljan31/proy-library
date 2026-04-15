@@ -3,7 +3,9 @@ package com.proyecto.fhce.library.entities;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.proyecto.fhce.library.enums.CondicionFisicaLibro;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
+import com.proyecto.fhce.library.enums.TipoDocumentoGarantia;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -64,6 +66,17 @@ public class Prestamo {
   @Column(nullable = false)
   private Integer renovaciones;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "tipo_documento_garantia", nullable = false)
+  private TipoDocumentoGarantia tipoDocumentoGarantia;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "condicion_entrega", nullable = false)
+  private CondicionFisicaLibro condicionEntrega; // estado al momento del préstamo
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "condicion_devolucion")
+  private CondicionFisicaLibro condicionDevolucion; // estado al momento de la devolución (nullable hasta devolver)
   // @OneToOne(mappedBy = "prestamo", cascade = CascadeType.ALL)
   // private Sancion sancion;
 
@@ -170,6 +183,30 @@ public class Prestamo {
 
   public void setRenovaciones(Integer renovaciones) {
     this.renovaciones = renovaciones;
+  }
+
+  public TipoDocumentoGarantia getTipoDocumentoGarantia() {
+    return tipoDocumentoGarantia;
+  }
+
+  public void setTipoDocumentoGarantia(TipoDocumentoGarantia tipoDocumentoGarantia) {
+    this.tipoDocumentoGarantia = tipoDocumentoGarantia;
+  }
+
+  public CondicionFisicaLibro getCondicionEntrega() {
+    return condicionEntrega;
+  }
+
+  public void setCondicionEntrega(CondicionFisicaLibro condicionEntrega) {
+    this.condicionEntrega = condicionEntrega;
+  }
+
+  public CondicionFisicaLibro getCondicionDevolucion() {
+    return condicionDevolucion;
+  }
+
+  public void setCondicionDevolucion(CondicionFisicaLibro condicionDevolucion) {
+    this.condicionDevolucion = condicionDevolucion;
   }
 
 }

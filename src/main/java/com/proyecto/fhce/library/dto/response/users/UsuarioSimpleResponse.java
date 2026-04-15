@@ -5,6 +5,7 @@ public class UsuarioSimpleResponse {
   private String username;
   private String nombreCompleto;
   private String email;
+  private Integer ci;
 
   public Long getId_usuario() {
     return id_usuario;
@@ -36,6 +37,14 @@ public class UsuarioSimpleResponse {
 
   public void setEmail(String email) {
     this.email = email;
+  }
+
+  public Integer getCi() {
+    return ci;
+  }
+
+  public void setCi(Integer ci) {
+    this.ci = ci;
   }
 
 }
