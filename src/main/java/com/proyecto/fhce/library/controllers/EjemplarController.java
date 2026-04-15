@@ -94,6 +94,18 @@ public class EjemplarController {
     return ResponseEntity.ok(ApiResponse.success(ejemplares));
   }
 
+  @Operation(summary = "Obtener ejemplares disponibles de un libro de una biblioteca con estado x", description = "Lista solo los ejemplares disponibles para préstamo de un libro, biblioteca y estado")
+  @GetMapping("/libro/{libroId}/biblioteca")
+  public ResponseEntity<ApiResponse<List<EjemplarResponse>>> findByLibroAndBibliotecaAndEstado(
+      @PathVariable Long libroId,
+      @RequestParam Long bibliotecaId,
+      @RequestParam EstadoEjemplar estado) {
+
+    List<EjemplarResponse> ejemplares = ejemplarService.findByLibroAndBibliotecaAndEstado(libroId, bibliotecaId,
+        estado);
+    return ResponseEntity.ok(ApiResponse.success(ejemplares));
+  }
+
   @Operation(summary = "Verificar disponibilidad de un libro", description = "Retorna la disponibilidad del libro en todas las bibliotecas")
   @GetMapping("/libro/{libroId}/disponibilidad")
   public ResponseEntity<ApiResponse<DisponibilidadLibroResponse>> verificarDisponibilidad(@PathVariable Long libroId) {

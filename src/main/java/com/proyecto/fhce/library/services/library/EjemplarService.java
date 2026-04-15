@@ -39,6 +39,9 @@ public interface EjemplarService {
 
   public List<EjemplarResponse> findDisponiblesByLibro(Long libroId);
 
+  public List<EjemplarResponse> findByLibroAndBibliotecaAndEstado(Long libroId, Long bibliotecaId,
+      EstadoEjemplar estado);
+
   public List<EjemplarResponse> findByBibliotecaAndEstado(Long bibliotecaId, EstadoEjemplar estado);
 
   public List<HistorialEstadoResponse> obtenerHistorial(Long ejemplarId);

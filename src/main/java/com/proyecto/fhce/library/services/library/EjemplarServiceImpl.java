@@ -289,6 +289,14 @@ public class EjemplarServiceImpl implements EjemplarService {
   }
 
   @Transactional(readOnly = true)
+  public List<EjemplarResponse> findByLibroAndBibliotecaAndEstado(Long libroId, Long bibliotecaId,
+      EstadoEjemplar estado) {
+    return ejemplarRepository.findByLibroAndBibliotecaAndEstado(libroId, bibliotecaId, estado).stream()
+        .map(this::mapToResponse)
+        .collect(Collectors.toList());
+  }
+
+  @Transactional(readOnly = true)
   public List<EjemplarResponse> findByBibliotecaAndEstado(Long bibliotecaId, EstadoEjemplar estado) {
     return ejemplarRepository.findByBibliotecaAndEstadoIn(
         bibliotecaId,

@@ -48,8 +48,9 @@ public class LibroController {
   }
 
   @GetMapping("/search")
-  public ResponseEntity<ApiResponse<List<LibroResponse>>> search(@RequestParam String q) {
-    List<LibroResponse> libros = libroService.search(q);
+  public ResponseEntity<ApiResponse<List<LibroResponse>>> search(@RequestParam String q,
+      @RequestParam(required = false) Long bibliotecaId) {
+    List<LibroResponse> libros = libroService.search(q, bibliotecaId);
     return ResponseEntity.ok(ApiResponse.success(libros));
   }
 

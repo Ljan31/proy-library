@@ -92,8 +92,8 @@ public class LibroServiceImpl implements LibroService {
   }
 
   @Transactional(readOnly = true)
-  public List<LibroResponse> search(String searchTerm) {
-    return libroRepository.searchLibros(searchTerm).stream()
+  public List<LibroResponse> search(String searchTerm, Long bibliotecaId) {
+    return libroRepository.searchLibros(searchTerm, bibliotecaId).stream()
         .map(this::mapToResponse)
         .collect(Collectors.toList());
   }

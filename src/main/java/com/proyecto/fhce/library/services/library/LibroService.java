@@ -18,7 +18,9 @@ public interface LibroService {
 
   public List<LibroResponse> findAll();
 
-  public List<LibroResponse> search(String searchTerm);
+  // public List<LibroResponse> search(String searchTerm);
+
+  public List<LibroResponse> search(String searchTerm, Long bibliotecaId);
 
   public PageResponse<LibroResponse> busquedaAvanzada(BusquedaLibroRequest request, Pageable pageable);
 

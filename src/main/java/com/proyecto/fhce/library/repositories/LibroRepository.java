@@ -28,12 +28,25 @@ public interface LibroRepository extends JpaRepository<Libro, Long>, JpaSpecific
   // @Param("nombre") String nombre,
   // @Param("apellido") String apellido);
 
+  // ==================== opcion 1
+  // @Query("SELECT DISTINCT l FROM Libro l " +
+  // "LEFT JOIN l.ediciones ed " +
+  // "WHERE LOWER(l.titulo) LIKE LOWER(CONCAT('%', :q, '%')) " +
+  // "OR LOWER(ed.isbn) LIKE LOWER(CONCAT('%', :q, '%')) " +
+  // "OR LOWER(ed.editorial) LIKE LOWER(CONCAT('%', :q, '%'))")
+  // List<Libro> searchLibros(@Param("q") String q);
+
   @Query("SELECT DISTINCT l FROM Libro l " +
       "LEFT JOIN l.ediciones ed " +
-      "WHERE LOWER(l.titulo) LIKE LOWER(CONCAT('%', :q, '%')) " +
+      "LEFT JOIN ed.ejemplares ej " +
+      "WHERE (" +
+      "LOWER(l.titulo) LIKE LOWER(CONCAT('%', :q, '%')) " +
       "OR LOWER(ed.isbn) LIKE LOWER(CONCAT('%', :q, '%')) " +
-      "OR LOWER(ed.editorial) LIKE LOWER(CONCAT('%', :q, '%'))")
-  List<Libro> searchLibros(@Param("q") String q);
+      "OR LOWER(ed.editorial) LIKE LOWER(CONCAT('%', :q, '%'))" +
+      ") " +
+      "AND (:bibliotecaId IS NULL OR ej.biblioteca.idBiblioteca = :bibliotecaId)")
+  List<Libro> searchLibros(@Param("q") String q,
+      @Param("bibliotecaId") Long bibliotecaId);
 
   // @Query("SELECT l FROM Libro l JOIN l.ejemplares e " +
   // "WHERE e.biblioteca.id_biblioteca = :bibliotecaId " +
