@@ -15,6 +15,8 @@ import com.proyecto.fhce.library.enums.EstadoPrestamo;
 public interface PrestamoService {
   public List<PrestamoResponse> findAll();
 
+  List<PrestamoResponse> findByBiblioteca(Long bibliotecaId, EstadoPrestamo estado);
+
   public PrestamoResponse findById(Long id);
 
   public List<PrestamoResponse> findByUsuario(Long usuarioId);

@@ -86,6 +86,20 @@ public class PrestamoServiceImpl implements PrestamoService {
   }
 
   @Transactional(readOnly = true)
+  public List<PrestamoResponse> findByBiblioteca(Long bibliotecaId, EstadoPrestamo estado) {
+    if (!bibliotecaRepository.existsById(bibliotecaId)) {
+      throw new ResourceNotFoundException("Biblioteca no encontrada con id: " + bibliotecaId);
+    }
+
+    List<Prestamo> prestamos = prestamoRepository
+        .findByBibliotecaConFiltroEstado(bibliotecaId, estado);
+
+    return prestamos.stream()
+        .map(this::mapToResponse)
+        .collect(Collectors.toList());
+  }
+
+  @Transactional(readOnly = true)
   public PrestamoResponse findById(Long id) {
     Prestamo prestamo = prestamoRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Préstamo no encontrado con id: " + id));
@@ -550,7 +564,7 @@ public class PrestamoServiceImpl implements PrestamoService {
       bibliotecarioPrestamo.setNombreCompleto(prestamo.getBibliotecarioPrestamo().getPersona().getApellido_pat() + " "
           + prestamo.getBibliotecarioPrestamo().getPersona().getNombre());
       bibliotecarioPrestamo.setUsername(prestamo.getBibliotecarioPrestamo().getUsername());
-
+      bibliotecarioPrestamo.setCi(prestamo.getBibliotecarioPrestamo().getPersona().getCi());
       response.setBibliotecarioPrestamo(bibliotecarioPrestamo);
     }
 
@@ -561,7 +575,7 @@ public class PrestamoServiceImpl implements PrestamoService {
       bibliotecarioDevolucion.setNombreCompleto(prestamo.getBibliotecarioDevolucion().getPersona().getApellido_pat()
           + " " + prestamo.getBibliotecarioDevolucion().getPersona().getNombre());
       bibliotecarioDevolucion.setUsername(prestamo.getBibliotecarioDevolucion().getUsername());
-
+      bibliotecarioDevolucion.setCi(prestamo.getBibliotecarioDevolucion().getPersona().getCi());
       response.setBibliotecarioDevolucion(bibliotecarioDevolucion);
     }
 

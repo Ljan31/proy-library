@@ -43,6 +43,16 @@ public class PrestamoController {
     return ResponseEntity.ok(ApiResponse.success(prestamos));
   }
 
+  @GetMapping("/biblioteca/{bibliotecaId}")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  public ResponseEntity<ApiResponse<List<PrestamoResponse>>> findByBiblioteca(
+      @PathVariable Long bibliotecaId,
+      @RequestParam(required = false) EstadoPrestamo estado) {
+
+    List<PrestamoResponse> prestamos = prestamoService.findByBiblioteca(bibliotecaId, estado);
+    return ResponseEntity.ok(ApiResponse.success(prestamos));
+  }
+
   @GetMapping("/{id}")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<ApiResponse<PrestamoResponse>> findById(@PathVariable Long id) {

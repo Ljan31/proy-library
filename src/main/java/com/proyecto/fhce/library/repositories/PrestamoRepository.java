@@ -22,6 +22,15 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
 
         List<Prestamo> findByBiblioteca_IdBiblioteca(Long bibliotecaId);
 
+        @Query("""
+                        SELECT p FROM Prestamo p
+                        WHERE p.biblioteca.idBiblioteca = :bibliotecaId
+                        AND (:estado IS NULL OR p.estadoPrestamo = :estado)
+                                """)
+        List<Prestamo> findByBibliotecaConFiltroEstado(
+                        @Param("bibliotecaId") Long bibliotecaId,
+                        @Param("estado") EstadoPrestamo estado);
+
         List<Prestamo> findByEstadoPrestamo(EstadoPrestamo estadoPrestamo);
 
         @Query("SELECT p FROM Prestamo p WHERE p.usuario.idUsuario = :usuarioId " +
