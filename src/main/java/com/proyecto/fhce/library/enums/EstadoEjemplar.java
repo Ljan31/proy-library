@@ -1,5 +1,5 @@
 package com.proyecto.fhce.library.enums;
 
 public enum EstadoEjemplar {
-  DISPONIBLE, PRESTADO, RESERVADO, EN_REPARACION, BAJA, PERDIDO
+  DISPONIBLE, PRESTADO, RESERVADO, EN_REPARACION, BAJA, PERDIDO, DETERIORADO, DAÑADO
 }

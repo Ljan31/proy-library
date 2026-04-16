@@ -1,17 +1,36 @@
 package com.proyecto.fhce.library.services;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.proyecto.fhce.library.entities.Biblioteca;
+import com.proyecto.fhce.library.entities.Carrera;
+import com.proyecto.fhce.library.entities.Edicion;
+import com.proyecto.fhce.library.entities.Ejemplar;
+import com.proyecto.fhce.library.entities.HistorialEstadoEjemplar;
+import com.proyecto.fhce.library.entities.Libro;
 import com.proyecto.fhce.library.entities.Permiso;
 import com.proyecto.fhce.library.entities.Persona;
 import com.proyecto.fhce.library.entities.Role;
 import com.proyecto.fhce.library.entities.Usuario;
+import com.proyecto.fhce.library.enums.EstadoBiblioteca;
+import com.proyecto.fhce.library.enums.EstadoEjemplar;
+import com.proyecto.fhce.library.enums.TipoBiblioteca;
+import com.proyecto.fhce.library.repositories.BibliotecaRepository;
+import com.proyecto.fhce.library.repositories.CarreraRepository;
+import com.proyecto.fhce.library.repositories.EdicionRepository;
+import com.proyecto.fhce.library.repositories.EjemplarRepository;
+import com.proyecto.fhce.library.repositories.HistorialEstadoEjemplarRepository;
+import com.proyecto.fhce.library.repositories.LibroRepository;
 import com.proyecto.fhce.library.repositories.PermisoRepository;
 import com.proyecto.fhce.library.repositories.PersonaRepository;
 import com.proyecto.fhce.library.repositories.RoleRepository;
@@ -26,6 +45,19 @@ public class DataSeedService {
   private final PersonaRepository personaRepository;
   private final PermisoRepository permisoRepository;
   private final PasswordEncoder passwordEncoder;
+
+  @Autowired
+  private CarreraRepository carreraRepository;
+  @Autowired
+  private BibliotecaRepository bibliotecaRepository;
+  @Autowired
+  private LibroRepository libroRepository;
+  @Autowired
+  private EdicionRepository edicionRepository;
+  @Autowired
+  private EjemplarRepository ejemplarRepository;
+  @Autowired
+  private HistorialEstadoEjemplarRepository historialEstadoEjemplarRepository;
 
   public DataSeedService(RoleRepository roleRepository,
       UserRepository userRepository, PersonaRepository personaRepository, PermisoRepository permisoRepository,
@@ -69,14 +101,52 @@ public class DataSeedService {
         "admin@localhost", "11111", "Admin123!", RoleName.ROLE_ADMIN);
 
     createUserIfNotExists("bibliotecario", "Juan", "Perez", "Gomez", 1234567,
-        "bibliotecario@localhost", "22222", "Biblio123!", RoleName.ROLE_BIBLIOTECARIO);
+        "bibliotecario@localhost", "22222", "123456", RoleName.ROLE_BIBLIOTECARIO);
 
     createUserIfNotExists("estudiante1", "Maria", "Lopez", "Diaz", 7654321,
-        "estudiante@localhost", "33333", "Estudiante123!", RoleName.ROLE_ESTUDIANTE);
+        "estudiante@localhost", "33333", "123456", RoleName.ROLE_ESTUDIANTE);
 
+    // Bibliotecarios
+    createUserIfNotExists("bibliotecario2", "Luis", "Mamani", "Quispe", 2233445,
+        "biblio2@localhost", "700001", "123456", RoleName.ROLE_BIBLIOTECARIO);
+
+    createUserIfNotExists("bibliotecario3", "Ana", "Choque", "Rojas", 3344556,
+        "biblio3@localhost", "700002", "123456", RoleName.ROLE_BIBLIOTECARIO);
+
+    // Estudiantes (10)
+    createUserIfNotExists("estudiante2", "Carlos", "Perez", "Lopez", 1000002,
+        "est2@localhost", "710002", "123456", RoleName.ROLE_ESTUDIANTE);
+
+    createUserIfNotExists("estudiante3", "Lucia", "Gomez", "Ramos", 1000003,
+        "est3@localhost", "710003", "123456", RoleName.ROLE_ESTUDIANTE);
+
+    createUserIfNotExists("estudiante4", "Diego", "Fernandez", "Torrez", 1000004,
+        "est4@localhost", "710004", "123456", RoleName.ROLE_ESTUDIANTE);
+
+    createUserIfNotExists("estudiante5", "Sofia", "Vargas", "Mendoza", 1000005,
+        "est5@localhost", "710005", "123456", RoleName.ROLE_ESTUDIANTE);
+
+    createUserIfNotExists("estudiante6", "Jorge", "Castro", "Quisbert", 1000006,
+        "est6@localhost", "710006", "123456", RoleName.ROLE_ESTUDIANTE);
+
+    createUserIfNotExists("estudiante7", "Elena", "Flores", "Condori", 1000007,
+        "est7@localhost", "710007", "123456", RoleName.ROLE_ESTUDIANTE);
+
+    createUserIfNotExists("estudiante8", "Miguel", "Huanca", "Perez", 1000008,
+        "est8@localhost", "710008", "123456", RoleName.ROLE_ESTUDIANTE);
+
+    createUserIfNotExists("estudiante9", "Valeria", "Rojas", "Loza", 1000009,
+        "est9@localhost", "710009", "123456", RoleName.ROLE_ESTUDIANTE);
+
+    createUserIfNotExists("estudiante10", "Andres", "Gutierrez", "Silva", 1000010,
+        "est10@localhost", "710010", "123456", RoleName.ROLE_ESTUDIANTE);
+
+    createUserIfNotExists("estudiante11", "Paola", "Navarro", "Ortiz", 1000011,
+        "est11@localhost", "710011", "123456", RoleName.ROLE_ESTUDIANTE);
     // ==================== 4️⃣ ASIGNAR PERMISOS A ROLES ====================
     assignPermisos();
-
+    seedCarrerasYBibliotecas();
+    seedLibrosEjemplares();
     return "Data seed completed successfully ✅";
   }
 
@@ -138,5 +208,221 @@ public class DataSeedService {
     roleRepository.save(estudianteRole);
 
     System.out.println("Permisos asignados a los roles ✅");
+  }
+
+  private void seedCarrerasYBibliotecas() {
+
+    // ==================== CARRERAS ====================
+    if (carreraRepository.count() == 0) {
+
+      Carrera historia = new Carrera();
+      historia.setNombre_carrera("Historia");
+      historia.setCodigo_carrera("HIS");
+      historia = carreraRepository.save(historia);
+
+      Carrera linguistica = new Carrera();
+      linguistica.setNombre_carrera("Lingüística e Idiomas");
+      linguistica.setCodigo_carrera("LIN");
+      linguistica = carreraRepository.save(linguistica);
+
+      Carrera filosofia = new Carrera();
+      filosofia.setNombre_carrera("Filosofía");
+      filosofia.setCodigo_carrera("FIL");
+      filosofia = carreraRepository.save(filosofia);
+
+      Carrera cienciasInfo = new Carrera();
+      cienciasInfo.setNombre_carrera("Ciencias de la Información");
+      cienciasInfo.setCodigo_carrera("CIN");
+      cienciasInfo = carreraRepository.save(cienciasInfo);
+
+      System.out.println("Carreras FHCE creadas ✅");
+
+      // ==================== BIBLIOTECA FACULTATIVA ====================
+      if (bibliotecaRepository.findBibliotecaFacultativa().isEmpty()) {
+
+        Biblioteca central = new Biblioteca();
+        central.setNombre("Biblioteca Central FHCE");
+        central.setTipoBiblioteca(TipoBiblioteca.FACULTATIVA);
+        central.setDireccion("Campus Universitario");
+        central.setTelefono("2222222");
+        central.setEmail("central@fhce.edu");
+        central.setHorario_atencion("08:00 - 20:00");
+        central.setEstado(EstadoBiblioteca.ACTIVA);
+
+        bibliotecaRepository.save(central);
+      }
+
+      // ==================== BIBLIOTECAS POR CARRERA ====================
+      crearBibliotecaCarrera(historia, "Biblioteca Historia");
+      crearBibliotecaCarrera(linguistica, "Biblioteca Lingüística");
+      crearBibliotecaCarrera(filosofia, "Biblioteca Filosofía");
+      crearBibliotecaCarrera(cienciasInfo, "Biblioteca Ciencias de la Información");
+
+      System.out.println("Bibliotecas FHCE creadas ✅");
+    }
+  }
+
+  private void crearBibliotecaCarrera(Carrera carrera, String nombreBiblioteca) {
+
+    Optional<Biblioteca> existente = bibliotecaRepository
+        .findByCarrera_IdCarreraAndTipoBiblioteca(
+            carrera.getId_carrera(),
+            TipoBiblioteca.CARRERA);
+
+    if (existente.isEmpty()) {
+      Biblioteca biblioteca = new Biblioteca();
+      biblioteca.setNombre(nombreBiblioteca);
+      biblioteca.setTipoBiblioteca(TipoBiblioteca.CARRERA);
+      biblioteca.setDireccion("Dirección de " + nombreBiblioteca);
+      biblioteca.setTelefono("7777777");
+      biblioteca.setEmail(nombreBiblioteca.toLowerCase().replace(" ", "") + "@mail.com");
+      biblioteca.setHorario_atencion("08:00 - 18:00");
+      biblioteca.setEstado(EstadoBiblioteca.ACTIVA);
+      biblioteca.setCarrera(carrera);
+
+      bibliotecaRepository.save(biblioteca);
+    }
+  }
+
+  private void seedLibrosEjemplares() {
+
+    // Obtener bibliotecas
+    Biblioteca historia = bibliotecaRepository.findByNombre("Biblioteca Historia")
+        .orElseThrow();
+
+    Biblioteca linguistica = bibliotecaRepository.findByNombre("Biblioteca Lingüística")
+        .orElseThrow();
+
+    // ==================== LIBROS HISTORIA ====================
+
+    Libro libro1 = crearLibro("Historia de Bolivia", "Español", "Historia general del país");
+    Edicion ed1 = crearEdicion(
+        libro1,
+        "ISBN-HIS-001",
+        "Editorial Andina",
+        2010,
+        "https://covers.openlibrary.org/b/id/8231996-L.jpg");
+
+    crearEjemplares(ed1, historia, "HIS-EJ-", 3);
+    // Segunda edición del libro Historia de Bolivia
+    Edicion ed1_v2 = crearEdicion(
+        libro1,
+        "ISBN-HIS-001-V2",
+        "Editorial Andina",
+        2022,
+        "https://covers.openlibrary.org/b/id/10523338-L.jpg");
+
+    // Crear ejemplar para nueva edición
+    crearEjemplares(ed1_v2, historia, "HIS-EJ-V2-", 1);
+
+    Libro libro2 = crearLibro("Historia Universal", "Español", "Historia del mundo");
+    Edicion ed2 = crearEdicion(
+        libro2,
+        "ISBN-HIS-002",
+        "Santillana",
+        2015,
+        "https://covers.openlibrary.org/b/id/8228691-L.jpg");
+
+    crearEjemplares(ed2, historia, "HIS-EJ-", 2);
+
+    // ==================== LIBROS LINGÜÍSTICA ====================
+
+    Libro libro3 = crearLibro("Introducción a la Lingüística", "Español", "Fundamentos lingüísticos");
+    Edicion ed3 = crearEdicion(
+        libro3,
+        "ISBN-LIN-001",
+        "McGraw-Hill",
+        2018,
+        "https://covers.openlibrary.org/b/id/8235083-L.jpg");
+
+    crearEjemplares(ed3, linguistica, "LIN-EJ-", 3);
+    // Segunda edición de Introducción a la Lingüística
+    Edicion ed3_v2 = crearEdicion(
+        libro3,
+        "ISBN-LIN-001-V2",
+        "McGraw-Hill",
+        2021,
+        "https://covers.openlibrary.org/b/id/10909258-L.jpg");
+
+    // Crear ejemplar para nueva edición
+    crearEjemplares(ed3_v2, linguistica, "LIN-EJ-V2-", 1);
+    Libro libro4 = crearLibro("Gramática Española", "Español", "Reglas gramaticales");
+    Edicion ed4 = crearEdicion(
+        libro4,
+        "ISBN-LIN-002",
+        "Planeta",
+        2020,
+        "https://covers.openlibrary.org/b/id/8244151-L.jpg");
+
+    crearEjemplares(ed4, linguistica, "LIN-EJ-", 2);
+
+    System.out.println("Libros y ejemplares creados ✅");
+  }
+
+  private Libro crearLibro(String titulo, String idioma, String descripcion) {
+    Libro libro = new Libro();
+    libro.setTitulo(titulo);
+    libro.setIdioma(idioma);
+    libro.setDescripcion(descripcion);
+    return libroRepository.save(libro);
+  }
+
+  private Edicion crearEdicion(Libro libro, String isbn, String editorial, int anio, String imagen) {
+
+    if (edicionRepository.existsByIsbn(isbn)) {
+      return edicionRepository.findByIsbn(isbn).orElseThrow();
+    }
+
+    Edicion ed = new Edicion();
+    ed.setLibro(libro);
+    ed.setIsbn(isbn);
+    ed.setEditorial(editorial);
+    ed.setAnoPublicacion(anio);
+    ed.setEdicion("1ra");
+    ed.setNumeroPaginas(200);
+    ed.setImagenPortada(imagen);
+
+    return edicionRepository.save(ed);
+  }
+
+  private void crearEjemplares(Edicion edicion, Biblioteca biblioteca,
+      String prefijo, int cantidad) {
+
+    for (int i = 1; i <= cantidad; i++) {
+
+      String codigo = prefijo + edicion.getIdEdicion() + "-" + i;
+
+      if (ejemplarRepository.existsByCodigoEjemplar(codigo))
+        continue;
+
+      Ejemplar ej = new Ejemplar();
+      ej.setEdicion(edicion);
+      ej.setBiblioteca(biblioteca);
+      ej.setCodigoEjemplar(codigo);
+      ej.setCodigoTopografico("TOP-" + codigo);
+      ej.setUbicacionFisica("Estante " + i);
+      ej.setEstadoEjemplar(EstadoEjemplar.DISPONIBLE);
+      ej.setFechaAdquisicion(LocalDate.now());
+      ej.setPrecioCompra(new BigDecimal("100"));
+
+      Ejemplar saved = ejemplarRepository.save(ej);
+
+      // historial inicial (igual que tu service)
+      registrarCambioEstadoSeed(saved);
+    }
+  }
+
+  private void registrarCambioEstadoSeed(Ejemplar ejemplar) {
+    HistorialEstadoEjemplar h = new HistorialEstadoEjemplar();
+    h.setEjemplar(ejemplar);
+    h.setEstadoAnterior(null);
+    h.setEstadoNuevo(EstadoEjemplar.DISPONIBLE);
+    h.setMotivo("Seed inicial");
+
+    // ⚠️ evitar problema de seguridad (puede no haber usuario logueado)
+    Usuario admin = userRepository.findByUsername("admin").orElseThrow();
+    h.setUsuarioCambio(admin);
+
+    historialEstadoEjemplarRepository.save(h);
   }
 }
