@@ -50,6 +50,10 @@ public class CertificadoNoDeuda {
   @Column(length = 500, name = "pdf_generado")
   private String pdfGenerado;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "biblioteca_id", nullable = false)
+  private Biblioteca biblioteca;
+
   @PrePersist
   protected void onCreate() {
     fechaEmision = LocalDateTime.now();
@@ -58,14 +62,6 @@ public class CertificadoNoDeuda {
     if (codigoVerificacion == null) {
       codigoVerificacion = UUID.randomUUID().toString();
     }
-  }
-
-  public Long getId_certificado() {
-    return idCertificado;
-  }
-
-  public void setId_certificado(Long id_certificado) {
-    this.idCertificado = id_certificado;
   }
 
   public Usuario getUsuario() {
@@ -122,6 +118,38 @@ public class CertificadoNoDeuda {
 
   public void setPdf_generado(String pdf_generado) {
     this.pdfGenerado = pdf_generado;
+  }
+
+  public Long getIdCertificado() {
+    return idCertificado;
+  }
+
+  public void setIdCertificado(Long idCertificado) {
+    this.idCertificado = idCertificado;
+  }
+
+  public String getCodigoVerificacion() {
+    return codigoVerificacion;
+  }
+
+  public void setCodigoVerificacion(String codigoVerificacion) {
+    this.codigoVerificacion = codigoVerificacion;
+  }
+
+  public String getPdfGenerado() {
+    return pdfGenerado;
+  }
+
+  public void setPdfGenerado(String pdfGenerado) {
+    this.pdfGenerado = pdfGenerado;
+  }
+
+  public Biblioteca getBiblioteca() {
+    return biblioteca;
+  }
+
+  public void setBiblioteca(Biblioteca biblioteca) {
+    this.biblioteca = biblioteca;
   }
 
 }

@@ -90,4 +90,29 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
         Long countPrestamosConEstadoByUsuario(
                         @Param("usuarioId") Long usuarioId,
                         @Param("estado") EstadoPrestamo estado);
+
+        /**
+         * Cuenta préstamos ACTIVOS de un usuario en una biblioteca específica.
+         */
+        @Query("SELECT COUNT(p) FROM Prestamo p " +
+                        "WHERE p.usuario.idUsuario = :usuarioId " +
+                        "AND p.biblioteca.idBiblioteca = :bibliotecaId " +
+                        "AND p.estadoPrestamo = 'ACTIVO'")
+        Long countPrestamosActivosByUsuarioAndBiblioteca(
+                        @Param("usuarioId") Long usuarioId,
+                        @Param("bibliotecaId") Long bibliotecaId);
+
+        /**
+         * Cuenta préstamos de un usuario en una biblioteca específica filtrado por
+         * estado.
+         * Sirve para VENCIDO y RENOVADO.
+         */
+        @Query("SELECT COUNT(p) FROM Prestamo p " +
+                        "WHERE p.usuario.idUsuario = :usuarioId " +
+                        "AND p.biblioteca.idBiblioteca = :bibliotecaId " +
+                        "AND p.estadoPrestamo = :estado")
+        Long countPrestamosConEstadoByUsuarioAndBiblioteca(
+                        @Param("usuarioId") Long usuarioId,
+                        @Param("bibliotecaId") Long bibliotecaId,
+                        @Param("estado") EstadoPrestamo estado);
 }

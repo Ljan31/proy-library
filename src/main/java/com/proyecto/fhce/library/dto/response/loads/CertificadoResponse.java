@@ -15,6 +15,8 @@ public class CertificadoResponse {
   private EstadoCertificado estadoCertificado;
   private String pdf_generado;
   private String urlDescarga;
+  private Long bibliotecaId;
+  private String bibliotecaNombre;
 
   public Long getId_certificado() {
     return id_certificado;
@@ -86,6 +88,22 @@ public class CertificadoResponse {
 
   public void setUrlDescarga(String urlDescarga) {
     this.urlDescarga = urlDescarga;
+  }
+
+  public Long getBibliotecaId() {
+    return bibliotecaId;
+  }
+
+  public void setBibliotecaId(Long bibliotecaId) {
+    this.bibliotecaId = bibliotecaId;
+  }
+
+  public String getBibliotecaNombre() {
+    return bibliotecaNombre;
+  }
+
+  public void setBibliotecaNombre(String bibliotecaNombre) {
+    this.bibliotecaNombre = bibliotecaNombre;
   }
 
 }
