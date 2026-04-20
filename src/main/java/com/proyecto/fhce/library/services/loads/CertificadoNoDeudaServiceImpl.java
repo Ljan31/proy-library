@@ -1,5 +1,6 @@
 package com.proyecto.fhce.library.services.loads;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -28,6 +29,9 @@ import com.proyecto.fhce.library.repositories.CertificadoNoDeudaRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 @Transactional
 public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService {
@@ -42,6 +46,9 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
 
   @Autowired
   private BibliotecaRepository bibliotecaRepository;
+  @Autowired
+  private PdfCertificadoGenerator pdfGenerator;
+  private static final Logger log = LoggerFactory.getLogger(CertificadoNoDeudaServiceImpl.class);
 
   // @Autowired
   // private NotificacionService notificacionService;
@@ -163,10 +170,22 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     }
   }
 
+  // private String generarPDF(CertificadoNoDeuda certificado) {
+  // // Aquí implementarías la generación del PDF usando iText, JasperReports,
+  // etc.
+  // // Por ahora retornamos una ruta simulada
+  // return "/certificados/" + certificado.getIdCertificado() + ".pdf";
+  // }
+
   private String generarPDF(CertificadoNoDeuda certificado) {
-    // Aquí implementarías la generación del PDF usando iText, JasperReports, etc.
-    // Por ahora retornamos una ruta simulada
-    return "/certificados/" + certificado.getIdCertificado() + ".pdf";
+    try {
+      return pdfGenerator.generar(certificado);
+    } catch (IOException e) {
+      // El certificado ya fue guardado — loguear y continuar, el PDF puede
+      // regenerarse
+      log.error("Error generando PDF para certificado {}: {}", certificado.getIdCertificado(), e.getMessage());
+      return null; // o lanzar excepción según política del equipo
+    }
   }
 
   @Transactional(readOnly = true)

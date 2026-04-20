@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -41,6 +42,9 @@ public class CertificadoController {
 
   @Autowired
   private CertificadoNoDeudaService certificadoService;
+
+  @Value("${app.certificados.ruta-base}")
+  private String rutaBase;
 
   /**
    * ADMIN: genera certificado para cualquier usuario en cualquier biblioteca.
@@ -135,17 +139,28 @@ public class CertificadoController {
     CertificadoResponse certificado = certificadoService
         .findByIdConAutorizacion(id, solicitanteId, authentication.getAuthorities());
 
-    Path path = Paths.get(certificado.getPdf_generado());
+    String nombreArchivo = certificado.getPdf_generado();
+    Path path = Paths.get(rutaBase).resolve(nombreArchivo).normalize();
+
     Resource resource = new UrlResource(path.toUri());
-
-    if (!resource.exists()) {
-      throw new ResourceNotFoundException("Archivo PDF no encontrado para el certificado: " + id);
+    System.out.println("ID recibido: " + id);
+    System.out.println("Authentication: " + authentication);
+    System.out.println("Authorities: " + authentication.getAuthorities());
+    System.out.println("nombreArchivo: " + nombreArchivo);
+    System.out.println("rutaBase: " + rutaBase);
+    System.out.println("path completo: " + path.toString());
+    System.out.println("URI del recurso: " + path.toUri());
+    System.out.println("exists: " + resource.exists());
+    System.out.println("isReadable: " + resource.isReadable());
+    if (!resource.exists() || !resource.isReadable()) {
+      throw new ResourceNotFoundException(
+          "Archivo PDF no encontrado para el certificado: " + id);
     }
-
+    System.out.println("Header filename: certificado-" + nombreArchivo + ".pdf");
     return ResponseEntity.ok()
         .contentType(MediaType.APPLICATION_PDF)
         .header(HttpHeaders.CONTENT_DISPOSITION,
-            "attachment; filename=\"certificado-" + id + ".pdf\"")
+            "attachment; filename=\"certificado-" + nombreArchivo + ".pdf\"")
         .body(resource);
   }
 
