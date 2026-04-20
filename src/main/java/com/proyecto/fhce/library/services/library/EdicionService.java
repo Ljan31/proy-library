@@ -2,13 +2,15 @@ package com.proyecto.fhce.library.services.library;
 
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.proyecto.fhce.library.dto.request.library.EdicionRequest;
 import com.proyecto.fhce.library.dto.response.library.EdicionResponse;
 
 public interface EdicionService {
-  EdicionResponse create(EdicionRequest request);
+  public EdicionResponse create(EdicionRequest request, MultipartFile portadaFile);
 
-  EdicionResponse update(Long id, EdicionRequest request);
+  public EdicionResponse update(Long id, EdicionRequest request, MultipartFile portadaFile);
 
   EdicionResponse findById(Long id);
 

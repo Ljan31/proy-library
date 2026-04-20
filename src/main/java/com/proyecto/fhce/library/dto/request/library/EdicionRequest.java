@@ -22,7 +22,6 @@ public class EdicionRequest {
 
   private Integer numeroPaginas;
 
-  @Size(max = 500)
   private String imagenPortada;
 
   @NotNull(message = "El libro es obligatorio")

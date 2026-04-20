@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,8 +14,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.proyecto.fhce.library.dto.request.library.EdicionRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.library.EdicionResponse;
@@ -45,24 +49,42 @@ public class EdicionController {
     return ResponseEntity.ok(ApiResponse.success(edicionService.findById(id)));
   }
 
-  @Operation(summary = "Crear nueva edición", security = @SecurityRequirement(name = "bearer-jwt"))
-  @PostMapping
+  @Operation(summary = "Crear nueva edición", description = "Acepta multipart/form-data. La portada puede ser archivo o URL.", security = @SecurityRequirement(name = "bearer-jwt"))
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
-  public ResponseEntity<ApiResponse<EdicionResponse>> create(@Valid @RequestBody EdicionRequest request) {
-    EdicionResponse edicion = edicionService.create(request);
+  public ResponseEntity<ApiResponse<EdicionResponse>> create(
+      @Valid @RequestPart("datos") EdicionRequest request,
+      @RequestPart(value = "portada", required = false) MultipartFile portadaFile) {
+    EdicionResponse edicion = edicionService.create(request, portadaFile);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success("Edición creada exitosamente", edicion));
   }
 
   @Operation(summary = "Actualizar edición", security = @SecurityRequirement(name = "bearer-jwt"))
-  @PutMapping("/{id}")
+  @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<EdicionResponse>> update(
       @PathVariable Long id,
-      @Valid @RequestBody EdicionRequest request) {
-    EdicionResponse edicion = edicionService.update(id, request);
+      @Valid @RequestBody EdicionRequest request,
+      @RequestPart(value = "portada", required = false) MultipartFile portadaFile) {
+    EdicionResponse edicion = edicionService.update(id, request, portadaFile);
     return ResponseEntity.ok(ApiResponse.success("Edición actualizada exitosamente", edicion));
   }
+
+  // @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  // public ResponseEntity<ApiResponse<EdicionResponse>> create(
+  // @RequestPart("datos") String datos,
+  // @RequestPart(value = "portada", required = false) MultipartFile portadaFile)
+  // throws Exception {
+
+  // ObjectMapper mapper = new ObjectMapper();
+  // EdicionRequest request = mapper.readValue(datos, EdicionRequest.class);
+
+  // EdicionResponse edicion = edicionService.create(request, portadaFile);
+
+  // return ResponseEntity.status(HttpStatus.CREATED)
+  // .body(ApiResponse.success("Edición creada exitosamente", edicion));
+  // }
 
   @Operation(summary = "Eliminar edición", security = @SecurityRequirement(name = "bearer-jwt"))
   @DeleteMapping("/{id}")
