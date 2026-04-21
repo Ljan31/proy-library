@@ -65,26 +65,11 @@ public class EdicionController {
   @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<EdicionResponse>> update(
       @PathVariable Long id,
-      @Valid @RequestBody EdicionRequest request,
+      @Valid @RequestPart("datos") EdicionRequest request,
       @RequestPart(value = "portada", required = false) MultipartFile portadaFile) {
     EdicionResponse edicion = edicionService.update(id, request, portadaFile);
     return ResponseEntity.ok(ApiResponse.success("Edición actualizada exitosamente", edicion));
   }
-
-  // @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  // public ResponseEntity<ApiResponse<EdicionResponse>> create(
-  // @RequestPart("datos") String datos,
-  // @RequestPart(value = "portada", required = false) MultipartFile portadaFile)
-  // throws Exception {
-
-  // ObjectMapper mapper = new ObjectMapper();
-  // EdicionRequest request = mapper.readValue(datos, EdicionRequest.class);
-
-  // EdicionResponse edicion = edicionService.create(request, portadaFile);
-
-  // return ResponseEntity.status(HttpStatus.CREATED)
-  // .body(ApiResponse.success("Edición creada exitosamente", edicion));
-  // }
 
   @Operation(summary = "Eliminar edición", security = @SecurityRequirement(name = "bearer-jwt"))
   @DeleteMapping("/{id}")
