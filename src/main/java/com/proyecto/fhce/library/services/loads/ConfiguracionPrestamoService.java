@@ -16,6 +16,7 @@ import com.proyecto.fhce.library.entities.Role;
 import com.proyecto.fhce.library.enums.TipoPrestamo;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
+import com.proyecto.fhce.library.mapper.ConfiguracionPrestamoMapper;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.ConfiguracionPrestamoRepository;
 import com.proyecto.fhce.library.repositories.RoleRepository;

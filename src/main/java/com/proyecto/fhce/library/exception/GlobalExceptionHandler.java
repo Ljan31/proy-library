@@ -121,4 +121,50 @@ public class GlobalExceptionHandler {
         .status(HttpStatus.BAD_REQUEST)
         .body(ApiResponse.error(message));
   }
+
+  // sancion
+  @ExceptionHandler(SancionException.SancionDuplicadaException.class)
+  public ResponseEntity<ApiResponse<Void>> handleSancionDuplicada(
+      SancionException.SancionDuplicadaException ex) {
+
+    return ResponseEntity
+        .status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(ex.getMessage()));
+  }
+
+  @ExceptionHandler(SancionException.SancionNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> handleSancionNotFound(
+      SancionException.SancionNotFoundException ex) {
+
+    return ResponseEntity
+        .status(HttpStatus.NOT_FOUND)
+        .body(ApiResponse.error(ex.getMessage()));
+  }
+
+  @ExceptionHandler(SancionException.EstadoInvalidoException.class)
+  public ResponseEntity<ApiResponse<Void>> handleEstadoInvalido(
+      SancionException.EstadoInvalidoException ex) {
+
+    return ResponseEntity
+        .status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(ex.getMessage()));
+  }
+
+  @ExceptionHandler(SancionException.SancionNoActivaException.class)
+  public ResponseEntity<ApiResponse<Void>> handleSancionNoActiva(
+      SancionException.SancionNoActivaException ex) {
+
+    return ResponseEntity
+        .status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(ex.getMessage()));
+  }
+
+  @ExceptionHandler(SancionException.PrestamoNoVencidoException.class)
+  public ResponseEntity<ApiResponse<Void>> handlePrestamoNoVencido(
+      SancionException.PrestamoNoVencidoException ex) {
+
+    return ResponseEntity
+        .status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(ex.getMessage()));
+  }
 }

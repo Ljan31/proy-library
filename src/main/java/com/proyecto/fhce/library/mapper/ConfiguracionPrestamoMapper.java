@@ -1,4 +1,4 @@
-package com.proyecto.fhce.library.services.loads;
+package com.proyecto.fhce.library.mapper;
 
 import org.springframework.stereotype.Component;
 
