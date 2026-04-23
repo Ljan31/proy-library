@@ -25,7 +25,8 @@ import jakarta.persistence.Table;
 public class Prestamo {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id_prestamo;
+  @Column(name = "id_prestamo")
+  private Long idPrestamo;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "ejemplar_id", nullable = false)
@@ -77,6 +78,10 @@ public class Prestamo {
   @Enumerated(EnumType.STRING)
   @Column(name = "condicion_devolucion")
   private CondicionFisicaLibro condicionDevolucion; // estado al momento de la devolución (nullable hasta devolver)
+
+  @Column(name = "id_config_usado")
+  private Long idConfigUsado;
+
   // @OneToOne(mappedBy = "prestamo", cascade = CascadeType.ALL)
   // private Sancion sancion;
 
@@ -89,12 +94,12 @@ public class Prestamo {
       renovaciones = 0;
   }
 
-  public Long getId_prestamo() {
-    return id_prestamo;
+  public Long getIdPrestamo() {
+    return idPrestamo;
   }
 
-  public void setId_prestamo(Long id_prestamo) {
-    this.id_prestamo = id_prestamo;
+  public void setIdPrestamo(Long idPrestamo) {
+    this.idPrestamo = idPrestamo;
   }
 
   public Ejemplar getEjemplar() {
@@ -207,6 +212,14 @@ public class Prestamo {
 
   public void setCondicionDevolucion(CondicionFisicaLibro condicionDevolucion) {
     this.condicionDevolucion = condicionDevolucion;
+  }
+
+  public Long getIdConfigUsado() {
+    return idConfigUsado;
+  }
+
+  public void setIdConfigUsado(Long idConfigUsado) {
+    this.idConfigUsado = idConfigUsado;
   }
 
 }

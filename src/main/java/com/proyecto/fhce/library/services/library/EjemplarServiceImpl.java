@@ -449,7 +449,7 @@ public class EjemplarServiceImpl implements EjemplarService {
       if (prestamoActivo.isPresent()) {
         Prestamo p = prestamoActivo.get();
         PrestamoActivoResponse prestamoResp = new PrestamoActivoResponse();
-        prestamoResp.setId_prestamo(p.getId_prestamo());
+        prestamoResp.setId_prestamo(p.getIdPrestamo());
         prestamoResp.setFechaPrestamo(p.getFechaPrestamo());
         prestamoResp.setFechaDevolucionEstimada(p.getFechaDevolucionEstimada());
 

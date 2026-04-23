@@ -494,7 +494,7 @@ public class PrestamoServiceImpl implements PrestamoService {
 
   private PrestamoResponse mapToResponse(Prestamo prestamo) {
     PrestamoResponse response = new PrestamoResponse();
-    response.setId_prestamo(prestamo.getId_prestamo());
+    response.setId_prestamo(prestamo.getIdPrestamo());
     response.setEstadoPrestamo(prestamo.getEstadoPrestamo());
     response.setFechaPrestamo(prestamo.getFechaPrestamo());
     response.setFechaDevolucionEstimada(prestamo.getFechaDevolucionEstimada());

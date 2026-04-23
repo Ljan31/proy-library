@@ -26,7 +26,7 @@ public class SancionMapper {
         s.getUsuario() != null ? s.getUsuario().getId_usuario() : null,
         nombreUsuario,
         ciUsuario,
-        s.getPrestamo() != null ? s.getPrestamo().getId_prestamo() : null,
+        s.getPrestamo() != null ? s.getPrestamo().getIdPrestamo() : null,
         s.getBiblioteca() != null ? s.getBiblioteca().getIdBiblioteca() : null,
         s.getBiblioteca() != null ? s.getBiblioteca().getNombre() : null,
         s.getTipoSancion(),

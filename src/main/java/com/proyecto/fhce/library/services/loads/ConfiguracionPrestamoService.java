@@ -80,6 +80,11 @@ public class ConfiguracionPrestamoService {
     return mapper.toResponseDTO(buscarPorIdOLanzarError(id));
   }
 
+  public ConfiguracionResueltaDTO obtenerPorId(Long idConfig) {
+    ConfiguracionPrestamo config = buscarPorIdOLanzarError(idConfig);
+    return mapper.toResueltaDTO(config);
+  }
+
   public List<ConfiguracionPrestamoResponseDTO> listarPorBiblioteca(Long bibliotecaId) {
     return configuracionRepository.findAllByBibliotecaId(bibliotecaId)
         .stream()

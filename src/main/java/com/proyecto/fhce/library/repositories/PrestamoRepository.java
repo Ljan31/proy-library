@@ -115,4 +115,35 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
                         @Param("usuarioId") Long usuarioId,
                         @Param("bibliotecaId") Long bibliotecaId,
                         @Param("estado") EstadoPrestamo estado);
+
+        /**
+         * Carga todas las relaciones necesarias para que SancionService
+         * pueda calcular multas sin lazy-loading adicional.
+         * REQUERIDO por el módulo de Sanciones
+         */
+        @Query("""
+                        SELECT p FROM Prestamo p
+                        JOIN FETCH p.usuario u
+                        JOIN FETCH u.roles
+                        JOIN FETCH p.biblioteca
+                        JOIN FETCH p.ejemplar
+                        WHERE p.idPrestamo = :id
+                        """)
+        Optional<Prestamo> findByIdWithRelations(@Param("id") Long id);
+
+        /**
+         * Préstamos vencidos que aún no tienen sanción ACTIVA.
+         * Usado por el CRON de SancionService para evitar duplicados.
+         * REQUERIDO por el módulo de Sanciones
+         */
+        @Query("""
+                        SELECT p FROM Prestamo p
+                        WHERE p.fechaDevolucionEstimada < CURRENT_DATE
+                        AND p.estadoPrestamo NOT IN ('DEVUELTO', 'CANCELADO')
+                        AND NOT EXISTS (
+                            SELECT 1 FROM Sancion s
+                            WHERE s.prestamo = p AND s.estado = 'ACTIVA'
+                        )
+                        """)
+        List<Prestamo> findPrestamosVencidosSinSancion();
 }
