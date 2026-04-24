@@ -11,7 +11,7 @@ import com.proyecto.fhce.library.dto.SancionDTO.EstadoSancionUsuarioDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.PagoMultaRequestDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.SancionManualRequestDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.SancionResponseDTO;
-import com.proyecto.fhce.library.dto.response.loads.ConfiguracionResueltaDTO;
+import com.proyecto.fhce.library.dto.response.loads.ConfiguracionPrestamoResponseDTO;
 import com.proyecto.fhce.library.entities.Prestamo;
 import com.proyecto.fhce.library.entities.Sancion;
 import com.proyecto.fhce.library.entities.Usuario;
@@ -105,14 +105,8 @@ public class SancionService {
     // ⑤ Obtener configuración completa si hay suspensión (para los días)
     int diasSuspension = 0;
     if (debeSuspender) {
-      // ConfiguracionResueltaDTO config =
-      // configuracionService.resolverConfiguracionAplicable(
-      // prestamo.getBiblioteca().getIdBiblioteca(),
-      // obtenerRolIdDelUsuario(prestamo.getUsuario()),
-      // prestamo.getTipoPrestamo());
-      // diasSuspension = config.diasSuspension();
-      ConfiguracionResueltaDTO config = configuracionService
-          .obtenerPorId(prestamo.getIdConfigUsado());
+      ConfiguracionPrestamoResponseDTO config = configuracionService
+          .buscarPorId(prestamo.getIdConfigUsado());
 
       // int diasSuspension = debeSuspender ? config.getDiasSuspension() : 0;
       diasSuspension = config.getDiasSuspension();

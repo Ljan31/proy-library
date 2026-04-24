@@ -1,8 +1,6 @@
 package com.proyecto.fhce.library.services.loads;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,10 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.proyecto.fhce.library.dto.ReglasPrestamoDTO;
 import com.proyecto.fhce.library.dto.request.loads.ConfiguracionPrestamoRequestDTO;
 import com.proyecto.fhce.library.dto.response.loads.ConfiguracionPrestamoResponseDTO;
-import com.proyecto.fhce.library.dto.response.loads.ConfiguracionResueltaDTO;
 import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.ConfiguracionPrestamo;
-import com.proyecto.fhce.library.entities.Role;
 import com.proyecto.fhce.library.enums.TipoPrestamo;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
