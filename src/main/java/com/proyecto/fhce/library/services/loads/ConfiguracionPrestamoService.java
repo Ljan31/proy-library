@@ -99,7 +99,6 @@ public class ConfiguracionPrestamoService {
    */
   public ConfiguracionResueltaDTO resolverConfiguracionAplicable(
       Long bibliotecaId, Long rolId, TipoPrestamo tipoPrestamo) {
-
     List<ConfiguracionPrestamo> candidatas = configuracionRepository
         .findConfiguracionesAplicables(bibliotecaId, rolId, tipoPrestamo);
 

@@ -28,6 +28,7 @@ public class PrestamoResponse {
   private TipoDocumentoGarantia tipoDocumentoGarantia;
   private CondicionFisicaLibro condicionEntrega;
   private CondicionFisicaLibro condicionDevolucion;
+  private Long idConfigUsado;
   // private SancionResponse sancion;
 
   public Long getId_prestamo() {
@@ -164,6 +165,14 @@ public class PrestamoResponse {
 
   public void setCondicionDevolucion(CondicionFisicaLibro condicionDevolucion) {
     this.condicionDevolucion = condicionDevolucion;
+  }
+
+  public Long getIdConfigUsado() {
+    return idConfigUsado;
+  }
+
+  public void setIdConfigUsado(Long idConfigUsado) {
+    this.idConfigUsado = idConfigUsado;
   }
 
 }

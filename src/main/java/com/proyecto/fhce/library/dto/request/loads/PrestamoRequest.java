@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import com.proyecto.fhce.library.enums.CondicionFisicaLibro;
 import com.proyecto.fhce.library.enums.TipoDocumentoGarantia;
+import com.proyecto.fhce.library.enums.TipoPrestamo;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
@@ -29,6 +30,8 @@ public class PrestamoRequest {
 
   @NotNull(message = "La condición física del ejemplar al entregarlo es obligatoria")
   private CondicionFisicaLibro condicionEntrega;
+
+  private TipoPrestamo tipoPrestamo;
 
   public Long getEjemplarId() {
     return ejemplarId;
@@ -84,6 +87,14 @@ public class PrestamoRequest {
 
   public void setCondicionEntrega(CondicionFisicaLibro condicionEntrega) {
     this.condicionEntrega = condicionEntrega;
+  }
+
+  public TipoPrestamo getTipoPrestamo() {
+    return tipoPrestamo;
+  }
+
+  public void setTipoPrestamo(TipoPrestamo tipoPrestamo) {
+    this.tipoPrestamo = tipoPrestamo;
   }
 
 }

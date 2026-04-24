@@ -5,7 +5,8 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.proyecto.fhce.library.config.PrestamoProperties;
+import com.proyecto.fhce.library.dto.SancionDTO.EstadoSancionUsuarioDTO;
 import com.proyecto.fhce.library.dto.request.loads.DevolucionRequest;
 import com.proyecto.fhce.library.dto.request.loads.FiltroPrestamoRequest;
 import com.proyecto.fhce.library.dto.request.loads.PrestamoRequest;
@@ -21,6 +23,7 @@ import com.proyecto.fhce.library.dto.response.library.BibliotecaSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.EdicionSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.EjemplarResponse;
 import com.proyecto.fhce.library.dto.response.library.LibroSimpleResponse;
+import com.proyecto.fhce.library.dto.response.loads.ConfiguracionResueltaDTO;
 import com.proyecto.fhce.library.dto.response.loads.PrestamoResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
@@ -32,6 +35,7 @@ import com.proyecto.fhce.library.enums.EstadoEjemplar;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
+import com.proyecto.fhce.library.mapper.PrestamoMapper;
 import com.proyecto.fhce.library.repositories.BibliotecaEncargadoRepository;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
@@ -40,8 +44,10 @@ import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class PrestamoServiceImpl implements PrestamoService {
+
+  private static final Logger log = LoggerFactory.getLogger(PrestamoServiceImpl.class);
 
   @Autowired
   private PrestamoRepository prestamoRepository;
@@ -56,19 +62,20 @@ public class PrestamoServiceImpl implements PrestamoService {
   private BibliotecaRepository bibliotecaRepository;
 
   @Autowired
-  private PrestamoProperties prestamoProperties;
-
-  @Autowired
   private HistorialEstadoEjemplarRepository historialRepository;
 
   @Autowired
   private BibliotecaEncargadoRepository bibliotecaEncargadoRepository;
-  // @Autowired
-  // private ConfiguracionPrestamoRepository configuracionRepository;
 
-  // @Autowired
-  // private SancionRepository sancionRepository;
+  @Autowired
+  private PrestamoMapper prestamoMapper;
 
+  // Integraciones con otros módulos
+  @Autowired
+  private ConfiguracionPrestamoService configuracionService;
+
+  @Autowired
+  private SancionService sancionService;
   // @Autowired
   // private NotificacionService notificacionService;
 
@@ -77,15 +84,13 @@ public class PrestamoServiceImpl implements PrestamoService {
 
   // ==================== QUERIES ====================
 
-  @Transactional(readOnly = true)
   public List<PrestamoResponse> findAll() {
     return prestamoRepository.findAll()
         .stream()
-        .map(this::mapToResponse)
+        .map(prestamoMapper::toResponse)
         .collect(Collectors.toList());
   }
 
-  @Transactional(readOnly = true)
   public List<PrestamoResponse> findByBiblioteca(Long bibliotecaId, EstadoPrestamo estado) {
     if (!bibliotecaRepository.existsById(bibliotecaId)) {
       throw new ResourceNotFoundException("Biblioteca no encontrada con id: " + bibliotecaId);
@@ -95,7 +100,7 @@ public class PrestamoServiceImpl implements PrestamoService {
         .findByBibliotecaConFiltroEstado(bibliotecaId, estado);
 
     return prestamos.stream()
-        .map(this::mapToResponse)
+        .map(prestamoMapper::toResponse)
         .collect(Collectors.toList());
   }
 
@@ -103,7 +108,7 @@ public class PrestamoServiceImpl implements PrestamoService {
   public PrestamoResponse findById(Long id) {
     Prestamo prestamo = prestamoRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Préstamo no encontrado con id: " + id));
-    return mapToResponse(prestamo);
+    return prestamoMapper.toResponse(prestamo);
   }
 
   @Transactional(readOnly = true)
@@ -114,7 +119,7 @@ public class PrestamoServiceImpl implements PrestamoService {
     }
     return prestamoRepository.findByUsuario_IdUsuario(usuarioId)
         .stream()
-        .map(this::mapToResponse)
+        .map(prestamoMapper::toResponse)
         .collect(Collectors.toList());
   }
 
@@ -122,14 +127,14 @@ public class PrestamoServiceImpl implements PrestamoService {
   public List<PrestamoResponse> findByEstado(EstadoPrestamo estado) {
     return prestamoRepository.findByEstadoPrestamo(estado)
         .stream()
-        .map(this::mapToResponse)
+        .map(prestamoMapper::toResponse)
         .collect(Collectors.toList());
   }
 
   @Transactional(readOnly = true)
   public List<PrestamoResponse> findPrestamosVencidos() {
     List<Prestamo> prestamos = prestamoRepository.findPrestamosVencidos(LocalDate.now());
-    return prestamos.stream().map(this::mapToResponse).collect(Collectors.toList());
+    return prestamos.stream().map(prestamoMapper::toResponse).collect(Collectors.toList());
   }
 
   @Transactional(readOnly = true)
@@ -137,7 +142,7 @@ public class PrestamoServiceImpl implements PrestamoService {
     LocalDate fechaInicio = LocalDate.now();
     LocalDate fechaFin = LocalDate.now().plusDays(dias);
     List<Prestamo> prestamos = prestamoRepository.findPrestamosPorVencer(fechaInicio, fechaFin);
-    return prestamos.stream().map(this::mapToResponse).collect(Collectors.toList());
+    return prestamos.stream().map(prestamoMapper::toResponse).collect(Collectors.toList());
   }
 
   @Transactional(readOnly = true)
@@ -163,12 +168,25 @@ public class PrestamoServiceImpl implements PrestamoService {
       prestamos = prestamoRepository.findAll();
     }
 
-    return prestamos.stream().map(this::mapToResponse).collect(Collectors.toList());
+    return prestamos.stream().map(prestamoMapper::toResponse).collect(Collectors.toList());
   }
 
   // ==================== OPERATIONS ====================
-
+  @Transactional
   public PrestamoResponse realizarPrestamo(PrestamoRequest request, Long bibliotecarioId) {
+    // ====== LOG ENTRADA ======
+    log.info(
+        "INICIO realizarPrestamo - usuarioId={}, ejemplarId={}, bibliotecaId={}, tipoPrestamo={}, fechaDevolucionEstimada={}, tipoDocumentoGarantia={}, condicionEntrega={}, observaciones={}, bibliotecarioId={}",
+        request.getUsuarioId(),
+        request.getEjemplarId(),
+        request.getBibliotecaId(),
+        request.getTipoPrestamo(),
+        request.getFechaDevolucionEstimada(),
+        request.getTipoDocumentoGarantia(),
+        request.getCondicionEntrega(),
+        request.getObservaciones(),
+        bibliotecarioId);
+
     Usuario usuario = usuarioRepository.findById(request.getUsuarioId())
         .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
@@ -179,11 +197,15 @@ public class PrestamoServiceImpl implements PrestamoService {
         .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada"));
 
     Usuario bibliotecario = validarEncargadoBiblioteca(bibliotecarioId, biblioteca);
-    // // Validate no active sanctions
-    // if (sancionRepository.hasUsuarioSancionesActivas(usuario.getId_usuario())) {
-    // throw new BusinessException("El usuario tiene sanciones activas y no puede
-    // realizar préstamos");
-    // }
+    // Validate no active sanctions
+    EstadoSancionUsuarioDTO estadoSanciones = sancionService.obtenerEstadoSanciones(usuario.getId_usuario());
+    log.debug("Estado sanciones: {}", estadoSanciones);
+
+    if (estadoSanciones.tieneSuspensionVigente()) {
+      throw new BusinessException(
+          "El usuario tiene suspensión activa hasta: " +
+              estadoSanciones.fechaFinSuspensionMasProxima());
+    }
 
     // Validate ejejmplar availability
     if (ejemplar.getEstadoEjemplar() != EstadoEjemplar.DISPONIBLE) {
@@ -196,15 +218,31 @@ public class PrestamoServiceImpl implements PrestamoService {
           throw new BusinessException("El ejemplar ya tiene un préstamo activo registrado");
         });
 
-    // // Get loan configuration
-    // ConfiguracionPrestamo config = obtenerConfiguracion(usuario, biblioteca);
-
+    // ③ Resolver configuración aplicable — INTEGRACIÓN CON CONFIGURACIÓN
+    // Obtiene el rol del usuario para buscar la config más específica disponible
+    Long rolId = usuario.getRoles().isEmpty() ? null : usuario.getRoles().iterator().next().getId_role();
+    ConfiguracionResueltaDTO config = configuracionService.resolverConfiguracionAplicable(
+        biblioteca.getIdBiblioteca(),
+        null,
+        request.getTipoPrestamo() // "SALA" | "DOMICILIO"
+    );
+    log.debug(
+        "Configuración aplicada - idConfig={}, tipoPrestamo={}, diasPrestamoMax={}, ejemplaresPermitidos={}, multaPorDia={}, multaMaxDias={}, diasSuspension={}, diasReserva={}, nivelAplicacion={}",
+        config.getIdConfig(),
+        config.getTipoPrestamo(),
+        config.getDiasPrestamoMax(),
+        config.getEjemplaresPermitidos(),
+        config.getMultaPorDia(),
+        config.getMultaMaxDias(),
+        config.getDiasSuspension(),
+        config.getDiasReserva(),
+        config.getNivelAplicacion());
     // Validate simultaneous loan limit
     Long prestamosActivos = prestamoRepository.countPrestamosActivosByUsuario(usuario.getId_usuario());
-    if (prestamosActivos >= prestamoProperties.getEjemplaresSimultaneosMaximos()) {
+    if (prestamosActivos >= config.getEjemplaresPermitidos()) {
       throw new BusinessException(
           "El usuario ha alcanzado el límite de préstamos simultáneos: "
-              + prestamoProperties.getEjemplaresSimultaneosMaximos());
+              + config.getEjemplaresPermitidos());
     }
 
     // Create loan
@@ -214,11 +252,11 @@ public class PrestamoServiceImpl implements PrestamoService {
     prestamo.setBiblioteca(biblioteca);
     prestamo.setBibliotecarioPrestamo(bibliotecario);
     prestamo.setFechaPrestamo(LocalDateTime.now());
-
+    prestamo.setIdConfigUsado(config.getIdConfig());
     // Calculate return date
     LocalDate fechaDevolucion = request.getFechaDevolucionEstimada() != null
         ? request.getFechaDevolucionEstimada()
-        : LocalDate.now().plusDays(prestamoProperties.getDiasMaximos());
+        : LocalDate.now().plusDays(config.getDiasPrestamoMax());
 
     prestamo.setFechaDevolucionEstimada(fechaDevolucion);
 
@@ -232,6 +270,8 @@ public class PrestamoServiceImpl implements PrestamoService {
     ejemplarRepository.save(ejemplar);
 
     Prestamo saved = prestamoRepository.save(prestamo);
+    log.info("Préstamo creado: id={} usuario={} ejemplar={}",
+        saved.getIdPrestamo(), usuario.getId_usuario(), ejemplar.getIdEjemplar());
 
     // // Audit
     // auditoriaService.registrar("CREATE_LOAN", "loans", saved.getId_prestamo(),
@@ -239,10 +279,10 @@ public class PrestamoServiceImpl implements PrestamoService {
 
     // // Notification
     // notificacionService.enviarNotificacionPrestamo(saved);
-
-    return mapToResponse(saved);
+    return prestamoMapper.toResponse(saved);
   }
 
+  @Transactional
   public PrestamoResponse realizarDevolucion(DevolucionRequest request, Long bibliotecarioId) {
     Prestamo prestamo = prestamoRepository.findById(request.getPrestamoId())
         .orElseThrow(() -> new ResourceNotFoundException("Préstamo no encontrado"));
@@ -252,6 +292,8 @@ public class PrestamoServiceImpl implements PrestamoService {
         && prestamo.getEstadoPrestamo() != EstadoPrestamo.RENOVADO) {
       throw new BusinessException("El préstamo no está en un estado válido para devolución. Estado actual: "
           + prestamo.getEstadoPrestamo());
+      // throw new BusinessException("Estado inválido para devolución: " +
+      // prestamo.getEstadoPrestamo());
     }
 
     Usuario bibliotecario = validarEncargadoBiblioteca(bibliotecarioId, prestamo.getBiblioteca());
@@ -263,9 +305,10 @@ public class PrestamoServiceImpl implements PrestamoService {
     prestamo.setCondicionDevolucion(request.getCondicionDevolucion());
 
     if (request.getObservaciones() != null) {
-      prestamo.setObservaciones(
-          (prestamo.getObservaciones() != null ? prestamo.getObservaciones() + ". " : "")
-              + request.getObservaciones());
+      String obs = prestamo.getObservaciones() != null
+          ? prestamo.getObservaciones() + ". " + request.getObservaciones()
+          : request.getObservaciones();
+      prestamo.setObservaciones(obs);
     }
 
     if (prestamo.getCondicionEntrega() != null &&
@@ -287,12 +330,22 @@ public class PrestamoServiceImpl implements PrestamoService {
     ejemplarRepository.save(ejemplar);
 
     registrarCambioEstado(ejemplar, estadoAnterior, nuevoEstado, request.getObservaciones(), bibliotecario);
-    // Check for overdue and create sanction if needed
-    // if (LocalDate.now().isAfter(prestamo.getFechaDevolucionEstimada())) {
-    // crearSancionPorRetraso(prestamo);
-    // }
-
     Prestamo updated = prestamoRepository.save(prestamo);
+
+    // ⑥ Delegar sanción al módulo de sanciones si hubo retraso — INTEGRACIÓN
+    // La sanción se procesa FUERA del bloque transaccional principal del préstamo.
+    // SancionService maneja su propia transacción y garantiza idempotencia.
+    if (LocalDate.now().isAfter(prestamo.getFechaDevolucionEstimada())) {
+      try {
+        sancionService.procesarDevolucionTardia(updated.getIdPrestamo());
+        log.info("Sanción procesada para préstamo vencido id={}", updated.getIdPrestamo());
+      } catch (Exception e) {
+        // Un fallo en la sanción NO revierte la devolución — el préstamo ya está
+        // cerrado.
+        // El CRON de SancionService retomará este préstamo en su próxima ejecución.
+        log.error("Error al procesar sanción para préstamo id={}: {}", updated.getIdPrestamo(), e.getMessage());
+      }
+    }
 
     // // Audit
     // auditoriaService.registrar("RETURN_LOAN", "loans", updated.getId_prestamo(),
@@ -301,10 +354,10 @@ public class PrestamoServiceImpl implements PrestamoService {
 
     // // Notification
     // notificacionService.enviarNotificacionDevolucion(updated);
-
-    return mapToResponse(updated);
+    return prestamoMapper.toResponse(updated);
   }
 
+  @Transactional
   public PrestamoResponse renovarPrestamo(RenovacionRequest request, Long userId,
       Collection<? extends GrantedAuthority> authorities) {
     Prestamo prestamo = prestamoRepository.findById(request.getPrestamoId())
@@ -344,32 +397,33 @@ public class PrestamoServiceImpl implements PrestamoService {
       throw new BusinessException("No se puede renovar un préstamo vencido. Debe registrar la devolución.");
     }
 
-    // // Get configuration
-    // ConfiguracionPrestamo config = obtenerConfiguracion(
-    // prestamo.getUsuario(),
-    // prestamo.getBiblioteca());
-
-    // Validate renewal limit
-    // if (prestamo.getRenovaciones() >= config.getRenovacionesMax()) {
-    if (prestamo.getRenovaciones() >= prestamoProperties.getRenovacionesMaximas()) {
-      throw new BusinessException(
-          "Ha alcanzado el límite de renovaciones: " + prestamoProperties.getRenovacionesMaximas());
+    // ⑦ Verificar suspensión vigente antes de renovar — INTEGRACIÓN CON SANCIONES
+    EstadoSancionUsuarioDTO estadoSanciones = sancionService
+        .obtenerEstadoSanciones(prestamo.getUsuario().getId_usuario());
+    if (estadoSanciones.tieneSuspensionVigente()) {
+      throw new BusinessException("No se puede renovar con suspensión activa");
     }
 
-    // // Validate no active sanctions
-    // if
-    // (sancionRepository.hasUsuarioSancionesActivas(prestamo.getUsuario().getId_usuario()))
-    // {
-    // throw new BusinessException("No se puede renovar con sanciones activas");
-    // }
+    // ⑧ Validar límite de renovaciones desde configuración — INTEGRACIÓN CON CONFIG
+    ConfiguracionResueltaDTO config = configuracionService.obtenerPorId(
+        prestamo.getIdConfigUsado());
 
+    // int renovacionesMax = config.getRenovacionesMax(); // desde config, no
+    // hardcoded
+    int renovacionesMax = 3; // desde config, no hardcoded
+    // Validate renewal limit
+    if (prestamo.getRenovaciones() >= renovacionesMax) {
+      throw new BusinessException(
+          "Ha alcanzado el límite de renovaciones: " + renovacionesMax);
+    }
     // Renew
     prestamo.setRenovaciones(prestamo.getRenovaciones() + 1);
     prestamo.setFechaDevolucionEstimada(
-        prestamo.getFechaDevolucionEstimada().plusDays(prestamoProperties.getDiasMaximos()));
+        prestamo.getFechaDevolucionEstimada().plusDays(config.getDiasPrestamoMax()));
     prestamo.setEstadoPrestamo(EstadoPrestamo.RENOVADO);
 
     Prestamo renewed = prestamoRepository.save(prestamo);
+    log.info("Préstamo renovado: id={} renovación #{}", renewed.getIdPrestamo(), renewed.getRenovaciones());
 
     // // Audit
     // auditoriaService.registrar("RENEW_LOAN", "loans", renewed.getId_prestamo(),
@@ -379,23 +433,31 @@ public class PrestamoServiceImpl implements PrestamoService {
     // // Notification
     // notificacionService.enviarNotificacionRenovacion(renewed);
 
-    return mapToResponse(renewed);
+    return prestamoMapper.toResponse(renewed);
   }
 
   // ==================== SCHEDULED JOBS ====================
-
-  @Scheduled(cron = "0 0 8 * * *") // Every day at 8 AM
+  /**
+   * Marca préstamos vencidos como VENCIDO.
+   * El CRON de SancionService (02:00 AM) procesará las sanciones automáticamente
+   * usando findPrestamosVencidosSinSancion() — no duplicar lógica aquí.
+   */
+  @Scheduled(cron = "0 0 1 * * *") // Every day at 8 AM
+  @Transactional
   public void procesarPrestamosVencidos() {
     List<Prestamo> vencidos = prestamoRepository.findPrestamosVencidos(LocalDate.now());
-
+    int procesados = 0;
     for (Prestamo prestamo : vencidos) {
       if (prestamo.getEstadoPrestamo() == EstadoPrestamo.ACTIVO
           || prestamo.getEstadoPrestamo() == EstadoPrestamo.RENOVADO) {
         prestamo.setEstadoPrestamo(EstadoPrestamo.VENCIDO);
         prestamoRepository.save(prestamo);
+        procesados++;
         // notificacionService.enviarNotificacionVencimiento(prestamo);
       }
     }
+    log.info("CRON marcarPrestamosVencidos: {} préstamos marcados como VENCIDO", procesados);
+
   }
 
   @Scheduled(cron = "0 0 9 * * *") // Every day at 9 AM
@@ -404,6 +466,7 @@ public class PrestamoServiceImpl implements PrestamoService {
     List<Prestamo> porVencer = prestamoRepository.findPrestamosPorVencer(
         LocalDate.now(),
         LocalDate.now().plusDays(2));
+    log.info("CRON notificarPrestamosPorVencer: {} préstamos por vencer", porVencer.size());
 
     // for (Prestamo prestamo : porVencer) {
     // notificacionService.enviarNotificacionProximoVencimiento(prestamo);
@@ -458,14 +521,6 @@ public class PrestamoServiceImpl implements PrestamoService {
     Usuario bibliotecario = usuarioRepository.findById(bibliotecarioId)
         .orElseThrow(() -> new ResourceNotFoundException("Bibliotecario no encontrado"));
 
-    // if (biblioteca.getEncargado() == null ||
-    // !biblioteca.getEncargado().getId_usuario().equals(bibliotecario.getId_usuario()))
-    // {
-
-    // throw new BusinessException(
-    // "El bibliotecario no está autorizado para operar en esta biblioteca");
-    // }
-
     boolean esEncargado = bibliotecaEncargadoRepository
         .existsByBiblioteca_IdBibliotecaAndUsuario_IdUsuarioAndActivoTrue(
             biblioteca.getIdBiblioteca(), bibliotecario.getId_usuario());
@@ -492,103 +547,4 @@ public class PrestamoServiceImpl implements PrestamoService {
     historialRepository.save(historial);
   }
 
-  private PrestamoResponse mapToResponse(Prestamo prestamo) {
-    PrestamoResponse response = new PrestamoResponse();
-    response.setId_prestamo(prestamo.getIdPrestamo());
-    response.setEstadoPrestamo(prestamo.getEstadoPrestamo());
-    response.setFechaPrestamo(prestamo.getFechaPrestamo());
-    response.setFechaDevolucionEstimada(prestamo.getFechaDevolucionEstimada());
-    response.setFechaDevolucionReal(prestamo.getFechaDevolucionReal());
-    response.setRenovaciones(prestamo.getRenovaciones());
-    response.setObservaciones(prestamo.getObservaciones());
-
-    // Map Ejemplar (eagerly needed fields)
-    if (prestamo.getEjemplar() != null) {
-      EjemplarResponse ejemplarResponse = new EjemplarResponse();
-      ejemplarResponse.setId_ejemplar(prestamo.getEjemplar().getIdEjemplar());
-      ejemplarResponse.setCodigoEjemplar(prestamo.getEjemplar().getCodigoEjemplar());
-      ejemplarResponse.setEstadoEjemplar(prestamo.getEjemplar().getEstadoEjemplar());
-      if (prestamo.getEjemplar().getEdicion().getLibro() != null
-          && prestamo.getEjemplar().getEdicion().getLibro() != null) {
-        LibroSimpleResponse libroResponse = new LibroSimpleResponse();
-        libroResponse.setIdLibro(prestamo.getEjemplar().getEdicion().getLibro().getIdLibro());
-        libroResponse.setTitulo(prestamo.getEjemplar().getEdicion().getLibro().getTitulo());
-        ejemplarResponse.setLibro(libroResponse);
-      }
-
-      if (prestamo.getEjemplar().getEdicion() != null) {
-        EdicionSimpleResponse ed = new EdicionSimpleResponse();
-        ed.setIdEdicion(prestamo.getEjemplar().getEdicion().getIdEdicion());
-        ed.setIsbn(prestamo.getEjemplar().getEdicion().getIsbn());
-        ed.setEditorial(prestamo.getEjemplar().getEdicion().getEditorial());
-        ed.setAnoPublicacion(prestamo.getEjemplar().getEdicion().getAnoPublicacion());
-        ed.setEdicion(prestamo.getEjemplar().getEdicion().getEdicion());
-        ed.setImagenPortada(prestamo.getEjemplar().getEdicion().getImagenPortada());
-
-        // ✅ Datos del libro padre dentro de la edición
-        if (prestamo.getEjemplar().getEdicion().getLibro() != null) {
-          ed.setIdLibro(prestamo.getEjemplar().getEdicion().getLibro().getIdLibro());
-          ed.setTitulo(prestamo.getEjemplar().getEdicion().getLibro().getTitulo());
-        }
-
-        ejemplarResponse.setEdicion(ed);
-      }
-
-      response.setEjemplar(ejemplarResponse);
-    }
-
-    // ===================== USUARIO =====================
-    if (prestamo.getUsuario() != null) {
-      UsuarioSimpleResponse usuarioResponse = new UsuarioSimpleResponse();
-      usuarioResponse.setId_usuario(prestamo.getUsuario().getId_usuario());
-      usuarioResponse.setNombreCompleto(
-          prestamo.getUsuario().getPersona().getApellido_pat() + " " + prestamo.getUsuario().getPersona().getNombre());
-      usuarioResponse.setUsername(prestamo.getUsuario().getUsername());
-      usuarioResponse.setCi(prestamo.getUsuario().getPersona().getCi());
-      response.setUsuario(usuarioResponse);
-    }
-    // ===================== BIBLIOTECA =====================
-    if (prestamo.getBiblioteca() != null) {
-      BibliotecaSimpleResponse bibliotecaResponse = new BibliotecaSimpleResponse();
-      bibliotecaResponse.setId_biblioteca(prestamo.getBiblioteca().getIdBiblioteca());
-      bibliotecaResponse.setNombre(prestamo.getBiblioteca().getNombre());
-
-      response.setBiblioteca(bibliotecaResponse);
-    }
-
-    // Map librarians
-    // ===================== BIBLIOTECARIO PRESTAMO =====================
-    if (prestamo.getBibliotecarioPrestamo() != null) {
-      UsuarioSimpleResponse bibliotecarioPrestamo = new UsuarioSimpleResponse();
-      bibliotecarioPrestamo.setId_usuario(prestamo.getBibliotecarioPrestamo().getId_usuario());
-      bibliotecarioPrestamo.setNombreCompleto(prestamo.getBibliotecarioPrestamo().getPersona().getApellido_pat() + " "
-          + prestamo.getBibliotecarioPrestamo().getPersona().getNombre());
-      bibliotecarioPrestamo.setUsername(prestamo.getBibliotecarioPrestamo().getUsername());
-      bibliotecarioPrestamo.setCi(prestamo.getBibliotecarioPrestamo().getPersona().getCi());
-      response.setBibliotecarioPrestamo(bibliotecarioPrestamo);
-    }
-
-    // ===================== BIBLIOTECARIO DEVOLUCION =====================
-    if (prestamo.getBibliotecarioDevolucion() != null) {
-      UsuarioSimpleResponse bibliotecarioDevolucion = new UsuarioSimpleResponse();
-      bibliotecarioDevolucion.setId_usuario(prestamo.getBibliotecarioDevolucion().getId_usuario());
-      bibliotecarioDevolucion.setNombreCompleto(prestamo.getBibliotecarioDevolucion().getPersona().getApellido_pat()
-          + " " + prestamo.getBibliotecarioDevolucion().getPersona().getNombre());
-      bibliotecarioDevolucion.setUsername(prestamo.getBibliotecarioDevolucion().getUsername());
-      bibliotecarioDevolucion.setCi(prestamo.getBibliotecarioDevolucion().getPersona().getCi());
-      response.setBibliotecarioDevolucion(bibliotecarioDevolucion);
-    }
-
-    // Convenience flag: is overdue?
-    if (prestamo.getEstadoPrestamo() == EstadoPrestamo.ACTIVO
-        || prestamo.getEstadoPrestamo() == EstadoPrestamo.RENOVADO) {
-      response.setVencido(LocalDate.now().isAfter(prestamo.getFechaDevolucionEstimada()));
-    } else {
-      response.setVencido(false);
-    }
-    response.setTipoDocumentoGarantia(prestamo.getTipoDocumentoGarantia());
-    response.setCondicionEntrega(prestamo.getCondicionEntrega());
-    response.setCondicionDevolucion(prestamo.getCondicionDevolucion());
-    return response;
-  }
 }

@@ -88,8 +88,16 @@ public class ConfiguracionPrestamoMapper {
               : entity.getEjemplaresMaxSala());
     } else if (tieneBiblioteca) {
       dto.setNivelAplicacion("BIBLIOTECA");
+      dto.setEjemplaresPermitidos(
+          entity.getTipoPrestamo() == TipoPrestamo.DOMICILIO
+              ? entity.getEjemplaresMaxDomicilio()
+              : entity.getEjemplaresMaxSala());
     } else {
       dto.setNivelAplicacion("GLOBAL");
+      dto.setEjemplaresPermitidos(
+          entity.getTipoPrestamo() == TipoPrestamo.DOMICILIO
+              ? entity.getEjemplaresMaxDomicilio()
+              : entity.getEjemplaresMaxSala());
     }
     return dto;
   }
