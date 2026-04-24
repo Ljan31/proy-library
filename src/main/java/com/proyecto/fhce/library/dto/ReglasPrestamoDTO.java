@@ -1,19 +1,15 @@
-package com.proyecto.fhce.library.dto.response.loads;
+package com.proyecto.fhce.library.dto;
 
 import java.math.BigDecimal;
 
-public class ConfiguracionPrestamoResponseDTO {
+public class ReglasPrestamoDTO {
 
   private Long idConfig;
 
-  // Datos resumidos de relaciones — nunca la entidad completa
-  private Long bibliotecaId;
-  private String nombreBiblioteca;
-
+  // Solo los campos relevantes según el tipo de préstamo consultado
   private Integer diasPrestamoMax;
   private Integer renovacionesMax;
-  private Integer ejemplaresMaxDomicilio;
-  private Integer ejemplaresMaxSala;
+  private Integer ejemplaresPermitidos;
   private BigDecimal multaPorDia;
   private Integer multaMaxDias;
   private Integer diasSuspension;
@@ -27,22 +23,6 @@ public class ConfiguracionPrestamoResponseDTO {
     this.idConfig = idConfig;
   }
 
-  public Long getBibliotecaId() {
-    return bibliotecaId;
-  }
-
-  public void setBibliotecaId(Long bibliotecaId) {
-    this.bibliotecaId = bibliotecaId;
-  }
-
-  public String getNombreBiblioteca() {
-    return nombreBiblioteca;
-  }
-
-  public void setNombreBiblioteca(String nombreBiblioteca) {
-    this.nombreBiblioteca = nombreBiblioteca;
-  }
-
   public Integer getDiasPrestamoMax() {
     return diasPrestamoMax;
   }
@@ -51,20 +31,20 @@ public class ConfiguracionPrestamoResponseDTO {
     this.diasPrestamoMax = diasPrestamoMax;
   }
 
-  public Integer getEjemplaresMaxDomicilio() {
-    return ejemplaresMaxDomicilio;
+  public Integer getRenovacionesMax() {
+    return renovacionesMax;
   }
 
-  public void setEjemplaresMaxDomicilio(Integer ejemplaresMaxDomicilio) {
-    this.ejemplaresMaxDomicilio = ejemplaresMaxDomicilio;
+  public void setRenovacionesMax(Integer renovacionesMax) {
+    this.renovacionesMax = renovacionesMax;
   }
 
-  public Integer getEjemplaresMaxSala() {
-    return ejemplaresMaxSala;
+  public Integer getEjemplaresPermitidos() {
+    return ejemplaresPermitidos;
   }
 
-  public void setEjemplaresMaxSala(Integer ejemplaresMaxSala) {
-    this.ejemplaresMaxSala = ejemplaresMaxSala;
+  public void setEjemplaresPermitidos(Integer ejemplaresPermitidos) {
+    this.ejemplaresPermitidos = ejemplaresPermitidos;
   }
 
   public BigDecimal getMultaPorDia() {
@@ -97,14 +77,6 @@ public class ConfiguracionPrestamoResponseDTO {
 
   public void setDiasReserva(Integer diasReserva) {
     this.diasReserva = diasReserva;
-  }
-
-  public Integer getRenovacionesMax() {
-    return renovacionesMax;
-  }
-
-  public void setRenovacionesMax(Integer renovacionesMax) {
-    this.renovacionesMax = renovacionesMax;
   }
 
 }

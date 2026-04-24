@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.proyecto.fhce.library.dto.ReglasPrestamoDTO;
 import com.proyecto.fhce.library.dto.request.loads.ConfiguracionPrestamoRequestDTO;
 import com.proyecto.fhce.library.dto.response.loads.ConfiguracionPrestamoResponseDTO;
 import com.proyecto.fhce.library.dto.response.loads.ConfiguracionResueltaDTO;
@@ -65,26 +66,20 @@ public class ConfiguracionPrestamoController {
   }
 
   @GetMapping("/biblioteca/{bibliotecaId}")
-  public ResponseEntity<List<ConfiguracionPrestamoResponseDTO>> listarPorBiblioteca(
+  public ResponseEntity<ConfiguracionPrestamoResponseDTO> listarPorBiblioteca(
       @PathVariable Long bibliotecaId) {
 
-    return ResponseEntity.ok(configuracionService.listarPorBiblioteca(bibliotecaId));
+    return ResponseEntity.ok(configuracionService.buscarPorBiblioteca(bibliotecaId));
   }
 
-  /**
-   * Endpoint clave: devuelve la configuración que realmente aplica
-   * para un usuario en contexto de préstamo.
-   * Usado por el módulo de préstamos al momento de registrar uno.
-   */
-  @GetMapping("/resolver")
-  public ResponseEntity<ConfiguracionResueltaDTO> resolverConfiguracion(
-      @RequestParam Long bibliotecaId,
-      @RequestParam(required = false) Long rolId,
+  // Endpoint para que otros módulos obtengan las reglas según tipo de préstamo
+  @GetMapping("/biblioteca/{bibliotecaId}/reglas")
+  public ResponseEntity<ReglasPrestamoDTO> obtenerReglas(
+      @PathVariable Long bibliotecaId,
       @RequestParam TipoPrestamo tipoPrestamo) {
 
     return ResponseEntity.ok(
-        configuracionService.resolverConfiguracionAplicable(
-            bibliotecaId, rolId, tipoPrestamo));
+        configuracionService.obtenerReglas(bibliotecaId, tipoPrestamo));
   }
 
   /**

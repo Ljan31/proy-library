@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.proyecto.fhce.library.dto.ReglasPrestamoDTO;
 import com.proyecto.fhce.library.dto.request.loads.ConfiguracionPrestamoRequestDTO;
 import com.proyecto.fhce.library.dto.response.loads.ConfiguracionPrestamoResponseDTO;
 import com.proyecto.fhce.library.dto.response.loads.ConfiguracionResueltaDTO;
@@ -19,7 +20,6 @@ import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.mapper.ConfiguracionPrestamoMapper;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.ConfiguracionPrestamoRepository;
-import com.proyecto.fhce.library.repositories.RoleRepository;
 
 @Service
 @Transactional(readOnly = true)
@@ -27,95 +27,88 @@ public class ConfiguracionPrestamoService {
 
   private final ConfiguracionPrestamoRepository configuracionRepository;
   private final BibliotecaRepository bibliotecaRepository;
-  private final RoleRepository roleRepository;
   private final ConfiguracionPrestamoMapper mapper;
 
   public ConfiguracionPrestamoService(
       ConfiguracionPrestamoRepository configuracionRepository,
       BibliotecaRepository bibliotecaRepository,
-      RoleRepository roleRepository,
       ConfiguracionPrestamoMapper mapper) {
     this.configuracionRepository = configuracionRepository;
     this.bibliotecaRepository = bibliotecaRepository;
-    this.roleRepository = roleRepository;
     this.mapper = mapper;
   }
 
+  // ─────────────────────────────────────────────
+  // CRUD
+  // ─────────────────────────────────────────────
+
   @Transactional
   public ConfiguracionPrestamoResponseDTO crear(ConfiguracionPrestamoRequestDTO request) {
-    validarNoExisteDuplicado(request.getBibliotecaId(), request.getRolId(),
-        request.getTipoPrestamo(), null);
+    validarNoExisteDuplicado(request.getBibliotecaId(), null);
 
-    Biblioteca biblioteca = resolverBiblioteca(request.getBibliotecaId());
-    Role rol = resolverRol(request.getRolId());
+    Biblioteca biblioteca = buscarBibliotecaOLanzarError(request.getBibliotecaId());
+    ConfiguracionPrestamo nueva = mapper.toEntity(request, biblioteca);
 
-    ConfiguracionPrestamo nueva = mapper.toEntity(request, biblioteca, rol);
-    ConfiguracionPrestamo guardada = configuracionRepository.save(nueva);
-
-    return mapper.toResponseDTO(guardada);
+    return mapper.toResponseDTO(configuracionRepository.save(nueva));
   }
 
   @Transactional
   public ConfiguracionPrestamoResponseDTO actualizar(Long id,
       ConfiguracionPrestamoRequestDTO request) {
-    ConfiguracionPrestamo existente = buscarPorIdOLanzarError(id);
+    ConfiguracionPrestamo existente = buscarConfiguracionOLanzarError(id);
+    validarNoExisteDuplicado(request.getBibliotecaId(), id);
 
-    validarNoExisteDuplicado(request.getBibliotecaId(), request.getRolId(),
-        request.getTipoPrestamo(), id);
+    Biblioteca biblioteca = buscarBibliotecaOLanzarError(request.getBibliotecaId());
+    mapper.actualizarEntidad(existente, request, biblioteca);
 
-    Biblioteca biblioteca = resolverBiblioteca(request.getBibliotecaId());
-    Role rol = resolverRol(request.getRolId());
-
-    mapper.actualizarEntidad(existente, request, biblioteca, rol);
     return mapper.toResponseDTO(existente);
   }
 
   @Transactional
   public void eliminar(Long id) {
-    ConfiguracionPrestamo configuracion = buscarPorIdOLanzarError(id);
-    configuracionRepository.delete(configuracion);
+    configuracionRepository.delete(buscarConfiguracionOLanzarError(id));
   }
 
   public ConfiguracionPrestamoResponseDTO buscarPorId(Long id) {
-    return mapper.toResponseDTO(buscarPorIdOLanzarError(id));
+    return mapper.toResponseDTO(buscarConfiguracionOLanzarError(id));
   }
 
-  public ConfiguracionResueltaDTO obtenerPorId(Long idConfig) {
-    ConfiguracionPrestamo config = buscarPorIdOLanzarError(idConfig);
-    return mapper.toResueltaDTO(config);
-  }
-
-  public List<ConfiguracionPrestamoResponseDTO> listarPorBiblioteca(Long bibliotecaId) {
-    return configuracionRepository.findAllByBibliotecaId(bibliotecaId)
-        .stream()
-        .map(mapper::toResponseDTO)
-        .collect(Collectors.toList());
-  }
-
-  /**
-   * Punto central del módulo: resuelve qué configuración aplica
-   * para un usuario con un rol dado, en una biblioteca y tipo de préstamo.
-   * Prioridad: ROL+BIBLIOTECA > BIBLIOTECA > GLOBAL
-   */
-  public ConfiguracionResueltaDTO resolverConfiguracionAplicable(
-      Long bibliotecaId, Long rolId, TipoPrestamo tipoPrestamo) {
-    List<ConfiguracionPrestamo> candidatas = configuracionRepository
-        .findConfiguracionesAplicables(bibliotecaId, rolId, tipoPrestamo);
-
-    ConfiguracionPrestamo aplicable = candidatas.stream()
-        .findFirst()
+  public ConfiguracionPrestamoResponseDTO buscarPorBiblioteca(Long bibliotecaId) {
+    ConfiguracionPrestamo config = configuracionRepository
+        .findByBibliotecaId(bibliotecaId)
         .orElseThrow(() -> new ResourceNotFoundException(
-            "No existe configuración de préstamo para el contexto solicitado"));
+            "No existe configuración para la biblioteca con id: " + bibliotecaId));
+    return mapper.toResponseDTO(config);
+  }
 
-    return mapper.toResueltaDTO(aplicable);
+  // ─────────────────────────────────────────────
+  // LÓGICA DE NEGOCIO — usada por otros módulos
+  // ─────────────────────────────────────────────
+
+  /**
+   * Devuelve las reglas aplicables según el tipo de préstamo.
+   * Este es el método central que consumen Préstamos, Reservas y Sanciones.
+   */
+  public ReglasPrestamoDTO obtenerReglas(Long bibliotecaId, TipoPrestamo tipo) {
+    ConfiguracionPrestamo config = configuracionRepository
+        .findByBibliotecaId(bibliotecaId)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No existe configuración para la biblioteca con id: " + bibliotecaId));
+
+    return tipo == TipoPrestamo.DOMICILIO
+        ? mapper.toReglasDTO(config, config.getEjemplaresMaxDomicilio())
+        : mapper.toReglasDTO(config, config.getEjemplaresMaxSala());
   }
 
   /**
-   * Calcula la multa total acumulada por días de retraso,
-   * respetando el tope configurado antes de activar suspensión.
+   * Calcula la multa acumulada respetando el tope configurado.
+   * Retorna 0 si la configuración no tiene multa definida.
    */
-  public BigDecimal calcularMulta(Long idConfig, int diasRetraso) {
-    ConfiguracionPrestamo config = buscarPorIdOLanzarError(idConfig);
+  public BigDecimal calcularMulta(Long bibliotecaId, int diasRetraso) {
+    ConfiguracionPrestamo config = configuracionRepository
+        .findByBibliotecaId(bibliotecaId)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No existe configuración para la biblioteca con id: " + bibliotecaId));
 
     if (config.getMultaPorDia() == null || config.getMultaMaxDias() == null) {
       return BigDecimal.ZERO;
@@ -126,45 +119,38 @@ public class ConfiguracionPrestamoService {
   }
 
   /**
-   * Determina si un retraso debe generar suspensión según la política
-   * configurada.
+   * Indica si un retraso activa la suspensión del usuario.
    */
-  public boolean debeSuspender(Long idConfig, int diasRetraso) {
-    ConfiguracionPrestamo config = buscarPorIdOLanzarError(idConfig);
+  public boolean debeSuspender(Long bibliotecaId, int diasRetraso) {
+    ConfiguracionPrestamo config = configuracionRepository
+        .findByBibliotecaId(bibliotecaId)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "No existe configuración para la biblioteca con id: " + bibliotecaId));
+
     return config.getMultaMaxDias() != null && diasRetraso > config.getMultaMaxDias();
   }
 
-  // --- Métodos privados auxiliares ---
+  // ─────────────────────────────────────────────
+  // AUXILIARES PRIVADOS
+  // ─────────────────────────────────────────────
 
-  private void validarNoExisteDuplicado(Long bibliotecaId, Long rolId,
-      TipoPrestamo tipo, Long excludeId) {
-    if (configuracionRepository.existeConfiguracionDuplicada(
-        bibliotecaId, rolId, tipo, excludeId)) {
+  private void validarNoExisteDuplicado(Long bibliotecaId, Long excludeId) {
+    if (configuracionRepository.existeConfiguracionParaBiblioteca(
+        bibliotecaId, excludeId)) {
       throw new BusinessException(
-          "Ya existe una configuración para esta combinación de biblioteca, " +
-              "rol y tipo de préstamo");
+          "Ya existe una configuración para la biblioteca con id: " + bibliotecaId);
     }
   }
 
-  private Biblioteca resolverBiblioteca(Long bibliotecaId) {
-    if (bibliotecaId == null)
-      return null;
+  private ConfiguracionPrestamo buscarConfiguracionOLanzarError(Long id) {
+    return configuracionRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "Configuración no encontrada con id: " + id));
+  }
+
+  private Biblioteca buscarBibliotecaOLanzarError(Long bibliotecaId) {
     return bibliotecaRepository.findById(bibliotecaId)
         .orElseThrow(() -> new ResourceNotFoundException(
             "Biblioteca no encontrada con id: " + bibliotecaId));
-  }
-
-  private Role resolverRol(Long rolId) {
-    if (rolId == null)
-      return null;
-    return roleRepository.findById(rolId)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "Rol no encontrado con id: " + rolId));
-  }
-
-  private ConfiguracionPrestamo buscarPorIdOLanzarError(Long id) {
-    return configuracionRepository.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "Configuración de préstamo no encontrada con id: " + id));
   }
 }

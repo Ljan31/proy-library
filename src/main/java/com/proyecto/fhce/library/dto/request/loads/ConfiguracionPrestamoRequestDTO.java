@@ -2,23 +2,21 @@ package com.proyecto.fhce.library.dto.request.loads;
 
 import java.math.BigDecimal;
 
-import com.proyecto.fhce.library.enums.TipoPrestamo;
-
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 public class ConfiguracionPrestamoRequestDTO {
 
-  @NotNull(message = "El tipo de préstamo es obligatorio")
-  private TipoPrestamo tipoPrestamo;
-
-  private Long bibliotecaId; // null = configuración global
-  private Long rolId; // null = aplica a todos
+  @NotNull(message = "La biblioteca es obligatoria")
+  private Long bibliotecaId;
 
   @NotNull(message = "Los días de préstamo máximo son obligatorios")
   @Min(value = 1, message = "Debe ser al menos 1 día")
   private Integer diasPrestamoMax;
+
+  @Min(value = 0, message = "No puede ser negativo")
+  private Integer renovacionesMax;
 
   @Min(value = 0)
   private Integer ejemplaresMaxDomicilio;
@@ -38,28 +36,12 @@ public class ConfiguracionPrestamoRequestDTO {
   @Min(value = 1)
   private Integer diasReserva;
 
-  public TipoPrestamo getTipoPrestamo() {
-    return tipoPrestamo;
-  }
-
-  public void setTipoPrestamo(TipoPrestamo tipoPrestamo) {
-    this.tipoPrestamo = tipoPrestamo;
-  }
-
   public Long getBibliotecaId() {
     return bibliotecaId;
   }
 
   public void setBibliotecaId(Long bibliotecaId) {
     this.bibliotecaId = bibliotecaId;
-  }
-
-  public Long getRolId() {
-    return rolId;
-  }
-
-  public void setRolId(Long rolId) {
-    this.rolId = rolId;
   }
 
   public Integer getDiasPrestamoMax() {
@@ -116,6 +98,14 @@ public class ConfiguracionPrestamoRequestDTO {
 
   public void setDiasReserva(Integer diasReserva) {
     this.diasReserva = diasReserva;
+  }
+
+  public Integer getRenovacionesMax() {
+    return renovacionesMax;
+  }
+
+  public void setRenovacionesMax(Integer renovacionesMax) {
+    this.renovacionesMax = renovacionesMax;
   }
 
 }

@@ -2,12 +2,8 @@ package com.proyecto.fhce.library.entities;
 
 import java.math.BigDecimal;
 
-import com.proyecto.fhce.library.enums.TipoPrestamo;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,11 +18,9 @@ import jakarta.validation.constraints.Min;
 
 @Entity
 @Table(name = "configuracion_prestamo", uniqueConstraints = {
-    @UniqueConstraint(name = "uk_config_biblioteca_rol_tipo", columnNames = { "biblioteca_id", "rol_id",
-        "tipo_prestamo" })
+    @UniqueConstraint(name = "uk_config_biblioteca", columnNames = { "biblioteca_id" })
 }, indexes = {
-    @Index(name = "idx_config_biblioteca", columnList = "biblioteca_id"),
-    @Index(name = "idx_config_rol", columnList = "rol_id")
+    @Index(name = "idx_config_biblioteca", columnList = "biblioteca_id")
 })
 public class ConfiguracionPrestamo {
 
@@ -39,17 +33,13 @@ public class ConfiguracionPrestamo {
   @JoinColumn(name = "biblioteca_id")
   private Biblioteca biblioteca;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "rol_id")
-  private Role rol;
-
-  @Enumerated(EnumType.STRING)
-  @Column(name = "tipo_prestamo", nullable = false, length = 20)
-  private TipoPrestamo tipoPrestamo;
-
   @Column(name = "dias_prestamo_max", nullable = false)
   @Min(value = 1, message = "Los días de préstamo máximo deben ser al menos 1")
   private Integer diasPrestamoMax;
+
+  @Column(name = "renovaciones_max", nullable = false)
+  @Min(value = 0, message = "Las renovaciones máximas no pueden ser negativas")
+  private Integer renovacionesMax;
 
   @Column(name = "ejemplares_max_domicilio")
   @Min(value = 0, message = "El límite de ejemplares no puede ser negativo")
@@ -89,22 +79,6 @@ public class ConfiguracionPrestamo {
 
   public void setBiblioteca(Biblioteca biblioteca) {
     this.biblioteca = biblioteca;
-  }
-
-  public Role getRol() {
-    return rol;
-  }
-
-  public void setRol(Role rol) {
-    this.rol = rol;
-  }
-
-  public TipoPrestamo getTipoPrestamo() {
-    return tipoPrestamo;
-  }
-
-  public void setTipoPrestamo(TipoPrestamo tipoPrestamo) {
-    this.tipoPrestamo = tipoPrestamo;
   }
 
   public Integer getDiasPrestamoMax() {
@@ -161,6 +135,14 @@ public class ConfiguracionPrestamo {
 
   public void setDiasReserva(Integer diasReserva) {
     this.diasReserva = diasReserva;
+  }
+
+  public Integer getRenovacionesMax() {
+    return renovacionesMax;
+  }
+
+  public void setRenovacionesMax(Integer renovacionesMax) {
+    this.renovacionesMax = renovacionesMax;
   }
 
 }
