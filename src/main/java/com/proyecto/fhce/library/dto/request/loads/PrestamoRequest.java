@@ -8,7 +8,6 @@ import com.proyecto.fhce.library.enums.TipoPrestamo;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 public class PrestamoRequest {
   @NotNull(message = "Ejemplar ID es requerido")
@@ -31,6 +30,7 @@ public class PrestamoRequest {
   @NotNull(message = "La condición física del ejemplar al entregarlo es obligatoria")
   private CondicionFisicaLibro condicionEntrega;
 
+  @NotNull(message = "El tipo de préstamo es obligatorio")
   private TipoPrestamo tipoPrestamo;
 
   public Long getEjemplarId() {

@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import com.proyecto.fhce.library.enums.CondicionFisicaLibro;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
 import com.proyecto.fhce.library.enums.TipoDocumentoGarantia;
+import com.proyecto.fhce.library.enums.TipoPrestamo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -82,6 +83,9 @@ public class Prestamo {
   @Column(name = "id_config_usado")
   private Long idConfigUsado;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "tipo_prestamo", nullable = false)
+  private TipoPrestamo tipoPrestamo;
   // @OneToOne(mappedBy = "prestamo", cascade = CascadeType.ALL)
   // private Sancion sancion;
 
@@ -220,6 +224,14 @@ public class Prestamo {
 
   public void setIdConfigUsado(Long idConfigUsado) {
     this.idConfigUsado = idConfigUsado;
+  }
+
+  public TipoPrestamo getTipoPrestamo() {
+    return tipoPrestamo;
+  }
+
+  public void setTipoPrestamo(TipoPrestamo tipoPrestamo) {
+    this.tipoPrestamo = tipoPrestamo;
   }
 
 }

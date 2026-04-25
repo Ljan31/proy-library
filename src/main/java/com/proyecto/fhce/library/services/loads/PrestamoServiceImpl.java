@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.proyecto.fhce.library.config.PrestamoProperties;
+import com.proyecto.fhce.library.dto.ReglasPrestamoDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.EstadoSancionUsuarioDTO;
 import com.proyecto.fhce.library.dto.request.loads.DevolucionRequest;
 import com.proyecto.fhce.library.dto.request.loads.FiltroPrestamoRequest;
@@ -33,6 +34,7 @@ import com.proyecto.fhce.library.entities.Prestamo;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
+import com.proyecto.fhce.library.enums.TipoPrestamo;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.mapper.PrestamoMapper;
@@ -219,30 +221,24 @@ public class PrestamoServiceImpl implements PrestamoService {
         });
 
     // ③ Resolver configuración aplicable — INTEGRACIÓN CON CONFIGURACIÓN
-    // Obtiene el rol del usuario para buscar la config más específica disponible
-    Long rolId = usuario.getRoles().isEmpty() ? null : usuario.getRoles().iterator().next().getId_role();
-    ConfiguracionResueltaDTO config = configuracionService.resolverConfiguracionAplicable(
+    ReglasPrestamoDTO reglas = configuracionService.obtenerReglas(
         biblioteca.getIdBiblioteca(),
-        null,
-        request.getTipoPrestamo() // "SALA" | "DOMICILIO"
+        request.getTipoPrestamo() // TipoPrestamo.SALA o TipoPrestamo.DOMICILIO
     );
     log.debug(
         "Configuración aplicada - idConfig={}, tipoPrestamo={}, diasPrestamoMax={}, ejemplaresPermitidos={}, multaPorDia={}, multaMaxDias={}, diasSuspension={}, diasReserva={}, nivelAplicacion={}",
-        config.getIdConfig(),
-        config.getTipoPrestamo(),
-        config.getDiasPrestamoMax(),
-        config.getEjemplaresPermitidos(),
-        config.getMultaPorDia(),
-        config.getMultaMaxDias(),
-        config.getDiasSuspension(),
-        config.getDiasReserva(),
-        config.getNivelAplicacion());
+        reglas.getDiasPrestamoMax(),
+        reglas.getEjemplaresPermitidos(),
+        reglas.getMultaPorDia(),
+        reglas.getMultaMaxDias(),
+        reglas.getDiasSuspension(),
+        reglas.getDiasReserva());
     // Validate simultaneous loan limit
     Long prestamosActivos = prestamoRepository.countPrestamosActivosByUsuario(usuario.getId_usuario());
-    if (prestamosActivos >= config.getEjemplaresPermitidos()) {
+    if (prestamosActivos >= reglas.getEjemplaresPermitidos()) {
       throw new BusinessException(
           "El usuario ha alcanzado el límite de préstamos simultáneos: "
-              + config.getEjemplaresPermitidos());
+              + reglas.getEjemplaresPermitidos());
     }
 
     // Create loan
@@ -252,11 +248,12 @@ public class PrestamoServiceImpl implements PrestamoService {
     prestamo.setBiblioteca(biblioteca);
     prestamo.setBibliotecarioPrestamo(bibliotecario);
     prestamo.setFechaPrestamo(LocalDateTime.now());
-    prestamo.setIdConfigUsado(config.getIdConfig());
+    prestamo.setIdConfigUsado(reglas.getIdConfig());
+    prestamo.setTipoPrestamo(request.getTipoPrestamo());
     // Calculate return date
     LocalDate fechaDevolucion = request.getFechaDevolucionEstimada() != null
         ? request.getFechaDevolucionEstimada()
-        : LocalDate.now().plusDays(config.getDiasPrestamoMax());
+        : LocalDate.now().plusDays(reglas.getDiasPrestamoMax());
 
     prestamo.setFechaDevolucionEstimada(fechaDevolucion);
 
@@ -335,15 +332,28 @@ public class PrestamoServiceImpl implements PrestamoService {
     // ⑥ Delegar sanción al módulo de sanciones si hubo retraso — INTEGRACIÓN
     // La sanción se procesa FUERA del bloque transaccional principal del préstamo.
     // SancionService maneja su propia transacción y garantiza idempotencia.
-    if (LocalDate.now().isAfter(prestamo.getFechaDevolucionEstimada())) {
+    // if (LocalDate.now().isAfter(prestamo.getFechaDevolucionEstimada())) {
+    // try {
+    // sancionService.procesarDevolucionTardia(updated.getIdPrestamo());
+    // log.info("Sanción procesada para préstamo vencido id={}",
+    // updated.getIdPrestamo());
+    // } catch (Exception e) {
+    // // Un fallo en la sanción NO revierte la devolución — el préstamo ya está
+    // // cerrado.
+    // // El CRON de SancionService retomará este préstamo en su próxima ejecución.
+    // log.error("Error al procesar sanción para préstamo id={}: {}",
+    // updated.getIdPrestamo(), e.getMessage());
+    // }
+    // }
+
+    if (prestamo.getTipoPrestamo() == TipoPrestamo.DOMICILIO
+        && LocalDate.now().isAfter(prestamo.getFechaDevolucionEstimada())) {
       try {
         sancionService.procesarDevolucionTardia(updated.getIdPrestamo());
-        log.info("Sanción procesada para préstamo vencido id={}", updated.getIdPrestamo());
+        log.info("Sanción procesada para préstamo id={}", updated.getIdPrestamo());
       } catch (Exception e) {
-        // Un fallo en la sanción NO revierte la devolución — el préstamo ya está
-        // cerrado.
-        // El CRON de SancionService retomará este préstamo en su próxima ejecución.
-        log.error("Error al procesar sanción para préstamo id={}: {}", updated.getIdPrestamo(), e.getMessage());
+        log.error("Error al procesar sanción para préstamo id={}: {}",
+            updated.getIdPrestamo(), e.getMessage());
       }
     }
 
@@ -405,12 +415,11 @@ public class PrestamoServiceImpl implements PrestamoService {
     }
 
     // ⑧ Validar límite de renovaciones desde configuración — INTEGRACIÓN CON CONFIG
-    ConfiguracionResueltaDTO config = configuracionService.obtenerPorId(
-        prestamo.getIdConfigUsado());
-
-    // int renovacionesMax = config.getRenovacionesMax(); // desde config, no
-    // hardcoded
-    int renovacionesMax = 3; // desde config, no hardcoded
+    ReglasPrestamoDTO reglas = configuracionService.obtenerReglas(
+        prestamo.getBiblioteca().getIdBiblioteca(),
+        prestamo.getTipoPrestamo() // necesitas este campo en la entidad (ver punto 3)
+    );
+    int renovacionesMax = reglas.getRenovacionesMax();
     // Validate renewal limit
     if (prestamo.getRenovaciones() >= renovacionesMax) {
       throw new BusinessException(
@@ -419,7 +428,7 @@ public class PrestamoServiceImpl implements PrestamoService {
     // Renew
     prestamo.setRenovaciones(prestamo.getRenovaciones() + 1);
     prestamo.setFechaDevolucionEstimada(
-        prestamo.getFechaDevolucionEstimada().plusDays(config.getDiasPrestamoMax()));
+        prestamo.getFechaDevolucionEstimada().plusDays(reglas.getDiasPrestamoMax()));
     prestamo.setEstadoPrestamo(EstadoPrestamo.RENOVADO);
 
     Prestamo renewed = prestamoRepository.save(prestamo);
