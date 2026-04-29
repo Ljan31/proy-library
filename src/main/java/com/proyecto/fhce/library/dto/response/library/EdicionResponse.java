@@ -9,6 +9,7 @@ public class EdicionResponse {
   private String edicion;
   private Integer numeroPaginas;
   private String imagenPortada;
+  private String pdfUrl;
 
   // Info resumida del libro al que pertenece
   private LibroSimpleResponse libro;
@@ -95,6 +96,14 @@ public class EdicionResponse {
 
   public void setEjemplaresDisponibles(int ejemplaresDisponibles) {
     this.ejemplaresDisponibles = ejemplaresDisponibles;
+  }
+
+  public String getPdfUrl() {
+    return pdfUrl;
+  }
+
+  public void setPdfUrl(String pdfUrl) {
+    this.pdfUrl = pdfUrl;
   }
 
 }

@@ -1,5 +1,6 @@
 package com.proyecto.fhce.library.services.library;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -13,16 +14,18 @@ import org.springframework.transaction.annotation.Transactional;
 import com.proyecto.fhce.library.dto.request.library.BusquedaLibroRequest;
 import com.proyecto.fhce.library.dto.request.library.LibroRequest;
 import com.proyecto.fhce.library.dto.response.PageResponse;
+import com.proyecto.fhce.library.dto.response.library.AutorResponse;
 import com.proyecto.fhce.library.dto.response.library.CategoriaLibroResponse;
 import com.proyecto.fhce.library.dto.response.library.EdicionResponse;
 import com.proyecto.fhce.library.dto.response.library.LibroResponse;
+import com.proyecto.fhce.library.entities.Autor;
 import com.proyecto.fhce.library.entities.CategoriaLibro;
 import com.proyecto.fhce.library.entities.Edicion;
 import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.Libro;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
-import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
+import com.proyecto.fhce.library.repositories.AutorRepository;
 import com.proyecto.fhce.library.repositories.CategoriaLibroRepository;
 import com.proyecto.fhce.library.repositories.EdicionRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
@@ -42,6 +45,9 @@ public class LibroServiceImpl implements LibroService {
   @Autowired
   private EdicionRepository edicionRepository;
 
+  @Autowired
+  private AutorRepository autorRepository;
+
   @Transactional
   public LibroResponse create(LibroRequest request) {
     Libro libro = new Libro();
@@ -49,11 +55,8 @@ public class LibroServiceImpl implements LibroService {
     libro.setIdioma(request.getIdioma());
     libro.setDescripcion(request.getDescripcion());
 
-    if (request.getCategoriaId() != null) {
-      CategoriaLibro categoria = categoriaRepository.findById(request.getCategoriaId())
-          .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada"));
-      libro.setCategoria(categoria);
-    }
+    asignarCategoria(libro, request.getCategoriaId());
+    asignarAutores(libro, request.getAutorIds());
 
     return mapToResponse(libroRepository.save(libro));
   }
@@ -67,11 +70,8 @@ public class LibroServiceImpl implements LibroService {
     libro.setIdioma(request.getIdioma());
     libro.setDescripcion(request.getDescripcion());
 
-    if (request.getCategoriaId() != null) {
-      CategoriaLibro categoria = categoriaRepository.findById(request.getCategoriaId())
-          .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada"));
-      libro.setCategoria(categoria);
-    }
+    asignarCategoria(libro, request.getCategoriaId());
+    asignarAutores(libro, request.getAutorIds());
 
     return mapToResponse(libroRepository.save(libro));
   }
@@ -124,6 +124,11 @@ public class LibroServiceImpl implements LibroService {
         return cb.equal(root.join("ediciones").get("isbn"), request.getIsbn());
       });
     }
+    // if (request.getAutorTexto() != null) {
+    // spec = spec.and((root, query, cb) ->
+    // cb.like(cb.lower(root.get("autorTexto")),
+    // "%" + request.getAutorTexto().toLowerCase() + "%"));
+    // }
     // ResultadoBusquedaLibroResponse response = new
     // ResultadoBusquedaLibroResponse();
     // response.setLibros(libros.stream().map(this::mapToResponse).collect(Collectors.toList()));
@@ -163,6 +168,10 @@ public class LibroServiceImpl implements LibroService {
       response.setCategoria(mapCategoriaToResponse(libro.getCategoria()));
     }
 
+    if (libro.getAutores() != null) {
+      response.setAutores(mapAutoresToResponse(libro.getAutores()));
+    }
+
     // ✅ Ediciones del libro
     List<Edicion> ediciones = edicionRepository.findByLibro_IdLibro(libro.getIdLibro());
     response.setEdiciones(ediciones.stream().map(ed -> {
@@ -194,5 +203,37 @@ public class LibroServiceImpl implements LibroService {
     response.setDescripcion(categoria.getDescripcion());
     response.setCodigo_dewey(categoria.getCodigo_dewey());
     return response;
+  }
+
+  private List<AutorResponse> mapAutoresToResponse(List<Autor> autores) {
+    if (autores == null) {
+      return null;
+    }
+
+    return autores.stream().map(a -> {
+      AutorResponse ar = new AutorResponse();
+      ar.setIdAutor(a.getIdAutor());
+      ar.setNombre(a.getNombre());
+      return ar;
+    }).collect(Collectors.toList());
+  }
+
+  private void asignarCategoria(Libro libro, Long categoriaId) {
+    if (categoriaId != null) {
+      CategoriaLibro categoria = categoriaRepository.findById(categoriaId)
+          .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con id: " + categoriaId));
+      libro.setCategoria(categoria);
+    } else {
+      libro.setCategoria(null);
+    }
+  }
+
+  private void asignarAutores(Libro libro, List<Long> autorIds) {
+    if (autorIds == null || autorIds.isEmpty()) {
+      libro.setAutores(new ArrayList<>());
+      return;
+    }
+    List<Autor> autores = autorRepository.findAllById(autorIds);
+    libro.setAutores(autores);
   }
 }

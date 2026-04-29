@@ -34,10 +34,11 @@ public class Edicion {
   @Column(length = 50)
   private String edicion;
 
-  private Integer numeroPaginas;
-
   @Column(length = 500)
   private String imagenPortada;
+
+  @Column(name = "pdf_url", length = 500)
+  private String pdfUrl;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "libro_id", nullable = false)
@@ -86,14 +87,6 @@ public class Edicion {
     this.edicion = edicion;
   }
 
-  public Integer getNumeroPaginas() {
-    return numeroPaginas;
-  }
-
-  public void setNumeroPaginas(Integer numeroPaginas) {
-    this.numeroPaginas = numeroPaginas;
-  }
-
   public String getImagenPortada() {
     return imagenPortada;
   }
@@ -116,6 +109,14 @@ public class Edicion {
 
   public void setEjemplares(List<Ejemplar> ejemplares) {
     this.ejemplares = ejemplares;
+  }
+
+  public String getPdfUrl() {
+    return pdfUrl;
+  }
+
+  public void setPdfUrl(String pdfUrl) {
+    this.pdfUrl = pdfUrl;
   }
 
 }

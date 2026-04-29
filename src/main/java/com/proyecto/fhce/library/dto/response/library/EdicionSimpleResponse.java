@@ -7,7 +7,7 @@ public class EdicionSimpleResponse {
   private Integer anoPublicacion;
   private String edicion;
   private String imagenPortada;
-
+  private String pdfUrl;
   // Info mínima del libro padre
   private Long idLibro;
   private String titulo;
@@ -74,6 +74,14 @@ public class EdicionSimpleResponse {
 
   public void setTitulo(String titulo) {
     this.titulo = titulo;
+  }
+
+  public String getPdfUrl() {
+    return pdfUrl;
+  }
+
+  public void setPdfUrl(String pdfUrl) {
+    this.pdfUrl = pdfUrl;
   }
 
 }

@@ -19,7 +19,6 @@ import com.proyecto.fhce.library.dto.response.library.DisponibilidadLibroRespons
 import com.proyecto.fhce.library.dto.response.library.DisponibilidadPorBibliotecaResponse;
 import com.proyecto.fhce.library.dto.response.library.EdicionSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.EjemplarResponse;
-import com.proyecto.fhce.library.dto.response.library.LibroSimpleResponse;
 import com.proyecto.fhce.library.dto.response.loads.HistorialEstadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.PrestamoActivoResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
@@ -27,7 +26,6 @@ import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.Edicion;
 import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.HistorialEstadoEjemplar;
-import com.proyecto.fhce.library.entities.Libro;
 import com.proyecto.fhce.library.entities.Prestamo;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
@@ -92,7 +90,6 @@ public class EjemplarServiceImpl implements EjemplarService {
         request.getEstadoEjemplar() != null ? request.getEstadoEjemplar() : EstadoEjemplar.DISPONIBLE);
     ejemplar.setFechaAdquisicion(
         request.getFechaAdquisicion() != null ? request.getFechaAdquisicion() : LocalDate.now());
-    ejemplar.setPrecioCompra(request.getPrecioCompra());
     ejemplar.setObservaciones(request.getObservaciones());
 
     Ejemplar saved = ejemplarRepository.save(ejemplar);
@@ -119,10 +116,6 @@ public class EjemplarServiceImpl implements EjemplarService {
     ejemplar.setCodigoTopografico(request.getCodigoTopografico());
     ejemplar.setUbicacionFisica(request.getUbicacionFisica());
     ejemplar.setObservaciones(request.getObservaciones());
-
-    if (request.getPrecioCompra() != null) {
-      ejemplar.setPrecioCompra(request.getPrecioCompra());
-    }
 
     // Actualizar libro y biblioteca si cambiaron
     if (request.getEdicionId() != null &&
@@ -166,6 +159,15 @@ public class EjemplarServiceImpl implements EjemplarService {
     // updated.getId_ejemplar(), estadoAnterior, request.getNuevoEstado());
 
     return mapToResponse(updated);
+  }
+
+  public void reportarDañado(Long id, String motivo) {
+    Ejemplar ejemplar = getOrThrow(id);
+    EstadoEjemplar anterior = ejemplar.getEstadoEjemplar();
+    validarCambioEstado(ejemplar, EstadoEjemplar.DAÑADO);
+    ejemplar.setEstadoEjemplar(EstadoEjemplar.DAÑADO);
+    ejemplarRepository.save(ejemplar);
+    registrarCambioEstado(ejemplar, anterior, EstadoEjemplar.DAÑADO, motivo);
   }
 
   public void darDeBaja(Long id, String motivo) {
@@ -314,17 +316,13 @@ public class EjemplarServiceImpl implements EjemplarService {
     disponibilidad.setLibroId(libroId);
     disponibilidad.setTotalEjemplares(ejemplares.size());
 
-    long disponibles = ejemplares.stream()
-        .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.DISPONIBLE).count();
-    long prestados = ejemplares.stream()
-        .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.PRESTADO).count();
-    long reservados = ejemplares.stream()
-        .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.RESERVADO).count();
-
-    disponibilidad.setEjemplaresDisponibles((int) disponibles);
-    disponibilidad.setEjemplaresPrestados((int) prestados);
-    disponibilidad.setEjemplaresReservados((int) reservados);
-    disponibilidad.setHayDisponibles(disponibles > 0);
+    disponibilidad.setEjemplaresDisponibles(contarPorEstado(ejemplares, EstadoEjemplar.DISPONIBLE));
+    disponibilidad.setEjemplaresPrestados(contarPorEstado(ejemplares, EstadoEjemplar.PRESTADO));
+    disponibilidad.setEjemplaresReservados(contarPorEstado(ejemplares, EstadoEjemplar.RESERVADO));
+    disponibilidad.setEjemplaresPerdidos(contarPorEstado(ejemplares, EstadoEjemplar.PERDIDO));
+    disponibilidad.setEjemplaresDañados(contarPorEstado(ejemplares, EstadoEjemplar.DAÑADO));
+    disponibilidad.setEjemplaresEnReparacion(contarPorEstado(ejemplares, EstadoEjemplar.EN_REPARACION));
+    disponibilidad.setHayDisponibles(disponibilidad.getEjemplaresDisponibles() > 0);
 
     Map<Biblioteca, List<Ejemplar>> porBiblioteca = ejemplares.stream()
         .collect(Collectors.groupingBy(Ejemplar::getBiblioteca));
@@ -387,6 +385,15 @@ public class EjemplarServiceImpl implements EjemplarService {
     }
   }
 
+  private Ejemplar getOrThrow(Long id) {
+    return ejemplarRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Ejemplar no encontrado con id: " + id));
+  }
+
+  private int contarPorEstado(List<Ejemplar> lista, EstadoEjemplar estado) {
+    return (int) lista.stream().filter(e -> e.getEstadoEjemplar() == estado).count();
+  }
+
   private void registrarCambioEstado(Ejemplar ejemplar, EstadoEjemplar estadoAnterior,
       EstadoEjemplar estadoNuevo, String motivo) {
     HistorialEstadoEjemplar historial = new HistorialEstadoEjemplar();
@@ -410,7 +417,6 @@ public class EjemplarServiceImpl implements EjemplarService {
     response.setUbicacionFisica(ejemplar.getUbicacionFisica());
     response.setEstadoEjemplar(ejemplar.getEstadoEjemplar());
     response.setFechaAdquisicion(ejemplar.getFechaAdquisicion());
-    response.setPrecioCompra(ejemplar.getPrecioCompra());
     response.setObservaciones(ejemplar.getObservaciones());
 
     // Libro

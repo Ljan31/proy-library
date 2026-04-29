@@ -11,10 +11,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.proyecto.fhce.library.dto.request.library.EdicionRequest;
 import com.proyecto.fhce.library.dto.response.library.EdicionResponse;
 import com.proyecto.fhce.library.dto.response.library.LibroSimpleResponse;
+import com.proyecto.fhce.library.entities.Autor;
 import com.proyecto.fhce.library.entities.Edicion;
 import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.Libro;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
+import com.proyecto.fhce.library.enums.TipoArchivo;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
@@ -36,12 +38,13 @@ public class EdicionServiceImpl implements EdicionService {
   private EjemplarRepository ejemplarRepository;
 
   @Autowired
-  private PortadaStorageService portadaStorage;
+  private StorageService storageService;
 
-  public EdicionResponse create(EdicionRequest request, MultipartFile portadaFile) {
-    if (edicionRepository.existsByIsbn(request.getIsbn())) {
-      throw new DuplicateResourceException("Ya existe una edición con ISBN: " + request.getIsbn());
-    }
+  public EdicionResponse create(EdicionRequest request, MultipartFile portadaFile, MultipartFile pdfFile) {
+    // if (edicionRepository.existsByIsbn(request.getIsbn())) {
+    // throw new DuplicateResourceException("Ya existe una edición con ISBN: " +
+    // request.getIsbn());
+    // }
 
     Libro libro = libroRepository.findById(request.getLibroId())
         .orElseThrow(() -> new ResourceNotFoundException("Libro no encontrado con id: " + request.getLibroId()));
@@ -51,17 +54,21 @@ public class EdicionServiceImpl implements EdicionService {
     edicion.setEditorial(request.getEditorial());
     edicion.setAnoPublicacion(request.getAnoPublicacion());
     edicion.setEdicion(request.getEdicion());
-    edicion.setNumeroPaginas(request.getNumeroPaginas());
     edicion.setLibro(libro);
     if (portadaFile != null && !portadaFile.isEmpty()) {
-      edicion.setImagenPortada(portadaStorage.guardar(portadaFile));
+      edicion.setImagenPortada(storageService.guardar(TipoArchivo.PORTADAS, portadaFile));
     } else if (request.getImagenPortada() != null) {
       edicion.setImagenPortada(request.getImagenPortada());
+    }
+    if (pdfFile != null && !pdfFile.isEmpty()) {
+      edicion.setPdfUrl(storageService.guardar(TipoArchivo.PDFS, pdfFile));
+    } else if (request.getPdfUrl() != null) {
+      edicion.setPdfUrl(request.getPdfUrl());
     }
     return mapToResponse(edicionRepository.save(edicion));
   }
 
-  public EdicionResponse update(Long id, EdicionRequest request, MultipartFile portadaFile) {
+  public EdicionResponse update(Long id, EdicionRequest request, MultipartFile portadaFile, MultipartFile pdfFile) {
     Edicion edicion = edicionRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Edición no encontrada con id: " + id));
 
@@ -74,15 +81,23 @@ public class EdicionServiceImpl implements EdicionService {
     edicion.setEditorial(request.getEditorial());
     edicion.setAnoPublicacion(request.getAnoPublicacion());
     edicion.setEdicion(request.getEdicion());
-    edicion.setNumeroPaginas(request.getNumeroPaginas());
 
     if (portadaFile != null && !portadaFile.isEmpty()) {
-      portadaStorage.eliminar(edicion.getImagenPortada());
-      edicion.setImagenPortada(portadaStorage.guardar(portadaFile));
+      storageService.eliminar(edicion.getImagenPortada(), TipoArchivo.PORTADAS);
+      edicion.setImagenPortada(storageService.guardar(TipoArchivo.PORTADAS, portadaFile));
+
     } else if (request.getImagenPortada() != null) {
-      // Se actualizó con una URL externa — eliminar archivo local previo si existía
-      portadaStorage.eliminar(edicion.getImagenPortada());
+      storageService.eliminar(edicion.getImagenPortada(), TipoArchivo.PORTADAS);
       edicion.setImagenPortada(request.getImagenPortada());
+    }
+
+    if (pdfFile != null && !pdfFile.isEmpty()) {
+      storageService.eliminar(edicion.getPdfUrl(), TipoArchivo.PDFS);
+      edicion.setPdfUrl(storageService.guardar(TipoArchivo.PDFS, pdfFile));
+
+    } else if (request.getPdfUrl() != null) {
+      storageService.eliminar(edicion.getPdfUrl(), TipoArchivo.PDFS);
+      edicion.setPdfUrl(request.getPdfUrl());
     }
 
     return mapToResponse(edicionRepository.save(edicion));
@@ -121,13 +136,14 @@ public class EdicionServiceImpl implements EdicionService {
     response.setEditorial(edicion.getEditorial());
     response.setAnoPublicacion(edicion.getAnoPublicacion());
     response.setEdicion(edicion.getEdicion());
-    response.setNumeroPaginas(edicion.getNumeroPaginas());
     response.setImagenPortada(edicion.getImagenPortada());
+    response.setPdfUrl(edicion.getPdfUrl());
 
     if (edicion.getLibro() != null) {
       LibroSimpleResponse libro = new LibroSimpleResponse();
       libro.setIdLibro(edicion.getLibro().getIdLibro());
       libro.setTitulo(edicion.getLibro().getTitulo());
+      libro.setAutores(mapAutoresToString(edicion.getLibro().getAutores()));
       response.setLibro(libro);
     }
 
@@ -140,5 +156,15 @@ public class EdicionServiceImpl implements EdicionService {
             .count());
 
     return response;
+  }
+
+  private String mapAutoresToString(List<Autor> autores) {
+    if (autores == null || autores.isEmpty()) {
+      return "";
+    }
+
+    return autores.stream()
+        .map(Autor::getNombre)
+        .collect(Collectors.joining(", "));
   }
 }

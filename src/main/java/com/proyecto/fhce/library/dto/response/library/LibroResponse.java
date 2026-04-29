@@ -10,6 +10,7 @@ public class LibroResponse {
   private CategoriaLibroResponse categoria;
 
   // ✅ Lista de ediciones disponibles (antes era un solo ISBN)
+  private List<AutorResponse> autores;
   private List<EdicionResponse> ediciones;
   // private Set<AutorResponse> autores;
   private Integer ejemplaresTotal;
@@ -86,6 +87,14 @@ public class LibroResponse {
 
   public void setEdiciones(List<EdicionResponse> ediciones) {
     this.ediciones = ediciones;
+  }
+
+  public List<AutorResponse> getAutores() {
+    return autores;
+  }
+
+  public void setAutores(List<AutorResponse> autores) {
+    this.autores = autores;
   }
 
 }

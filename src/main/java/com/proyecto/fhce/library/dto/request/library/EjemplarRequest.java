@@ -31,8 +31,6 @@ public class EjemplarRequest {
 
   private LocalDate fechaAdquisicion;
 
-  private BigDecimal precioCompra;
-
   private String observaciones;
 
   public Long getBibliotecaId() {
@@ -97,14 +95,6 @@ public class EjemplarRequest {
 
   public void setEdicionId(Long edicionId) {
     this.edicionId = edicionId;
-  }
-
-  public BigDecimal getPrecioCompra() {
-    return precioCompra;
-  }
-
-  public void setPrecioCompra(BigDecimal precioCompra) {
-    this.precioCompra = precioCompra;
   }
 
 }

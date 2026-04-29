@@ -1,5 +1,6 @@
 package com.proyecto.fhce.library.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
@@ -10,6 +11,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -37,6 +40,10 @@ public class Libro {
 
   @OneToMany(mappedBy = "libro", cascade = CascadeType.ALL)
   private List<Edicion> ediciones;
+
+  @ManyToMany(fetch = FetchType.LAZY)
+  @JoinTable(name = "libros_autores", joinColumns = @JoinColumn(name = "libro_id"), inverseJoinColumns = @JoinColumn(name = "autor_id"))
+  private List<Autor> autores = new ArrayList<>();
 
   public Long getId_libro() {
     return idLibro;
@@ -94,13 +101,13 @@ public class Libro {
     this.ediciones = ediciones;
   }
 
-  // @ManyToMany
-  // @JoinTable(
-  // name = "books_authors",
-  // joinColumns = @JoinColumn(name = "book_id"),
-  // inverseJoinColumns = @JoinColumn(name = "author_id")
-  // )
-  // private Set<Autor> autores;
+  public List<Autor> getAutores() {
+    return autores;
+  }
+
+  public void setAutores(List<Autor> autores) {
+    this.autores = autores;
+  }
 
   // @OneToMany(mappedBy = "libro")
   // private List<Reserva> reservas;

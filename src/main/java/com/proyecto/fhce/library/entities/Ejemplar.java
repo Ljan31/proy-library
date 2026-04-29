@@ -53,9 +53,6 @@ public class Ejemplar {
   @Column(name = "fecha_adquisicion")
   private LocalDate fechaAdquisicion;
 
-  @Column(precision = 10, scale = 2, name = "precio_compra")
-  private BigDecimal precioCompra;
-
   @Column(columnDefinition = "TEXT")
   private String observaciones;
 
@@ -125,14 +122,6 @@ public class Ejemplar {
 
   public void setFechaAdquisicion(LocalDate fechaAdquisicion) {
     this.fechaAdquisicion = fechaAdquisicion;
-  }
-
-  public BigDecimal getPrecioCompra() {
-    return precioCompra;
-  }
-
-  public void setPrecioCompra(BigDecimal precioCompra) {
-    this.precioCompra = precioCompra;
   }
 
   public String getObservaciones() {

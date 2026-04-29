@@ -12,13 +12,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.proyecto.fhce.library.dto.request.library.EdicionRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.library.EdicionResponse;
@@ -54,8 +52,9 @@ public class EdicionController {
   @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<EdicionResponse>> create(
       @Valid @RequestPart("datos") EdicionRequest request,
-      @RequestPart(value = "portada", required = false) MultipartFile portadaFile) {
-    EdicionResponse edicion = edicionService.create(request, portadaFile);
+      @RequestPart(value = "portada", required = false) MultipartFile portadaFile,
+      @RequestPart(value = "pdf", required = false) MultipartFile pdfFile) {
+    EdicionResponse edicion = edicionService.create(request, portadaFile, pdfFile);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success("Edición creada exitosamente", edicion));
   }
@@ -66,8 +65,9 @@ public class EdicionController {
   public ResponseEntity<ApiResponse<EdicionResponse>> update(
       @PathVariable Long id,
       @Valid @RequestPart("datos") EdicionRequest request,
-      @RequestPart(value = "portada", required = false) MultipartFile portadaFile) {
-    EdicionResponse edicion = edicionService.update(id, request, portadaFile);
+      @RequestPart(value = "portada", required = false) MultipartFile portadaFile,
+      @RequestPart(value = "pdf", required = false) MultipartFile pdfFile) {
+    EdicionResponse edicion = edicionService.update(id, request, portadaFile, pdfFile);
     return ResponseEntity.ok(ApiResponse.success("Edición actualizada exitosamente", edicion));
   }
 

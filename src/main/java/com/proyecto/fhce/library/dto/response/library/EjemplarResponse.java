@@ -13,7 +13,6 @@ public class EjemplarResponse {
   private String ubicacionFisica;
   private EstadoEjemplar estadoEjemplar;
   private LocalDate fechaAdquisicion;
-  private BigDecimal precioCompra;
   private String observaciones;
 
   private EdicionSimpleResponse edicion;
@@ -91,14 +90,6 @@ public class EjemplarResponse {
 
   public void setUbicacionFisica(String ubicacionFisica) {
     this.ubicacionFisica = ubicacionFisica;
-  }
-
-  public BigDecimal getPrecioCompra() {
-    return precioCompra;
-  }
-
-  public void setPrecioCompra(BigDecimal precioCompra) {
-    this.precioCompra = precioCompra;
   }
 
   public EdicionSimpleResponse getEdicion() {

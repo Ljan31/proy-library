@@ -10,7 +10,9 @@ public class DisponibilidadLibroResponse {
   private int ejemplaresDisponibles;
   private int ejemplaresPrestados;
   private int ejemplaresReservados;
-
+  private int ejemplaresDañados;
+  private int ejemplaresPerdidos;
+  private int ejemplaresEnReparacion;
   private boolean hayDisponibles;
 
   private List<DisponibilidadPorBibliotecaResponse> porBiblioteca;
@@ -77,6 +79,30 @@ public class DisponibilidadLibroResponse {
 
   public void setPorBiblioteca(List<DisponibilidadPorBibliotecaResponse> porBiblioteca) {
     this.porBiblioteca = porBiblioteca;
+  }
+
+  public int getEjemplaresDañados() {
+    return ejemplaresDañados;
+  }
+
+  public void setEjemplaresDañados(int ejemplaresDañados) {
+    this.ejemplaresDañados = ejemplaresDañados;
+  }
+
+  public int getEjemplaresPerdidos() {
+    return ejemplaresPerdidos;
+  }
+
+  public void setEjemplaresPerdidos(int ejemplaresPerdidos) {
+    this.ejemplaresPerdidos = ejemplaresPerdidos;
+  }
+
+  public int getEjemplaresEnReparacion() {
+    return ejemplaresEnReparacion;
+  }
+
+  public void setEjemplaresEnReparacion(int ejemplaresEnReparacion) {
+    this.ejemplaresEnReparacion = ejemplaresEnReparacion;
   }
 
 }

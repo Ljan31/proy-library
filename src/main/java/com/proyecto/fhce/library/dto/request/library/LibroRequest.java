@@ -1,5 +1,7 @@
 package com.proyecto.fhce.library.dto.request.library;
 
+import java.util.List;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -13,7 +15,7 @@ public class LibroRequest {
   private String idioma;
 
   private Long categoriaId;
-
+  private List<Long> autorIds;
   private String descripcion;
 
   public String getTitulo() {
@@ -46,6 +48,14 @@ public class LibroRequest {
 
   public void setDescripcion(String descripcion) {
     this.descripcion = descripcion;
+  }
+
+  public List<Long> getAutorIds() {
+    return autorIds;
+  }
+
+  public void setAutorIds(List<Long> autorIds) {
+    this.autorIds = autorIds;
   }
 
 }

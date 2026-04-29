@@ -1,7 +1,6 @@
 package com.proyecto.fhce.library.repositories;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -14,50 +13,52 @@ import com.proyecto.fhce.library.entities.Libro;
 @Repository
 public interface LibroRepository extends JpaRepository<Libro, Long>, JpaSpecificationExecutor<Libro> {
 
-  List<Libro> findByTituloContainingIgnoreCase(String titulo);
+    List<Libro> findByTituloContainingIgnoreCase(String titulo);
 
-  List<Libro> findByCategoria_IdCategoria(Long categoriaId);
+    List<Libro> findByCategoria_IdCategoria(Long categoriaId);
 
-  // @Query("SELECT l FROM Libro l LEFT JOIN FETCH l.ejemplares e " +
-  // "WHERE l.id_libro = :id")
-  // Optional<Libro> findByIdWithEjemplares(@Param("id") Long id);
+    // @Query("SELECT l FROM Libro l LEFT JOIN FETCH l.ejemplares e " +
+    // "WHERE l.id_libro = :id")
+    // Optional<Libro> findByIdWithEjemplares(@Param("id") Long id);
 
-  // @Query("SELECT DISTINCT l FROM Libro l JOIN l.autores a " +
-  // "WHERE a.nombre LIKE %:nombre% OR a.apellido LIKE %:apellido%")
-  // List<Libro> findByAutorNombreOrApellido(
-  // @Param("nombre") String nombre,
-  // @Param("apellido") String apellido);
+    // @Query("SELECT DISTINCT l FROM Libro l JOIN l.autores a " +
+    // "WHERE a.nombre LIKE %:nombre% OR a.apellido LIKE %:apellido%")
+    // List<Libro> findByAutorNombreOrApellido(
+    // @Param("nombre") String nombre,
+    // @Param("apellido") String apellido);
 
-  // ==================== opcion 1
-  // @Query("SELECT DISTINCT l FROM Libro l " +
-  // "LEFT JOIN l.ediciones ed " +
-  // "WHERE LOWER(l.titulo) LIKE LOWER(CONCAT('%', :q, '%')) " +
-  // "OR LOWER(ed.isbn) LIKE LOWER(CONCAT('%', :q, '%')) " +
-  // "OR LOWER(ed.editorial) LIKE LOWER(CONCAT('%', :q, '%'))")
-  // List<Libro> searchLibros(@Param("q") String q);
+    // ==================== opcion 1
+    // @Query("SELECT DISTINCT l FROM Libro l " +
+    // "LEFT JOIN l.ediciones ed " +
+    // "WHERE LOWER(l.titulo) LIKE LOWER(CONCAT('%', :q, '%')) " +
+    // "OR LOWER(ed.isbn) LIKE LOWER(CONCAT('%', :q, '%')) " +
+    // "OR LOWER(ed.editorial) LIKE LOWER(CONCAT('%', :q, '%'))")
+    // List<Libro> searchLibros(@Param("q") String q);
 
-  @Query("SELECT DISTINCT l FROM Libro l " +
-      "LEFT JOIN l.ediciones ed " +
-      "LEFT JOIN ed.ejemplares ej " +
-      "WHERE (" +
-      "LOWER(l.titulo) LIKE LOWER(CONCAT('%', :q, '%')) " +
-      "OR LOWER(ed.isbn) LIKE LOWER(CONCAT('%', :q, '%')) " +
-      "OR LOWER(ed.editorial) LIKE LOWER(CONCAT('%', :q, '%'))" +
-      ") " +
-      "AND (:bibliotecaId IS NULL OR ej.biblioteca.idBiblioteca = :bibliotecaId)")
-  List<Libro> searchLibros(@Param("q") String q,
-      @Param("bibliotecaId") Long bibliotecaId);
+    @Query("SELECT DISTINCT l FROM Libro l " +
+            "LEFT JOIN l.ediciones ed " +
+            "LEFT JOIN ed.ejemplares ej " +
+            "LEFT JOIN l.autores a " +
+            "WHERE (" +
+            "LOWER(l.titulo) LIKE LOWER(CONCAT('%', :q, '%')) " +
+            "OR LOWER(ed.isbn) LIKE LOWER(CONCAT('%', :q, '%')) " +
+            "OR LOWER(a.nombre) LIKE LOWER(CONCAT('%', :q, '%'))" +
+            "OR LOWER(ed.editorial) LIKE LOWER(CONCAT('%', :q, '%'))" +
+            ") " +
+            "AND (:bibliotecaId IS NULL OR ej.biblioteca.idBiblioteca = :bibliotecaId)")
+    List<Libro> searchLibros(@Param("q") String q,
+            @Param("bibliotecaId") Long bibliotecaId);
 
-  // @Query("SELECT l FROM Libro l JOIN l.ejemplares e " +
-  // "WHERE e.biblioteca.id_biblioteca = :bibliotecaId " +
-  // "GROUP BY l ORDER BY l.titulo")
-  // List<Libro> findByBiblioteca(@Param("bibliotecaId") Long bibliotecaId);
+    // @Query("SELECT l FROM Libro l JOIN l.ejemplares e " +
+    // "WHERE e.biblioteca.id_biblioteca = :bibliotecaId " +
+    // "GROUP BY l ORDER BY l.titulo")
+    // List<Libro> findByBiblioteca(@Param("bibliotecaId") Long bibliotecaId);
 
-  @Query("SELECT COUNT(l) FROM Libro l WHERE l.categoria.idCategoria = :categoriaId")
-  Long countByCategoria_IdCategoria(@Param("categoriaId") Long categoriaId);
+    @Query("SELECT COUNT(l) FROM Libro l WHERE l.categoria.idCategoria = :categoriaId")
+    Long countByCategoria_IdCategoria(@Param("categoriaId") Long categoriaId);
 
-  @Query("SELECT COUNT(l) FROM Libro l WHERE l.categoria.idCategoria = :categoriaId")
-  Long countByCategoria(@Param("categoriaId") Long categoriaId);
+    @Query("SELECT COUNT(l) FROM Libro l WHERE l.categoria.idCategoria = :categoriaId")
+    Long countByCategoria(@Param("categoriaId") Long categoriaId);
 
-  List<Libro> findTop10ByCategoria_IdCategoriaOrderByIdLibroDesc(Long categoriaId);
+    List<Libro> findTop10ByCategoria_IdCategoriaOrderByIdLibroDesc(Long categoriaId);
 }

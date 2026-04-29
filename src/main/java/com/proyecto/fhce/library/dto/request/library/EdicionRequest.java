@@ -6,8 +6,8 @@ import jakarta.validation.constraints.Size;
 
 public class EdicionRequest {
 
-  @NotBlank(message = "El ISBN es obligatorio")
-  @Size(max = 20)
+  // @NotBlank(message = "El ISBN es obligatorio")
+  // @Size(max = 20)
   private String isbn;
 
   @NotBlank(message = "La editorial es obligatoria")
@@ -23,6 +23,8 @@ public class EdicionRequest {
   private Integer numeroPaginas;
 
   private String imagenPortada;
+
+  private String pdfUrl;
 
   @NotNull(message = "El libro es obligatorio")
   private Long libroId;
@@ -81,6 +83,14 @@ public class EdicionRequest {
 
   public void setLibroId(Long libroId) {
     this.libroId = libroId;
+  }
+
+  public String getPdfUrl() {
+    return pdfUrl;
+  }
+
+  public void setPdfUrl(String pdfUrl) {
+    this.pdfUrl = pdfUrl;
   }
 
 }

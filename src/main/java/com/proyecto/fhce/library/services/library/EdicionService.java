@@ -8,9 +8,9 @@ import com.proyecto.fhce.library.dto.request.library.EdicionRequest;
 import com.proyecto.fhce.library.dto.response.library.EdicionResponse;
 
 public interface EdicionService {
-  public EdicionResponse create(EdicionRequest request, MultipartFile portadaFile);
+  public EdicionResponse create(EdicionRequest request, MultipartFile portadaFile, MultipartFile pdfFile);
 
-  public EdicionResponse update(Long id, EdicionRequest request, MultipartFile portadaFile);
+  public EdicionResponse update(Long id, EdicionRequest request, MultipartFile portadaFile, MultipartFile pdfFile);
 
   EdicionResponse findById(Long id);
 
