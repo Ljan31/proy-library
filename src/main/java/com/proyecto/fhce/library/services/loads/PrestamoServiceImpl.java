@@ -370,8 +370,20 @@ public class PrestamoServiceImpl implements PrestamoService {
   @Transactional
   public PrestamoResponse renovarPrestamo(RenovacionRequest request, Long userId,
       Collection<? extends GrantedAuthority> authorities) {
+    System.out.println("\n===== INICIO RENOVACION =====");
+
+    // 1. Entrada
+    System.out.println("Request prestamoId: " + request.getPrestamoId());
+    System.out.println("User ID: " + userId);
+
     Prestamo prestamo = prestamoRepository.findById(request.getPrestamoId())
         .orElseThrow(() -> new ResourceNotFoundException("Préstamo no encontrado"));
+    System.out.println("\n[DATOS PRESTAMO]");
+    System.out.println("ID: " + prestamo.getIdPrestamo());
+    System.out.println("Usuario ID: " + prestamo.getUsuario().getId_usuario());
+    System.out.println("Estado: " + prestamo.getEstadoPrestamo());
+    System.out.println("Fecha devolución: " + prestamo.getFechaDevolucionEstimada());
+    System.out.println("Renovaciones actuales: " + prestamo.getRenovaciones());
 
     boolean esBibliotecario = authorities.stream()
         .anyMatch(a -> a.getAuthority().equals("ROLE_BIBLIOTECARIO"));
@@ -387,7 +399,7 @@ public class PrestamoServiceImpl implements PrestamoService {
     boolean esPropietario = prestamo.getUsuario()
         .getId_usuario()
         .equals(userId);
-
+    System.out.println("\n¿Es propietario?: " + esPropietario);
     if (!esPropietario) {
       if (esBibliotecario) {
         validarEncargadoBiblioteca(userId, prestamo.getBiblioteca());
@@ -401,7 +413,10 @@ public class PrestamoServiceImpl implements PrestamoService {
       throw new BusinessException("El préstamo no está activo y no puede renovarse. Estado actual: "
           + prestamo.getEstadoPrestamo());
     }
-
+    // 6. Validar vencimiento
+    System.out.println("\n[VALIDANDO FECHA]");
+    System.out.println("Hoy: " + LocalDate.now());
+    System.out.println("Fecha devolución: " + prestamo.getFechaDevolucionEstimada());
     // Validate not overdue
     if (LocalDate.now().isAfter(prestamo.getFechaDevolucionEstimada())) {
       throw new BusinessException("No se puede renovar un préstamo vencido. Debe registrar la devolución.");

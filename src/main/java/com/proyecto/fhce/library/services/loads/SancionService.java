@@ -11,6 +11,7 @@ import com.proyecto.fhce.library.dto.SancionDTO.EstadoSancionUsuarioDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.PagoMultaRequestDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.SancionManualRequestDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.SancionResponseDTO;
+import com.proyecto.fhce.library.dto.request.CrearNotificacionRequest;
 import com.proyecto.fhce.library.dto.response.loads.ConfiguracionPrestamoResponseDTO;
 import com.proyecto.fhce.library.entities.Prestamo;
 import com.proyecto.fhce.library.entities.Sancion;
@@ -18,6 +19,7 @@ import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoSancion;
 import com.proyecto.fhce.library.enums.MotivoSancion;
 import com.proyecto.fhce.library.enums.TipoSancion;
+import com.proyecto.fhce.library.enums.notificaciones.TipoNotificacion;
 import com.proyecto.fhce.library.exception.SancionException.PrestamoNoVencidoException;
 import com.proyecto.fhce.library.exception.SancionException.SancionDuplicadaException;
 import com.proyecto.fhce.library.exception.SancionException.SancionNoActivaException;
@@ -27,6 +29,7 @@ import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.SancionRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.notificaciones.NotificacionService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -45,7 +48,7 @@ public class SancionService {
   private final UserRepository usuarioRepository;
   private final BibliotecaRepository bibliotecaRepository;
   private final ConfiguracionPrestamoService configuracionService;
-  // private final NotificacionService notificacionService;
+  private final NotificacionService notificacionService;
   private final SancionMapper mapper;
 
   public SancionService(
@@ -54,14 +57,14 @@ public class SancionService {
       UserRepository usuarioRepository,
       BibliotecaRepository bibliotecaRepository,
       ConfiguracionPrestamoService configuracionService,
-      // NotificacionService notificacionService,
+      NotificacionService notificacionService,
       SancionMapper mapper) {
     this.sancionRepository = sancionRepository;
     this.prestamoRepository = prestamoRepository;
     this.usuarioRepository = usuarioRepository;
     this.bibliotecaRepository = bibliotecaRepository;
     this.configuracionService = configuracionService;
-    // this.notificacionService = notificacionService;
+    this.notificacionService = notificacionService;
     this.mapper = mapper;
   }
 
@@ -362,11 +365,28 @@ public class SancionService {
 
   private void enviarNotificacionSancion(Sancion sancion) {
     try {
-      // notificacionService.enviarNotificacionSancion(
-      // sancion.getUsuario().getIdUsuario(),
-      // sancion.getIdSancion(),
-      // sancion.getMontoMulta(),
-      // sancion.getFechaFinSuspension());
+
+      String asunto = "Sanción por devolución tardía";
+
+      String mensaje = String.format(
+          "Se ha generado una sanción por devolución tardía.%n" +
+              "Monto de multa: %s.%n" +
+              "%s",
+          sancion.getMontoMulta(),
+          sancion.getFechaFinSuspension() != null
+              ? "Suspensión hasta: " + sancion.getFechaFinSuspension()
+              : "No se aplicó suspensión.");
+
+      CrearNotificacionRequest request = new CrearNotificacionRequest(
+          sancion.getUsuario().getId_usuario(),
+          TipoNotificacion.SANCION,
+          asunto,
+          mensaje,
+          null, //
+          sancion.getIdSancion(),
+          "SANCION");
+
+      notificacionService.crear(request);
     } catch (Exception e) {
       // La notificación no es crítica — no revierte la sanción
       log.warn("No se pudo enviar notificación para sanción [id={}]: {}",

@@ -51,7 +51,7 @@ public class Notificacion {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado_envio", nullable = false, length = 10)
-    private EstadoEnvio estadoEnvio;
+    private EstadoEnvio estadoEnvio = EstadoEnvio.PENDIENTE;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "canal", nullable = false, length = 10)
@@ -64,7 +64,7 @@ public class Notificacion {
     private String tipoReferencia;
 
     @Column(name = "intentos_envio", nullable = false)
-    private Integer intentosEnvio;
+    private Integer intentosEnvio = 0;
 
     @Column(name = "ultimo_error", columnDefinition = "TEXT")
     private String ultimoError;
@@ -72,37 +72,40 @@ public class Notificacion {
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
-    // ========================
-    // CONSTRUCTORES
-    // ========================
+    // -------------------------------------------------------
+    // Constructores
+    // -------------------------------------------------------
 
     public Notificacion() {
     }
 
-    public Notificacion(Long idNotificacion, Long idUsuario, TipoNotificacion tipoNotificacion,
-            String asunto, String mensaje, LocalDateTime fechaEnvio,
-            LocalDateTime fechaLectura, EstadoEnvio estadoEnvio,
-            CanalNotificacion canal, Long idReferencia, String tipoReferencia,
-            Integer intentosEnvio, String ultimoError, LocalDateTime fechaCreacion) {
-        this.idNotificacion = idNotificacion;
+    public Notificacion(Long idUsuario, TipoNotificacion tipoNotificacion,
+            String asunto, String mensaje,
+            EstadoEnvio estadoEnvio, CanalNotificacion canal,
+            Long idReferencia, String tipoReferencia) {
         this.idUsuario = idUsuario;
         this.tipoNotificacion = tipoNotificacion;
         this.asunto = asunto;
         this.mensaje = mensaje;
-        this.fechaEnvio = fechaEnvio;
-        this.fechaLectura = fechaLectura;
-        this.estadoEnvio = estadoEnvio;
+        this.estadoEnvio = estadoEnvio != null ? estadoEnvio : EstadoEnvio.PENDIENTE;
         this.canal = canal;
         this.idReferencia = idReferencia;
         this.tipoReferencia = tipoReferencia;
-        this.intentosEnvio = intentosEnvio;
-        this.ultimoError = ultimoError;
-        this.fechaCreacion = fechaCreacion;
+        this.intentosEnvio = 0;
     }
 
-    // ========================
-    // GETTERS Y SETTERS
-    // ========================
+    @PrePersist
+    protected void onCreate() {
+        this.fechaCreacion = LocalDateTime.now();
+        if (this.estadoEnvio == null)
+            this.estadoEnvio = EstadoEnvio.PENDIENTE;
+        if (this.intentosEnvio == null)
+            this.intentosEnvio = 0;
+    }
+
+    // -------------------------------------------------------
+    // Getters y Setters
+    // -------------------------------------------------------
 
     public Long getIdNotificacion() {
         return idNotificacion;
@@ -124,8 +127,8 @@ public class Notificacion {
         return tipoNotificacion;
     }
 
-    public void setTipoNotificacion(TipoNotificacion tipoNotificacion) {
-        this.tipoNotificacion = tipoNotificacion;
+    public void setTipoNotificacion(TipoNotificacion t) {
+        this.tipoNotificacion = t;
     }
 
     public String getAsunto() {
@@ -212,33 +215,17 @@ public class Notificacion {
         return fechaCreacion;
     }
 
-    // ========================
-    // CICLO DE VIDA
-    // ========================
-
-    @PrePersist
-    protected void onCreate() {
-        this.fechaCreacion = LocalDateTime.now();
-
-        if (this.estadoEnvio == null) {
-            this.estadoEnvio = EstadoEnvio.PENDIENTE;
-        }
-        if (this.intentosEnvio == null) {
-            this.intentosEnvio = 0;
-        }
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
     }
 
-    // ========================
-    // LÓGICA DE DOMINIO
-    // ========================
+    // -------------------------------------------------------
+    // Métodos de dominio
+    // -------------------------------------------------------
 
     public boolean puedeReintentar(int maxIntentos) {
         return this.estadoEnvio == EstadoEnvio.FALLIDO
                 && this.intentosEnvio < maxIntentos;
-    }
-
-    public boolean esPendiente() {
-        return this.estadoEnvio == EstadoEnvio.PENDIENTE;
     }
 
     public boolean fueLeida() {
@@ -253,7 +240,7 @@ public class Notificacion {
 
     public void registrarFallo(String mensajeError) {
         this.estadoEnvio = EstadoEnvio.FALLIDO;
-        this.intentosEnvio = (this.intentosEnvio == null ? 1 : this.intentosEnvio + 1);
+        this.intentosEnvio = this.intentosEnvio + 1;
         this.ultimoError = mensajeError;
     }
 
