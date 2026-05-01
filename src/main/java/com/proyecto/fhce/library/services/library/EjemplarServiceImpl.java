@@ -428,7 +428,7 @@ public class EjemplarServiceImpl implements EjemplarService {
       ed.setAnoPublicacion(ejemplar.getEdicion().getAnoPublicacion());
       ed.setEdicion(ejemplar.getEdicion().getEdicion());
       ed.setImagenPortada(ejemplar.getEdicion().getImagenPortada());
-
+      ed.setPdfUrl(ejemplar.getEdicion().getPdfUrl());
       // ✅ Datos del libro padre dentro de la edición
       if (ejemplar.getEdicion().getLibro() != null) {
         ed.setIdLibro(ejemplar.getEdicion().getLibro().getIdLibro());

@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.Carrera;
+import com.proyecto.fhce.library.entities.CategoriaLibro;
+import com.proyecto.fhce.library.entities.ConfiguracionPrestamo;
 import com.proyecto.fhce.library.entities.Edicion;
 import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.HistorialEstadoEjemplar;
@@ -27,6 +29,8 @@ import com.proyecto.fhce.library.enums.EstadoEjemplar;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.CarreraRepository;
+import com.proyecto.fhce.library.repositories.CategoriaLibroRepository;
+import com.proyecto.fhce.library.repositories.ConfiguracionPrestamoRepository;
 import com.proyecto.fhce.library.repositories.EdicionRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.HistorialEstadoEjemplarRepository;
@@ -58,6 +62,10 @@ public class DataSeedService {
   private EjemplarRepository ejemplarRepository;
   @Autowired
   private HistorialEstadoEjemplarRepository historialEstadoEjemplarRepository;
+  @Autowired
+  private CategoriaLibroRepository categoriaLibroRepository;
+  @Autowired
+  private ConfiguracionPrestamoRepository configuracionPrestamoRepository;
 
   public DataSeedService(RoleRepository roleRepository,
       UserRepository userRepository, PersonaRepository personaRepository, PermisoRepository permisoRepository,
@@ -114,39 +122,41 @@ public class DataSeedService {
         "biblio3@localhost", "700002", "123456", RoleName.ROLE_BIBLIOTECARIO);
 
     // Estudiantes (10)
-    createUserIfNotExists("carlos", "Carlos", "Perez", "Lopez", 1000002,
+    createUserIfNotExists("carlos", "Carlos", "Perez", "Lopez", 12,
         "est2@localhost", "710002", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("lucia", "Lucia", "Gomez", "Ramos", 1000003,
+    createUserIfNotExists("lucia", "Lucia", "Gomez", "Ramos", 13,
         "est3@localhost", "710003", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("diego", "Diego", "Fernandez", "Torrez", 1000004,
+    createUserIfNotExists("diego", "Diego", "Fernandez", "Torrez", 14,
         "est4@localhost", "710004", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("sofia", "Sofia", "Vargas", "Mendoza", 1000005,
+    createUserIfNotExists("sofia", "Sofia", "Vargas", "Mendoza", 15,
         "est5@localhost", "710005", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("jorge", "Jorge", "Castro", "Quisbert", 1000006,
+    createUserIfNotExists("jorge", "Jorge", "Castro", "Quisbert", 16,
         "est6@localhost", "710006", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("elena", "Elena", "Flores", "Condori", 1000007,
+    createUserIfNotExists("elena", "Elena", "Flores", "Condori", 17,
         "est7@localhost", "710007", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("miguel", "Miguel", "Huanca", "Perez", 1000008,
+    createUserIfNotExists("miguel", "Miguel", "Huanca", "Perez", 18,
         "est8@localhost", "710008", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("alejandra", "alejandra", "Rojas", "Loza", 1000009,
+    createUserIfNotExists("alejandra", "alejandra", "Rojas", "Loza", 19,
         "est9@localhost", "710009", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("andres", "Andres", "Gutierrez", "Silva", 1000010,
+    createUserIfNotExists("andres", "Andres", "Gutierrez", "Silva", 21,
         "est10@localhost", "710010", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("paola", "Paola", "Navarro", "Ortiz", 1000011,
+    createUserIfNotExists("paola", "Paola", "Navarro", "Ortiz", 22,
         "est11@localhost", "710011", "123456", RoleName.ROLE_ESTUDIANTE);
     // ==================== 4️⃣ ASIGNAR PERMISOS A ROLES ====================
     assignPermisos();
     seedCarrerasYBibliotecas();
     seedLibrosEjemplares();
+    seedCategorias();
+    seedConfiguracionPrestamo();
     return "Data seed completed successfully ✅";
   }
 
@@ -359,6 +369,83 @@ public class DataSeedService {
     System.out.println("Libros y ejemplares creados ✅");
   }
 
+  private void seedCategorias() {
+
+    if (categoriaLibroRepository.count() > 0) {
+      return; // evitar duplicados
+    }
+
+    List<CategoriaLibro> categorias = List.of(
+
+        crearCategoria("Filosofía", "Pensamiento filosófico", "100"),
+        crearCategoria("Religión", "Estudios religiosos", "200"),
+        crearCategoria("Ciencias Sociales", "Sociedad y cultura", "300"),
+        crearCategoria("Lenguas", "Idiomas y lingüística", "400"),
+        crearCategoria("Ciencias Naturales", "Matemáticas, física, química", "500"),
+        crearCategoria("Tecnología", "Ingeniería y aplicaciones", "600"),
+        crearCategoria("Artes", "Arte, música y recreación", "700"),
+        crearCategoria("Literatura", "Obras literarias", "800"),
+        crearCategoria("Historia", "Historia universal", "900"),
+        crearCategoria("Geografía", "Estudio de la tierra", "910")
+
+    );
+
+    categoriaLibroRepository.saveAll(categorias);
+
+    System.out.println("Categorías creadas ✅");
+  }
+
+  private void seedConfiguracionPrestamo() {
+
+    if (configuracionPrestamoRepository.count() > 0) {
+      return; // evitar duplicados
+    }
+
+    Biblioteca biblioteca2 = bibliotecaRepository.findById(2L)
+        .orElseThrow(() -> new RuntimeException("Biblioteca 2 no existe"));
+
+    Biblioteca biblioteca3 = bibliotecaRepository.findById(3L)
+        .orElseThrow(() -> new RuntimeException("Biblioteca 3 no existe"));
+
+    // Configuración Biblioteca 2
+    ConfiguracionPrestamo config2 = new ConfiguracionPrestamo();
+    config2.setBiblioteca(biblioteca2);
+    config2.setDiasPrestamoMax(7);
+    config2.setRenovacionesMax(2);
+    config2.setEjemplaresMaxDomicilio(3);
+    config2.setEjemplaresMaxSala(2);
+    config2.setMultaPorDia(new BigDecimal("2.50"));
+    config2.setMultaMaxDias(10);
+    config2.setDiasSuspension(3);
+    config2.setDiasReserva(2);
+
+    configuracionPrestamoRepository.save(config2);
+
+    // Configuración Biblioteca 3
+    ConfiguracionPrestamo config3 = new ConfiguracionPrestamo();
+    config3.setBiblioteca(biblioteca3);
+    config3.setDiasPrestamoMax(5);
+    config3.setRenovacionesMax(1);
+    config3.setEjemplaresMaxDomicilio(2);
+    config3.setEjemplaresMaxSala(1);
+    config3.setMultaPorDia(new BigDecimal("3.00"));
+    config3.setMultaMaxDias(7);
+    config3.setDiasSuspension(5);
+    config3.setDiasReserva(1);
+
+    configuracionPrestamoRepository.save(config3);
+
+    System.out.println("Configuraciones de préstamo creadas ✅");
+  }
+
+  private CategoriaLibro crearCategoria(String nombre, String descripcion, String dewey) {
+    CategoriaLibro c = new CategoriaLibro();
+    c.setNombre_categoria(nombre);
+    c.setDescripcion(descripcion);
+    c.setCodigo_dewey(dewey);
+    return c;
+  }
+
   private Libro crearLibro(String titulo, String idioma, String descripcion) {
     Libro libro = new Libro();
     libro.setTitulo(titulo);
@@ -423,4 +510,5 @@ public class DataSeedService {
 
     historialEstadoEjemplarRepository.save(h);
   }
+
 }

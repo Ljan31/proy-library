@@ -10,17 +10,15 @@ public class EdicionRequest {
   // @Size(max = 20)
   private String isbn;
 
-  @NotBlank(message = "La editorial es obligatoria")
-  @Size(max = 200)
+  // @NotBlank(message = "La editorial es obligatoria")
+  // @Size(max = 200)
   private String editorial;
 
-  @NotNull(message = "El año de publicación es obligatorio")
+  // @NotNull(message = "El año de publicación es obligatorio")
   private Integer anoPublicacion;
 
   @Size(max = 50)
   private String edicion;
-
-  private Integer numeroPaginas;
 
   private String imagenPortada;
 
@@ -59,14 +57,6 @@ public class EdicionRequest {
 
   public void setEdicion(String edicion) {
     this.edicion = edicion;
-  }
-
-  public Integer getNumeroPaginas() {
-    return numeroPaginas;
-  }
-
-  public void setNumeroPaginas(Integer numeroPaginas) {
-    this.numeroPaginas = numeroPaginas;
   }
 
   public String getImagenPortada() {

@@ -106,7 +106,7 @@ public class UserController {
 
   // ===================== FIND BY ROLE =====================
   @GetMapping("/by-role")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<List<UsuarioResponse>>> findByRole(
       @RequestParam String roleName) {
 

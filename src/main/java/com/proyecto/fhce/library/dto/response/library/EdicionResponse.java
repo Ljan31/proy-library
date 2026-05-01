@@ -7,7 +7,6 @@ public class EdicionResponse {
   private String editorial;
   private Integer anoPublicacion;
   private String edicion;
-  private Integer numeroPaginas;
   private String imagenPortada;
   private String pdfUrl;
 
@@ -56,14 +55,6 @@ public class EdicionResponse {
 
   public void setEdicion(String edicion) {
     this.edicion = edicion;
-  }
-
-  public Integer getNumeroPaginas() {
-    return numeroPaginas;
-  }
-
-  public void setNumeroPaginas(Integer numeroPaginas) {
-    this.numeroPaginas = numeroPaginas;
   }
 
   public String getImagenPortada() {

@@ -37,7 +37,7 @@ public class Ejemplar {
   @JoinColumn(name = "library_id", nullable = false)
   private Biblioteca biblioteca;
 
-  @Column(unique = true, nullable = false, length = 50, name = "codigo_ejemplar")
+  @Column(nullable = false, length = 50, name = "codigo_ejemplar")
   private String codigoEjemplar;
 
   @Column(length = 100, name = "codigo_topografico")
