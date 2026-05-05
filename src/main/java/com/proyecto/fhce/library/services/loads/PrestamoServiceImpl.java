@@ -34,6 +34,7 @@ import com.proyecto.fhce.library.entities.Prestamo;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
+import com.proyecto.fhce.library.enums.EstadoReserva;
 import com.proyecto.fhce.library.enums.TipoPrestamo;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
@@ -43,6 +44,7 @@ import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.HistorialEstadoEjemplarRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
+import com.proyecto.fhce.library.repositories.ReservaRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 
 @Service
@@ -75,6 +77,9 @@ public class PrestamoServiceImpl implements PrestamoService {
   // Integraciones con otros módulos
   @Autowired
   private ConfiguracionPrestamoService configuracionService;
+
+  @Autowired
+  private ReservaRepository reservaRepository;
 
   @Autowired
   private SancionService sancionService;
@@ -210,7 +215,18 @@ public class PrestamoServiceImpl implements PrestamoService {
     }
 
     // Validate ejejmplar availability
-    if (ejemplar.getEstadoEjemplar() != EstadoEjemplar.DISPONIBLE) {
+    // if (ejemplar.getEstadoEjemplar() != EstadoEjemplar.DISPONIBLE) {
+    // throw new BusinessException("El ejemplar no está disponible para préstamo");
+    // }
+    boolean disponible = ejemplar.getEstadoEjemplar() == EstadoEjemplar.DISPONIBLE;
+
+    boolean reservadoParaUsuario = ejemplar.getEstadoEjemplar() == EstadoEjemplar.RESERVADO
+        && reservaRepository.existsByEjemplarIdAndUsuarioIdAndEstadoReserva(
+            ejemplar.getIdEjemplar(),
+            usuario.getId_usuario(),
+            EstadoReserva.NOTIFICADA);
+
+    if (!disponible && !reservadoParaUsuario) {
       throw new BusinessException("El ejemplar no está disponible para préstamo");
     }
 

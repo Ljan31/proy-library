@@ -8,6 +8,8 @@ public class LibroResponse {
   private String idioma;
   private String descripcion;
   private CategoriaLibroResponse categoria;
+  private Long idBiblioteca;
+  private String nombreBiblioteca;
 
   // ✅ Lista de ediciones disponibles (antes era un solo ISBN)
   private List<AutorResponse> autores;
@@ -95,6 +97,22 @@ public class LibroResponse {
 
   public void setAutores(List<AutorResponse> autores) {
     this.autores = autores;
+  }
+
+  public Long getIdBiblioteca() {
+    return idBiblioteca;
+  }
+
+  public void setIdBiblioteca(Long idBiblioteca) {
+    this.idBiblioteca = idBiblioteca;
+  }
+
+  public String getNombreBiblioteca() {
+    return nombreBiblioteca;
+  }
+
+  public void setNombreBiblioteca(String nombreBiblioteca) {
+    this.nombreBiblioteca = nombreBiblioteca;
   }
 
 }
