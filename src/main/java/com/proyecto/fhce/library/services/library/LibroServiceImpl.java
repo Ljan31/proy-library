@@ -31,6 +31,8 @@ import com.proyecto.fhce.library.repositories.EdicionRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.LibroRepository;
 
+import jakarta.persistence.criteria.Predicate;
+
 @Service
 public class LibroServiceImpl implements LibroService {
   @Autowired
@@ -106,10 +108,35 @@ public class LibroServiceImpl implements LibroService {
     Specification<Libro> spec = Specification.where(null);
 
     // Aplicar filtros
-    if (request.getTitulo() != null) {
-      spec = spec.and((root, query, cb) -> cb.like(
-          cb.lower(root.get("titulo")),
-          "%" + request.getTitulo().toLowerCase() + "%"));
+    // if (request.getTitulo() != null) {
+    // spec = spec.and((root, query, cb) -> cb.like(
+    // cb.lower(root.get("titulo")),
+    // "%" + request.getTitulo().toLowerCase() + "%"));
+    // }
+
+    if (request.getTitulo() != null || request.getAutor() != null) {
+      spec = spec.and((root, query, cb) -> {
+
+        query.distinct(true);
+
+        List<Predicate> predicates = new ArrayList<>();
+
+        if (request.getTitulo() != null) {
+          predicates.add(
+              cb.like(
+                  cb.lower(root.get("titulo")),
+                  "%" + request.getTitulo().toLowerCase() + "%"));
+        }
+
+        if (request.getAutor() != null) {
+          predicates.add(
+              cb.like(
+                  cb.lower(root.join("autores").get("nombre")),
+                  "%" + request.getAutor().toLowerCase() + "%"));
+        }
+
+        return cb.or(predicates.toArray(new Predicate[0]));
+      });
     }
 
     if (request.getCategoriaId() != null) {
@@ -124,10 +151,21 @@ public class LibroServiceImpl implements LibroService {
         return cb.equal(root.join("ediciones").get("isbn"), request.getIsbn());
       });
     }
-    // if (request.getAutorTexto() != null) {
-    // spec = spec.and((root, query, cb) ->
-    // cb.like(cb.lower(root.get("autorTexto")),
-    // "%" + request.getAutorTexto().toLowerCase() + "%"));
+    if (request.getAnoPublicacion() != null) {
+      spec = spec.and((root, query, cb) -> {
+        query.distinct(true);
+        return cb.equal(
+            root.join("ediciones").get("anoPublicacion"),
+            request.getAnoPublicacion());
+      });
+    }
+    // if (request.getAutor() != null) {
+    // spec = spec.and((root, query, cb) -> {
+    // query.distinct(true);
+    // return cb.like(
+    // cb.lower(root.join("autores").get("nombre")),
+    // "%" + request.getAutor().toLowerCase() + "%");
+    // });
     // }
     // ResultadoBusquedaLibroResponse response = new
     // ResultadoBusquedaLibroResponse();
@@ -193,6 +231,11 @@ public class LibroServiceImpl implements LibroService {
             .filter(e -> e.getEstadoEjemplar() == EstadoEjemplar.DISPONIBLE)
             .count());
 
+    if (!todosEjemplares.isEmpty()) {
+      response.setIdBiblioteca(
+          todosEjemplares.get(0).getBiblioteca().getIdBiblioteca());
+      response.setNombreBiblioteca(todosEjemplares.get(0).getBiblioteca().getNombre());
+    }
     return response;
   }
 
