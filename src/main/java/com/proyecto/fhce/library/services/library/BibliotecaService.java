@@ -2,16 +2,17 @@ package com.proyecto.fhce.library.services.library;
 
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.proyecto.fhce.library.dto.request.library.BibliotecaRequest;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
-import com.proyecto.fhce.library.enums.RolEncargado;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
 
 public interface BibliotecaService {
-  public BibliotecaResponse create(BibliotecaRequest request);
+  public BibliotecaResponse create(BibliotecaRequest request, MultipartFile logoFile);
 
-  public BibliotecaResponse update(Long id, BibliotecaRequest request);
+  public BibliotecaResponse update(Long id, BibliotecaRequest request, MultipartFile logoFile);
 
   public void delete(Long id);
 

@@ -93,6 +93,7 @@ public class SpringSecurityConfig {
             // .requestMatchers("/api/roles/**").permitAll()
             // Swagger/OpenAPI
             .requestMatchers("/portadas/**").permitAll()
+            .requestMatchers("/logos/**").permitAll()
             .requestMatchers("/pdfs/**").permitAll()
             .requestMatchers("/v3/api-docs/**").permitAll()
             .requestMatchers("/swagger-ui/**").permitAll()

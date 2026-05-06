@@ -57,6 +57,8 @@ public class Biblioteca {
   @Column(nullable = false)
   private EstadoBiblioteca estado;
 
+  @Column(name = "logo_url", length = 500)
+  private String logoUrl;
   @OneToMany(mappedBy = "biblioteca")
   private List<Ejemplar> ejemplares;
 
@@ -154,6 +156,14 @@ public class Biblioteca {
 
   public void setEncargados(List<BibliotecaEncargado> encargados) {
     this.encargados = encargados;
+  }
+
+  public String getLogoUrl() {
+    return logoUrl;
+  }
+
+  public void setLogoUrl(String logoUrl) {
+    this.logoUrl = logoUrl;
   }
 
   // @OneToMany(mappedBy = "biblioteca")

@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.proyecto.fhce.library.dto.request.library.BibliotecaRequest;
 import com.proyecto.fhce.library.dto.response.CarreraSimpleResponse;
@@ -30,6 +31,7 @@ import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
 import com.proyecto.fhce.library.enums.RolEncargado;
+import com.proyecto.fhce.library.enums.TipoArchivo;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
@@ -62,6 +64,9 @@ public class BibliotecaServiceImpl implements BibliotecaService {
   @Autowired
   private RoleRepository roleRepository;
 
+  @Autowired
+  private StorageService storageService;
+
   // @Autowired
   // private PrestamoRepository prestamoRepository;
 
@@ -72,7 +77,7 @@ public class BibliotecaServiceImpl implements BibliotecaService {
   // private AuditoriaService auditoriaService;
 
   @Transactional
-  public BibliotecaResponse create(BibliotecaRequest request) {
+  public BibliotecaResponse create(BibliotecaRequest request, MultipartFile logoFile) {
     // Validar nombre único
     if (bibliotecaRepository.existsByNombre(request.getNombre())) {
       throw new DuplicateResourceException("Ya existe una biblioteca con nombre: " +
@@ -113,7 +118,10 @@ public class BibliotecaServiceImpl implements BibliotecaService {
         throw new BusinessException("Ya existe una biblioteca facultativa");
       }
     }
-
+    if (logoFile != null && !logoFile.isEmpty()) {
+      String logoUrl = storageService.guardar(TipoArchivo.LOGOS, logoFile);
+      biblioteca.setLogoUrl(logoUrl);
+    }
     // Asignar encargado
     asignarEncargados(biblioteca, request.getEncargadosIds());
 
@@ -126,7 +134,7 @@ public class BibliotecaServiceImpl implements BibliotecaService {
   }
 
   @Transactional
-  public BibliotecaResponse update(Long id, BibliotecaRequest request) {
+  public BibliotecaResponse update(Long id, BibliotecaRequest request, MultipartFile logoFile) {
     Biblioteca biblioteca = bibliotecaRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada con id: " + id));
 
@@ -156,7 +164,14 @@ public class BibliotecaServiceImpl implements BibliotecaService {
           .orElseThrow(() -> new ResourceNotFoundException("Carrera no encontrada"));
       biblioteca.setCarrera(carrera);
     }
+    if (logoFile != null && !logoFile.isEmpty()) {
+      // eliminar anterior
+      storageService.eliminar(biblioteca.getLogoUrl(), TipoArchivo.LOGOS);
 
+      // guardar nuevo
+      String logoUrl = storageService.guardar(TipoArchivo.LOGOS, logoFile);
+      biblioteca.setLogoUrl(logoUrl);
+    }
     // Actualizar encargado
     asignarEncargados(biblioteca, request.getEncargadosIds());
 
@@ -242,9 +257,11 @@ public class BibliotecaServiceImpl implements BibliotecaService {
       throw new BusinessException(
           "No se puede eliminar la biblioteca porque tiene " + ejemplaresCount + " ejemplar(es) registrado(s)");
     }
-
     bibliotecaRepository.delete(biblioteca);
-
+    String logoUrl = biblioteca.getLogoUrl();
+    if (logoUrl != null && !logoUrl.isBlank()) {
+      storageService.eliminar(logoUrl, TipoArchivo.LOGOS);
+    }
     // auditoriaService.registrar("DELETE_LIBRARY", "libraries",
     // biblioteca.getId_biblioteca(), biblioteca.getNombre(), null);
   }
@@ -537,6 +554,7 @@ public class BibliotecaServiceImpl implements BibliotecaService {
     response.setEmail(biblioteca.getEmail());
     response.setHorario_atencion(biblioteca.getHorario_atencion());
     response.setEstado(biblioteca.getEstado());
+    response.setLogoUrl(biblioteca.getLogoUrl());
 
     // Carrera
     if (biblioteca.getCarrera() != null) {

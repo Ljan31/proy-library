@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.proyecto.fhce.library.dto.response.CarreraSimpleResponse;
 import com.proyecto.fhce.library.dto.response.users.EncargadoSimpleResponse;
-import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
 
@@ -22,6 +21,7 @@ public class BibliotecaResponse {
   private EstadoBiblioteca estado;
   private Integer ejemplaresTotal;
   private Integer ejemplaresDisponibles;
+  private String logoUrl;
 
   public Long getId_biblioteca() {
     return id_biblioteca;
@@ -117,6 +117,14 @@ public class BibliotecaResponse {
 
   public void setEncargados(List<EncargadoSimpleResponse> encargados) {
     this.encargados = encargados;
+  }
+
+  public String getLogoUrl() {
+    return logoUrl;
+  }
+
+  public void setLogoUrl(String logoUrl) {
+    this.logoUrl = logoUrl;
   }
 
 }

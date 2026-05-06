@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -15,7 +16,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.proyecto.fhce.library.dto.request.library.BibliotecaRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
@@ -118,22 +121,24 @@ public class BibliotecaController {
   // }
 
   @Operation(summary = "Crear nueva biblioteca", description = "Registra una nueva biblioteca en el sistema", security = @SecurityRequirement(name = "bearer-jwt"))
-  @PostMapping
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<BibliotecaResponse>> create(
-      @Valid @RequestBody BibliotecaRequest request) {
-    BibliotecaResponse biblioteca = bibliotecaService.create(request);
+      @Valid @RequestPart("datos") BibliotecaRequest request,
+      @RequestPart(value = "logo", required = false) MultipartFile logoFile) {
+    BibliotecaResponse biblioteca = bibliotecaService.create(request, logoFile);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success("Biblioteca creada exitosamente", biblioteca));
   }
 
   @Operation(summary = "Actualizar biblioteca", description = "Actualiza la información de una biblioteca existente", security = @SecurityRequirement(name = "bearer-jwt"))
-  @PutMapping("/{id}")
+  @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<BibliotecaResponse>> update(
       @PathVariable Long id,
-      @Valid @RequestBody BibliotecaRequest request) {
-    BibliotecaResponse biblioteca = bibliotecaService.update(id, request);
+      @Valid @RequestPart("datos") BibliotecaRequest request,
+      @RequestPart(value = "logo", required = false) MultipartFile logoFile) {
+    BibliotecaResponse biblioteca = bibliotecaService.update(id, request, logoFile);
     return ResponseEntity.ok(ApiResponse.success("Biblioteca actualizada exitosamente", biblioteca));
   }
 

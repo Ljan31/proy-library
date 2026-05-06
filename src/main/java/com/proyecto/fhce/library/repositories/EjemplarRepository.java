@@ -73,7 +73,7 @@ public interface EjemplarRepository extends JpaRepository<Ejemplar, Long> {
         List<Ejemplar> findDisponiblesByEdicion(@Param("edicionId") Long edicionId);
 
         @Query("SELECT COUNT(e) FROM Ejemplar e WHERE e.biblioteca.idBiblioteca = :bibliotecaId " +
-                        "AND e.estadoEjemplar = :estado")
+                        "AND (:estado IS NULL OR e.estadoEjemplar = :estado)")
         Long countByBibliotecaAndEstado(
                         @Param("bibliotecaId") Long bibliotecaId,
                         @Param("estado") EstadoEjemplar estado);
