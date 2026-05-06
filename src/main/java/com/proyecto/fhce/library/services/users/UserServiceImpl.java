@@ -320,6 +320,7 @@ public class UserServiceImpl implements UserService {
     response.setNombre(b.getNombre());
     response.setTipoBiblioteca(b.getTipoBiblioteca());
     response.setEstado(b.getEstado());
+    response.setLogoUrl(b.getLogoUrl());
     return response;
   }
 
