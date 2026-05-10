@@ -79,6 +79,21 @@ public class StorageService {
           throw new RuntimeException("Debe ser un PDF");
         }
         break;
+
+      case RESPALDOS_ENCARGADOS:
+
+        boolean esPdf = contentType != null &&
+            contentType.equals("application/pdf");
+
+        boolean esImagen = contentType != null &&
+            contentType.startsWith("image/");
+
+        if (!esPdf && !esImagen) {
+          throw new RuntimeException(
+              "El respaldo debe ser PDF o imagen");
+        }
+
+        break;
     }
   }
 

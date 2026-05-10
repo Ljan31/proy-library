@@ -5,6 +5,7 @@ public class EncargadoSimpleResponse {
   private String username;
   private String nombreCompleto;
   private String rol;
+  private String respaldoUrl;
 
   public Long getIdUsuario() {
     return idUsuario;
@@ -36,6 +37,14 @@ public class EncargadoSimpleResponse {
 
   public void setRol(String rol) {
     this.rol = rol;
+  }
+
+  public String getRespaldoUrl() {
+    return respaldoUrl;
+  }
+
+  public void setRespaldoUrl(String respaldoUrl) {
+    this.respaldoUrl = respaldoUrl;
   }
 
 }

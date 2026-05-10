@@ -18,7 +18,13 @@ public interface BibliotecaService {
 
   public void cambiarEstado(Long id, EstadoBiblioteca nuevoEstado);
 
-  public void asignarEncargado(Long bibliotecaId, List<Long> usuarioId, long usuarioActualId);
+  public void asignarEncargado(Long bibliotecaId, List<Long> usuariosIds, MultipartFile respaldoFile,
+      long usuarioActualId);
+
+  public String uploadEncargadoImagen(
+      Long bibliotecaId,
+      Long usuarioId,
+      MultipartFile imagen);
 
   public List<BibliotecaResponse> findAll();
 

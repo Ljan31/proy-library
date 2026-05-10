@@ -45,6 +45,9 @@ public class BibliotecaEncargado {
   @Column(nullable = false)
   private Boolean activo = true;
 
+  @Column(name = "respaldo_url")
+  private String respaldoUrl;
+
   public Long getId() {
     return id;
   }
@@ -99,6 +102,14 @@ public class BibliotecaEncargado {
 
   public void setActivo(Boolean activo) {
     this.activo = activo;
+  }
+
+  public String getRespaldoUrl() {
+    return respaldoUrl;
+  }
+
+  public void setRespaldoUrl(String respaldoUrl) {
+    this.respaldoUrl = respaldoUrl;
   }
 
 }

@@ -1,6 +1,7 @@
 package com.proyecto.fhce.library.controllers;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -153,15 +154,38 @@ public class BibliotecaController {
   }
 
   @Operation(summary = "Asignar encargado a biblioteca", description = "Asigna un usuario como encargado de la biblioteca", security = @SecurityRequirement(name = "bearer-jwt"))
-  @PutMapping("/{bibliotecaId}/encargados")
+  @PutMapping(value = "/{bibliotecaId}/encargados", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<Void>> asignarEncargado(
       @PathVariable Long bibliotecaId,
-      @RequestBody List<Long> encargadosIds,
+      @RequestPart("encargadosIds") List<Long> encargadosIds,
+      @RequestPart(value = "respaldo", required = false) MultipartFile respaldoFile,
       Authentication authentication) {
     Long usuarioActualId = obtenerUsuarioId(authentication);
-    bibliotecaService.asignarEncargado(bibliotecaId, encargadosIds, usuarioActualId);
+    bibliotecaService.asignarEncargado(bibliotecaId, encargadosIds, respaldoFile, usuarioActualId);
     return ResponseEntity.ok(ApiResponse.success("Encargado asignado exitosamente", null));
+  }
+
+  @Operation(summary = "Subir imagen de encargado", description = "Sube o actualiza la imagen de un encargado de biblioteca", security = @SecurityRequirement(name = "bearer-jwt"))
+  @PostMapping(value = "/{bibliotecaId}/encargados/imagen", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  public ResponseEntity<ApiResponse<Map<String, String>>> uploadEncargadoImagen(
+      @PathVariable Long bibliotecaId,
+
+      @RequestPart("usuarioId") Long usuarioId,
+
+      @RequestPart("imagen") MultipartFile imagen) {
+
+    String imagenUrl = bibliotecaService.uploadEncargadoImagen(
+        bibliotecaId,
+        usuarioId,
+        imagen);
+
+    Map<String, String> data = Map.of(
+        "imagenUrl", imagenUrl);
+
+    return ResponseEntity.ok(
+        ApiResponse.success("Imagen subida exitosamente", data));
   }
 
   @Operation(summary = "Eliminar biblioteca", description = "Elimina una biblioteca (solo si no tiene ejemplares)", security = @SecurityRequirement(name = "bearer-jwt"))

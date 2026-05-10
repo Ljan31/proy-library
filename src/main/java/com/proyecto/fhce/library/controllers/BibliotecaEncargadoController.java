@@ -58,6 +58,7 @@ public class BibliotecaEncargadoController {
   public ResponseEntity<ApiResponse<Void>> remover(
       @PathVariable Long bibliotecaId,
       @PathVariable Long usuarioId) {
+    System.out.println("====================desde encargado delete");
     encargadoService.removerEncargado(bibliotecaId, usuarioId);
     return ResponseEntity.ok(ApiResponse.success("Encargado removido exitosamente", null));
   }

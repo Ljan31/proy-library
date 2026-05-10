@@ -305,7 +305,8 @@ public class BibliotecaServiceImpl implements BibliotecaService {
   }
 
   @Transactional
-  public void asignarEncargado(Long bibliotecaId, List<Long> usuariosIds, long usuarioActualId) {
+  public void asignarEncargado(Long bibliotecaId, List<Long> usuariosIds, MultipartFile respaldoFile,
+      long usuarioActualId) {
     Biblioteca biblioteca = bibliotecaRepository.findById(bibliotecaId)
         .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada"));
     Usuario usuarioActual = usuarioRepository.findById(usuarioActualId)
@@ -369,7 +370,14 @@ public class BibliotecaServiceImpl implements BibliotecaService {
       be.setActivo(true);
       be.setRolEncargado(rol);
       be.setFechaAsignacion(LocalDateTime.now());
+      if (respaldoFile != null && !respaldoFile.isEmpty()) {
 
+        String respaldoUrl = storageService.guardar(
+            TipoArchivo.RESPALDOS_ENCARGADOS,
+            respaldoFile);
+
+        be.setRespaldoUrl(respaldoUrl);
+      }
       biblioteca.getEncargados().add(be);
     }
     bibliotecaRepository.save(biblioteca);
@@ -377,6 +385,37 @@ public class BibliotecaServiceImpl implements BibliotecaService {
     // auditoriaService.registrar("ASSIGN_LIBRARY_MANAGER", "libraries",
     // biblioteca.getId_biblioteca(), null, "Encargado: " +
     // encargado.getUsername());
+  }
+
+  @Transactional
+  public String uploadEncargadoImagen(
+      Long bibliotecaId,
+      Long usuarioId,
+      MultipartFile imagen) {
+
+    Biblioteca biblioteca = bibliotecaRepository.findById(bibliotecaId)
+        .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada"));
+
+    BibliotecaEncargado encargado = biblioteca.getEncargados()
+        .stream()
+        .filter(be -> be.getUsuario().getId_usuario().equals(usuarioId)
+            && be.getActivo())
+        .findFirst()
+        .orElseThrow(() -> new ResourceNotFoundException("Encargado no encontrado"));
+
+    if (imagen == null || imagen.isEmpty()) {
+      throw new BusinessException("La imagen es requerida");
+    }
+
+    String imagenUrl = storageService.guardar(
+        TipoArchivo.RESPALDOS_ENCARGADOS,
+        imagen);
+
+    encargado.setRespaldoUrl(imagenUrl);
+
+    encargadoRepository.save(encargado);
+
+    return imagenUrl;
   }
 
   @Transactional(readOnly = true)
@@ -587,6 +626,7 @@ public class BibliotecaServiceImpl implements BibliotecaService {
           var p = be.getUsuario().getPersona();
           e.setNombreCompleto(p.getNombre() + " " + p.getApellido_pat() + " " + p.getApellido_mat());
           e.setRol(be.getRolEncargado().name());
+          e.setRespaldoUrl(be.getRespaldoUrl());
           return e;
         })
         .collect(Collectors.toList());

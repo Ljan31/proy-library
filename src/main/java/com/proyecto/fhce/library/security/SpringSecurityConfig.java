@@ -77,6 +77,9 @@ public class SpringSecurityConfig {
     http
         .csrf(csrf -> csrf.disable())
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .headers(headers -> headers
+            .contentSecurityPolicy(csp -> csp
+                .policyDirectives("frame-ancestors 'self' http://localhost:5173")))
         .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/auth/**").permitAll()
@@ -95,6 +98,7 @@ public class SpringSecurityConfig {
             .requestMatchers("/portadas/**").permitAll()
             .requestMatchers("/logos/**").permitAll()
             .requestMatchers("/pdfs/**").permitAll()
+            .requestMatchers("/respaldos_encargados/**").permitAll()
             .requestMatchers("/v3/api-docs/**").permitAll()
             .requestMatchers("/swagger-ui/**").permitAll()
             .requestMatchers("/swagger-ui.html").permitAll()
