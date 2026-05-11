@@ -11,8 +11,10 @@ import com.proyecto.fhce.library.dto.SancionDTO.EstadoSancionUsuarioDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.PagoMultaRequestDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.SancionManualRequestDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.SancionResponseDTO;
+import com.proyecto.fhce.library.dto.SancionDTO.SancionResumenDTO;
 import com.proyecto.fhce.library.dto.request.CrearNotificacionRequest;
 import com.proyecto.fhce.library.dto.response.loads.ConfiguracionPrestamoResponseDTO;
+import com.proyecto.fhce.library.entities.ConfiguracionPrestamo;
 import com.proyecto.fhce.library.entities.Prestamo;
 import com.proyecto.fhce.library.entities.Sancion;
 import com.proyecto.fhce.library.entities.Usuario;
@@ -82,46 +84,86 @@ public class SancionService {
    */
   @Transactional
   public SancionResponseDTO procesarDevolucionTardia(Long idPrestamo) {
+    log.info("==================================================");
+    log.info("INICIANDO procesamiento de devolución tardía");
+    log.info("ID préstamo recibido: {}", idPrestamo);
     Prestamo prestamo = prestamoRepository.findByIdWithRelations(idPrestamo)
         .orElseThrow(() -> new RuntimeException("Préstamo no encontrado: " + idPrestamo));
 
     // ① Verificar que no exista sanción activa ya creada para este préstamo
     if (sancionRepository.existsByPrestamo_IdPrestamoAndEstado(idPrestamo, EstadoSancion.ACTIVA)) {
+      log.warn("Ya existe una sanción activa para el préstamo ID={}",
+          idPrestamo);
       throw new SancionDuplicadaException(idPrestamo);
     }
 
     // ② Calcular días de retraso
-    int diasRetraso = calcularDiasRetraso(prestamo);
+    // Si ya fue devuelto, usamos la fecha real; si no, usamos hoy
+    LocalDate fechaDevolucionReal = prestamo.getFechaDevolucionReal() != null
+        ? prestamo.getFechaDevolucionReal().toLocalDate()
+        : null;
+
+    // ② Calcular días de retraso
+    int diasRetraso = CalculadoraMultas.calcularDiasRetraso(
+        prestamo.getFechaDevolucionEstimada(),
+        fechaDevolucionReal);
+    // int diasRetraso = calcularDiasRetraso(prestamo);
     if (diasRetraso <= 0) {
+      log.warn("El préstamo aún no está vencido. ID={}", idPrestamo);
+
       throw new PrestamoNoVencidoException(idPrestamo);
     }
 
+    // ③ Obtener la configuración histórica del préstamo
+    // SIEMPRE se usa idConfigUsado guardado en el préstamo,
+    // aunque la config de la biblioteca haya cambiado después
+    ConfiguracionPrestamo config = obtenerConfigHistorica(prestamo.getIdConfigUsado(), idPrestamo);
     // ③ Obtener monto de multa desde ConfiguracionPrestamoService
     // Usamos el idConfig guardado en el préstamo para respetar la config histórica
-    BigDecimal montoMulta = configuracionService.calcularMulta(
-        prestamo.getIdConfigUsado(), diasRetraso);
+    // BigDecimal montoMulta = configuracionService.calcularMulta(
+    // prestamo.getBiblioteca().getIdBiblioteca(), diasRetraso);
+    BigDecimal montoMulta = CalculadoraMultas.calcularMonto(diasRetraso, config);
+
+    log.info("Monto multa calculado: {}", montoMulta);
 
     // ④ Determinar si corresponde suspensión
-    boolean debeSuspender = configuracionService.debeSuspender(
-        prestamo.getIdConfigUsado(), diasRetraso);
+    // boolean debeSuspender = configuracionService.debeSuspender(
+    // prestamo.getBiblioteca().getIdBiblioteca(), diasRetraso);
+    boolean debeSuspender = CalculadoraMultas.debeSuspender(diasRetraso, config);
+
+    log.info("¿Debe suspender?: {}", debeSuspender);
 
     // ⑤ Obtener configuración completa si hay suspensión (para los días)
     int diasSuspension = 0;
     if (debeSuspender) {
-      ConfiguracionPrestamoResponseDTO config = configuracionService
-          .buscarPorId(prestamo.getIdConfigUsado());
+      // ConfiguracionPrestamoResponseDTO config = configuracionService
+      // .buscarPorId(prestamo.getIdConfigUsado());
 
       // int diasSuspension = debeSuspender ? config.getDiasSuspension() : 0;
+      log.info("Días de suspensión obtenidos: {}",
+          diasSuspension);
       diasSuspension = config.getDiasSuspension();
     }
 
     // ⑥ Construir y persistir la sanción
     Sancion sancion = construirSancionPorRetraso(
         prestamo, diasRetraso, montoMulta, diasSuspension, debeSuspender);
+    // Sancion sancion = construirSancionPorRetraso(
+    // prestamo, diasRetraso, montoMulta, config, debeSuspender);
     Sancion guardada = sancionRepository.save(sancion);
 
-    log.info("Sanción creada [id={}] para préstamo [id={}], usuario [id={}], diasRetraso={}",
-        guardada.getIdSancion(), idPrestamo, prestamo.getUsuario().getId_usuario(), diasRetraso);
+    // log.info("Sanción creada [id={}] para préstamo [id={}], usuario [id={}],
+    // diasRetraso={}",
+    // guardada.getIdSancion(), idPrestamo, prestamo.getUsuario().getId_usuario(),
+    // diasRetraso);
+    log.info(
+        "Resumen -> [id={}], préstamo={}, usuario={}, retraso={} días, multa={}, suspensión={} días",
+        guardada.getIdSancion(),
+        idPrestamo,
+        prestamo.getUsuario().getId_usuario(),
+        diasRetraso,
+        montoMulta,
+        diasSuspension);
 
     // ⑦ Notificar al usuario (no transaccional — si falla, no revierte la sanción)
     enviarNotificacionSancion(guardada);
@@ -196,7 +238,7 @@ public class SancionService {
     boolean tieneSuspension = sancionRepository.tieneSuspensionVigente(usuarioId);
     boolean tieneDeuda = sancionRepository.tieneDeudaPendiente(usuarioId);
     long totalActivas = sancionRepository.contarSancionesActivasPorUsuario(usuarioId);
-
+    List<Sancion> sancionesActivas = sancionRepository.findActivasByUsuario(usuarioId);
     // Fecha de fin de suspensión más próxima (si tiene suspensión activa)
     LocalDate fechaFinProxima = sancionRepository.findActivasByUsuario(usuarioId)
         .stream()
@@ -206,10 +248,69 @@ public class SancionService {
         .min(LocalDate::compareTo)
         .orElse(null);
 
+    List<SancionResumenDTO> sancionesResumen = sancionesActivas.stream()
+        .map(s -> new SancionResumenDTO(
+            s.getIdSancion(),
+            s.getPrestamo() != null
+                ? s.getPrestamo().getIdPrestamo()
+                : null,
+            s.getTipoSancion(),
+            s.getEstado(),
+            s.getMontoMulta(),
+            s.getFechaFinSuspension(),
+            s.implicaSuspension()
+                && s.getFechaFinSuspension() != null
+                && !s.getFechaFinSuspension().isBefore(LocalDate.now()),
+            s.getMotivo() != null
+                ? s.getMotivo().name()
+                : null))
+        .toList();
+    BigDecimal montoTotalDeuda = sancionesResumen.stream()
+        .map(SancionResumenDTO::montoMulta)
+        .filter(monto -> monto != null)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
     return new EstadoSancionUsuarioDTO(
-        usuarioId, tieneSuspension, tieneDeuda, totalActivas, fechaFinProxima);
+        usuarioId,
+        tieneSuspension,
+        tieneDeuda,
+        totalActivas,
+        montoTotalDeuda,
+        fechaFinProxima,
+        sancionesResumen);
   }
 
+  /**
+   * Calcula el monto que el usuario pagaría si abona HOY.
+   * No modifica ningún dato — es solo una consulta informativa.
+   *
+   * Si la multa está congelada, retorna el tope máximo.
+   * Si la sanción no es de tipo MULTA (o es manual sin config), retorna el
+   * montoMulta guardado.
+   */
+  public BigDecimal calcularMontoActual(Long idSancion) {
+    Sancion sancion = obtenerSancionOException(idSancion);
+
+    if (!sancion.estaActiva()) {
+      return sancion.getMontoMulta();
+    }
+
+    // Solo recalculamos para sanciones por retraso que tienen config histórica
+    if (sancion.getIdConfigUsado() == null || sancion.getPrestamo() == null) {
+      return sancion.getMontoMulta();
+    }
+
+    ConfiguracionPrestamo config = configuracionService
+        .obtenerEntidadPorId(sancion.getIdConfigUsado());
+
+    if (config == null) {
+      return sancion.getMontoMulta();
+    }
+
+    return CalculadoraMultas.calcularMontoActual(
+        sancion.getPrestamo().getFechaDevolucionEstimada(),
+        config);
+  }
   // ════════════════════════════════════════════════════════════════════════
   // GESTIÓN DE ESTADO — pago y condonación
   // ════════════════════════════════════════════════════════════════════════
@@ -269,21 +370,54 @@ public class SancionService {
    * Idempotente: la verificación de duplicados garantiza que ejecutarlo
    * dos veces produce el mismo resultado.
    */
-  @Scheduled(cron = "0 0 2 * * *")
+  @Scheduled(cron = "0 34 11 * * *")
   @Transactional
   public void procesarPrestamosVencidos() {
+    log.info("==================================================");
+
     log.info("Iniciando CRON: procesarPrestamosVencidos");
+    log.info("Fecha/Hora ejecución: {}", LocalDateTime.now());
 
     List<Prestamo> vencidos = prestamoRepository.findPrestamosVencidosSinSancion();
     log.info("Préstamos vencidos sin sanción encontrados: {}", vencidos.size());
-
+    if (vencidos.isEmpty()) {
+      log.info("No existen préstamos pendientes por procesar.");
+    }
+    int procesados = 0, errores = 0;
     for (Prestamo prestamo : vencidos) {
+      log.info("--------------------------------------------------");
+      log.info("Procesando préstamo ID: {}", prestamo.getIdPrestamo());
+
       try {
+        // Logs de seguimiento del flujo
+        log.info("Usuario: {}",
+            prestamo.getUsuario() != null
+                ? prestamo.getUsuario().getUsername()
+                : "SIN USUARIO");
+
+        log.info("Fecha préstamo: {}", prestamo.getFechaPrestamo());
+        log.info("Fecha devolución esperada: {}", prestamo.getFechaDevolucionEstimada());
+
+        if (prestamo.getEjemplar() != null) {
+          log.info("Ejemplar ID: {}", prestamo.getEjemplar().getIdEjemplar());
+
+          if (prestamo.getEjemplar().getEdicion().getLibro() != null) {
+            log.info("Libro: {}",
+                prestamo.getEjemplar().getEdicion().getLibro().getTitulo());
+          }
+        }
+
+        log.info("Invocando procesarDevolucionTardia({})...",
+            prestamo.getIdPrestamo());
         procesarDevolucionTardia(prestamo.getIdPrestamo());
+        log.info("Préstamo procesado correctamente [id={}]",
+            prestamo.getIdPrestamo());
+        procesados++;
       } catch (SancionDuplicadaException e) {
         // Idempotencia: ya fue procesado en una ejecución anterior
         log.warn("Préstamo [id={}] ya tiene sanción activa, se omite.", prestamo.getIdPrestamo());
       } catch (Exception e) {
+        errores++;
         // Loguear pero continuar con el siguiente — no queremos que un error
         // detenga el procesamiento de todos los demás préstamos
         log.error("Error al procesar préstamo vencido [id={}]: {}",
@@ -292,6 +426,52 @@ public class SancionService {
     }
 
     log.info("CRON finalizado: procesarPrestamosVencidos");
+    log.info("CRON fin — procesarPrestamosVencidos: {} procesados, {} errores", procesados, errores);
+
+    log.info("==================================================");
+
+  }
+
+  /**
+   * CRON 2 — 02:30 AM todos los días.
+   *
+   * Actualiza el montoMulta de sanciones ACTIVAS por retraso que aún no
+   * alcanzaron el tope. Una vez que la multa está congelada, no se toca más.
+   *
+   * Ejemplo con multaMaxDias=7, multaPorDia=3:
+   * Día 1 → guardado Bs 3 → CRON día 2 lo actualiza a Bs 6
+   * Día 2 → guardado Bs 6 → CRON día 3 lo actualiza a Bs 9
+   * ...
+   * Día 7 → guardado Bs 21 → CONGELADO — CRON ya no toca este registro
+   *
+   * Si el usuario paga en el día 4 (Bs 12), el CRON no lo toca porque
+   * el estado ya no es ACTIVA.
+   */
+  @Scheduled(cron = "0 50 22 * * *")
+  @Transactional
+  public void actualizarMultasSanciones() {
+    log.info("CRON inicio — actualizarMultasSanciones");
+
+    // Solo sanciones activas, por retraso, con config histórica guardada
+    List<Sancion> candidatas = sancionRepository.findActivasPorRetrasoConConfig();
+
+    int actualizadas = 0, congeladas = 0, errores = 0;
+
+    for (Sancion sancion : candidatas) {
+      try {
+        boolean cambio = actualizarMontoSancion(sancion);
+        if (cambio)
+          actualizadas++;
+        else
+          congeladas++;
+      } catch (Exception e) {
+        errores++;
+        log.error("Error actualizando sanción [id={}]: {}", sancion.getIdSancion(), e.getMessage(), e);
+      }
+    }
+
+    log.info("CRON fin — actualizarMultasSanciones: {} actualizadas, {} congeladas, {} errores",
+        actualizadas, congeladas, errores);
   }
 
   /**
@@ -312,6 +492,93 @@ public class SancionService {
   // ════════════════════════════════════════════════════════════════════════
   // MÉTODOS PRIVADOS DE APOYO
   // ════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Recalcula y persiste el monto de una sanción activa.
+   *
+   * Retorna true si el monto cambió (sanción actualizada).
+   * Retorna false si la multa ya estaba congelada (sin cambios).
+   *
+   * El método también activa la suspensión si el retraso superó multaMaxDias
+   * y la sanción aún era de tipo MULTA.
+   */
+  private boolean actualizarMontoSancion(Sancion sancion) {
+    ConfiguracionPrestamo config = configuracionService
+        .obtenerEntidadPorId(sancion.getIdConfigUsado());
+    // ConfiguracionPrestamo config = configuracionRepository
+    // .findById(sancion.getIdConfigUsado())
+    // .orElse(null);
+
+    if (config == null) {
+      log.warn("Config [id={}] no encontrada para sanción [id={}]. Se omite.",
+          sancion.getIdConfigUsado(), sancion.getIdSancion());
+      return false;
+    }
+
+    // Calcular días de retraso actuales (el préstamo sigue activo → usa hoy)
+    LocalDate fechaEstimada = sancion.getPrestamo().getFechaDevolucionEstimada();
+    int diasRetraso = CalculadoraMultas.calcularDiasRetraso(fechaEstimada, null);
+
+    // Si la multa ya está congelada, no hay nada que actualizar
+    if (CalculadoraMultas.multaCongelada(diasRetraso, config)) {
+      BigDecimal montoMaximo = CalculadoraMultas.calcularMontoMaximo(config);
+
+      // Garantizamos que el monto guardado sea exactamente el tope
+      // (por si en alguna ejecución anterior quedó desincronizado)
+      if (montoMaximo != null
+          && sancion.getMontoMulta().compareTo(montoMaximo) != 0) {
+        sancion.setMontoMulta(montoMaximo);
+        sancion.setDiasRetraso(diasRetraso);
+        sancionRepository.save(sancion);
+      }
+      return false; // ya congelada
+    }
+
+    // Calcular nuevo monto con los días actuales
+    BigDecimal nuevoMonto = CalculadoraMultas.calcularMonto(diasRetraso, config);
+    BigDecimal montoAnterior = sancion.getMontoMulta();
+
+    // Actualizar solo si hubo cambio real (evita writes innecesarios)
+    if (nuevoMonto.compareTo(montoAnterior) == 0) {
+      return false;
+    }
+
+    sancion.setMontoMulta(nuevoMonto);
+    sancion.setDiasRetraso(diasRetraso);
+    String observacionAutomatica = String.format(
+        "Multa actualizada automáticamente. Días de retraso: %d. " +
+            "Monto acumulado: Bs %.2f.",
+        diasRetraso,
+        nuevoMonto);
+    sancion.setObservaciones(observacionAutomatica);
+
+    // ── Verificar si debe activarse suspensión ───────────────────────────
+    // Puede ocurrir que en el CRON del día anterior se creó como MULTA
+    // y hoy ya superó el tope → se convierte en MULTA_Y_SUSPENSION
+    if (CalculadoraMultas.debeSuspender(diasRetraso, config)
+        && sancion.getTipoSancion() == TipoSancion.MULTA) {
+
+      sancion.setTipoSancion(TipoSancion.MULTA_Y_SUSPENSION);
+      sancion.setDiasSuspension(config.getDiasSuspension());
+      sancion.setFechaInicioSuspension(LocalDate.now());
+      sancion.setFechaFinSuspension(LocalDate.now().plusDays(config.getDiasSuspension()));
+      sancion.setObservaciones(
+          sancion.getObservaciones()
+              + " Se activó suspensión por exceder el límite permitido.");
+      log.info("Sanción [id={}] escalada a MULTA_Y_SUSPENSION — diasRetraso={}, usuario [id={}]",
+          sancion.getIdSancion(), diasRetraso, sancion.getUsuario().getId_usuario());
+
+      // * fatal implementar notificacion */
+      // enviarNotificacionSuspension(sancion);
+    }
+
+    sancionRepository.save(sancion);
+
+    log.debug("Sanción [id={}] actualizada — monto: {} → {}, diasRetraso: {}",
+        sancion.getIdSancion(), montoAnterior, nuevoMonto, diasRetraso);
+
+    return true;
+  }
 
   private int calcularDiasRetraso(Prestamo prestamo) {
     LocalDate fechaDevolucionReal = prestamo.getFechaDevolucionReal() != null
@@ -363,6 +630,15 @@ public class SancionService {
         .orElseThrow(() -> new SancionNotFoundException(idSancion));
   }
 
+  private ConfiguracionPrestamo obtenerConfigHistorica(Long idConfig, Long idPrestamo) {
+    if (idConfig == null) {
+      throw new RuntimeException(
+          "El préstamo [id=" + idPrestamo + "] no tiene idConfigUsado guardado. " +
+              "No se puede calcular la sanción sin la configuración histórica.");
+    }
+    return configuracionService.obtenerEntidadPorId(idConfig);
+  }
+
   private void enviarNotificacionSancion(Sancion sancion) {
     try {
 
@@ -393,4 +669,17 @@ public class SancionService {
           sancion.getIdSancion(), e.getMessage());
     }
   }
+
+  // private void enviarNotificacionSuspension(Sancion sancion) {
+  // try {
+  // notificacionService.enviarNotificacionSuspension(
+  // sancion.getUsuario().getId_usuario(),
+  // sancion.getIdSancion(),
+  // sancion.getFechaFinSuspension());
+  // } catch (Exception e) {
+  // log.warn("No se pudo enviar notificación de suspensión para sanción [id={}]:
+  // {}",
+  // sancion.getIdSancion(), e.getMessage());
+  // }
+  // }
 }

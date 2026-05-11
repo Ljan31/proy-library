@@ -69,6 +69,10 @@ public class ConfiguracionPrestamoService {
     return mapper.toResponseDTO(buscarConfiguracionOLanzarError(id));
   }
 
+  public ConfiguracionPrestamo obtenerEntidadPorId(Long id) {
+    return buscarConfiguracionOLanzarError(id);
+  }
+
   public ConfiguracionPrestamoResponseDTO buscarPorBiblioteca(Long bibliotecaId) {
     ConfiguracionPrestamo config = configuracionRepository
         .findByBibliotecaId(bibliotecaId)

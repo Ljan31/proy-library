@@ -104,6 +104,29 @@ public interface SancionRepository extends JpaRepository<Sancion, Long> {
       """)
   boolean tieneDeudaPendiente(@Param("usuarioId") Long usuarioId);
 
+  // ── Para el CRON de actualización de multas (CRON 2 — 02:30 AM) ──────────
+
+  /**
+   * Devuelve sanciones ACTIVAS originadas por retraso (tienen préstamo y config),
+   * con el préstamo y su fecha estimada cargados para calcular días actuales.
+   *
+   * Excluye sanciones manuales (sin prestamo o sin idConfigUsado) porque
+   * su monto es fijo — no se actualiza diariamente.
+   *
+   * El CRON de actualización itera esta lista y recalcula el monto de cada una.
+   */
+  @Query("""
+      SELECT s FROM Sancion s
+      JOIN FETCH s.prestamo p
+      JOIN FETCH s.usuario u
+      WHERE s.estado = 'ACTIVA'
+        AND s.motivo = 'RETRASO_DEVOLUCION'
+        AND s.idConfigUsado IS NOT NULL
+        AND p.fechaDevolucionReal IS NULL
+      ORDER BY s.fechaGeneracion ASC
+      """)
+  List<Sancion> findActivasPorRetrasoConConfig();
+
   // ── Para el CRON de vencimientos ──────────────────────────────────────────
 
   /**

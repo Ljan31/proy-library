@@ -46,6 +46,8 @@ import com.proyecto.fhce.library.repositories.HistorialEstadoEjemplarRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.ReservaRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.library.ReservaService;
+import com.proyecto.fhce.library.services.library.ReservaServiceImpl;
 
 @Service
 @Transactional(readOnly = true)
@@ -80,6 +82,9 @@ public class PrestamoServiceImpl implements PrestamoService {
 
   @Autowired
   private ReservaRepository reservaRepository;
+
+  @Autowired
+  private AsignacionReservaService asignacionReservaService;
 
   @Autowired
   private SancionService sancionService;
@@ -344,7 +349,7 @@ public class PrestamoServiceImpl implements PrestamoService {
 
     registrarCambioEstado(ejemplar, estadoAnterior, nuevoEstado, request.getObservaciones(), bibliotecario);
     Prestamo updated = prestamoRepository.save(prestamo);
-
+    asignacionReservaService.detectarYAsignarDisponibles();
     // ⑥ Delegar sanción al módulo de sanciones si hubo retraso — INTEGRACIÓN
     // La sanción se procesa FUERA del bloque transaccional principal del préstamo.
     // SancionService maneja su propia transacción y garantiza idempotencia.
@@ -362,16 +367,17 @@ public class PrestamoServiceImpl implements PrestamoService {
     // }
     // }
 
-    if (prestamo.getTipoPrestamo() == TipoPrestamo.DOMICILIO
-        && LocalDate.now().isAfter(prestamo.getFechaDevolucionEstimada())) {
-      try {
-        sancionService.procesarDevolucionTardia(updated.getIdPrestamo());
-        log.info("Sanción procesada para préstamo id={}", updated.getIdPrestamo());
-      } catch (Exception e) {
-        log.error("Error al procesar sanción para préstamo id={}: {}",
-            updated.getIdPrestamo(), e.getMessage());
-      }
-    }
+    // * modificar logica */
+    // if (prestamo.getTipoPrestamo() == TipoPrestamo.DOMICILIO
+    // && LocalDate.now().isAfter(prestamo.getFechaDevolucionEstimada())) {
+    // try {
+    // sancionService.procesarDevolucionTardia(updated.getIdPrestamo());
+    // log.info("Sanción procesada para préstamo id={}", updated.getIdPrestamo());
+    // } catch (Exception e) {
+    // log.error("Error al procesar sanción para préstamo id={}: {}",
+    // updated.getIdPrestamo(), e.getMessage());
+    // }
+    // }
 
     // // Audit
     // auditoriaService.registrar("RETURN_LOAN", "loans", updated.getId_prestamo(),

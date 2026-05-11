@@ -48,11 +48,13 @@ public class SancionMapper {
   public SancionResumenDTO toResumenDTO(Sancion s) {
     return new SancionResumenDTO(
         s.getIdSancion(),
+        s.getPrestamo() != null ? s.getPrestamo().getIdPrestamo() : null,
         s.getTipoSancion(),
         s.getEstado(),
         s.getMontoMulta(),
         s.getFechaFinSuspension(),
-        s.suspensionVigente());
+        s.suspensionVigente(),
+        s.getMotivo() != null ? s.getMotivo().name() : null);
   }
 
   public List<SancionResponseDTO> toResponseDTOList(List<Sancion> sanciones) {
