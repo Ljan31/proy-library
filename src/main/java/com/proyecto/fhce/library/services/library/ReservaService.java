@@ -76,5 +76,5 @@ public interface ReservaService {
    * Llamado por el CRON de asignación y también desde PrestamoService
    * al registrar una devolución (el ejemplar queda disponible).
    */
-  void procesarDisponibilidad(Long libroId, Long bibliotecaId);
+  // void procesarDisponibilidad(Long libroId, Long bibliotecaId);
 }

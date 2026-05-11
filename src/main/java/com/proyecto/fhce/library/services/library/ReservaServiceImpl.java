@@ -39,6 +39,7 @@ import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.LibroRepository;
 import com.proyecto.fhce.library.repositories.ReservaRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.loads.AsignacionReservaService;
 import com.proyecto.fhce.library.services.loads.ConfiguracionPrestamoService;
 import com.proyecto.fhce.library.services.loads.PrestamoService;
 import com.proyecto.fhce.library.services.loads.SancionService;
@@ -70,6 +71,9 @@ public class ReservaServiceImpl implements ReservaService {
   private SancionService sancionService;
   @Autowired
   private PrestamoService prestamoService;
+
+  @Autowired
+  private AsignacionReservaService asignacionReservaService;
   // @Autowired private NotificacionService notificacionService;
 
   // ==================== QUERIES ====================
@@ -191,7 +195,7 @@ public class ReservaServiceImpl implements ReservaService {
     // ⑦ Verificar si ya hay ejemplares disponibles para asignar inmediatamente
     // Se ejecuta fuera del flujo de guardado para que la reserva ya esté persistida
     try {
-      procesarDisponibilidad(libro.getIdLibro(), biblioteca.getIdBiblioteca());
+      asignacionReservaService.procesarDisponibilidad(libro.getIdLibro(), biblioteca.getIdBiblioteca());
     } catch (Exception e) {
       // No revierte la creación de la reserva si la asignación falla
       log.warn("No se pudo asignar ejemplar inmediatamente para reserva id={}: {}",
@@ -248,7 +252,7 @@ public class ReservaServiceImpl implements ReservaService {
     // Reasignar al siguiente en la cola si había ejemplar liberado
     if (ejemplarAsignado != null) {
       try {
-        procesarDisponibilidad(
+        asignacionReservaService.procesarDisponibilidad(
             reserva.getLibro().getIdLibro(),
             reserva.getBiblioteca().getIdBiblioteca());
       } catch (Exception e) {
@@ -320,85 +324,6 @@ public class ReservaServiceImpl implements ReservaService {
 
   // ==================== PROCESO DE ASIGNACIÓN ====================
 
-  @Transactional
-  public void procesarDisponibilidad(Long libroId, Long bibliotecaId) {
-    log.info("INICIO procesarDisponibilidad libroId={}, bibliotecaId={}", libroId, bibliotecaId);
-    int iteracion = 0;
-    while (true) {
-      iteracion++;
-      log.info("---- Iteración {} ----", iteracion);
-
-      // 1. Buscar ejemplar disponible con lock
-      log.info("Buscando ejemplar DISPONIBLE con lock...");
-      // Buscar primer ejemplar disponible del libro en la biblioteca
-      List<Ejemplar> ejemplarDisponible = ejemplarRepository
-          .findDisponibleConLock(
-              libroId, bibliotecaId, EstadoEjemplar.DISPONIBLE, PageRequest.of(0, 1));
-
-      if (ejemplarDisponible.isEmpty()) {
-        log.info("No hay ejemplares disponibles para libroId={}, bibliotecaId={}", libroId, bibliotecaId);
-        return; // No hay ejemplares disponibles, nada que hacer
-      }
-
-      // Tomar el primero en la cola CON LOCKING PESIMISTA
-      // Evita que dos hilos asignen el mismo ejemplar a reservas distintas
-      List<Reserva> primeraEnCola = reservaRepository.findPrimeraEnColaConLock(libroId, bibliotecaId,
-          PageRequest.of(0, 1));
-      log.info("DEBUG -> reservas en cola encontradas: {}", primeraEnCola.size());
-      for (Reserva r : primeraEnCola) {
-        log.info("DEBUG -> Reserva id={}, usuarioId={}, estado={}, fecha={}",
-            r.getIdReserva(),
-            r.getUsuario().getId_usuario(),
-            r.getEstadoReserva(),
-            r.getFechaReserva());
-      }
-      if (primeraEnCola.isEmpty()) {
-        log.info("No hay reservas en cola para libroId={}, bibliotecaId={}", libroId, bibliotecaId);
-
-        return; // No hay nadie esperando este libro
-      }
-
-      Reserva reserva = primeraEnCola.get(0);
-      Ejemplar ejemplar = ejemplarDisponible.get(0);
-
-      log.info("Reserva encontrada: idReserva={}, usuarioId={}, estado={}",
-          reserva.getIdReserva(),
-          reserva.getUsuario().getId_usuario(),
-          reserva.getEstadoReserva());
-
-      log.info("Ejemplar encontrado y bloqueado: idEjemplar={}, estado={}",
-          ejemplar.getIdEjemplar(), ejemplar.getEstadoEjemplar());
-
-      // ConfiguracionResueltaDTO config =
-      // configuracionService.resolverConfiguracionPorId(
-      ConfiguracionPrestamoResponseDTO config = configuracionService.buscarPorId(
-          reserva.getIdConfigUsado());
-      log.info("Configuración obtenida: diasReserva={}", config.getDiasReserva());
-      // Asignar ejemplar y cambiar estado
-      ejemplar.setEstadoEjemplar(EstadoEjemplar.RESERVADO);
-      // ejemplarRepository.save(ejemplar);
-      ejemplarRepository.saveAndFlush(ejemplar);
-
-      reserva.setEjemplar(ejemplar);
-      reserva.setEstadoReserva(EstadoReserva.NOTIFICADA);
-      // fecha_vencimiento_reserva = hoy + diasReserva de la config guardada
-      reserva.setFechaVencimientoReserva(LocalDate.now().plusDays(config.getDiasReserva()));
-      // reservaRepository.save(reserva);
-      reservaRepository.saveAndFlush(reserva);
-
-      log.info("Ejemplar id={} asignado a reserva id={} (usuario={}). Vence: {}",
-          ejemplar.getIdEjemplar(), reserva.getIdReserva(),
-          reserva.getUsuario().getId_usuario(),
-          reserva.getFechaVencimientoReserva());
-      log.debug("Post-save -> ejemplar estado={}, reserva estado={}",
-          ejemplar.getEstadoEjemplar(),
-          reserva.getEstadoReserva());
-      // Notificar al usuario — INTEGRACIÓN CON NOTIFICACIONES
-      // notificacionService.enviarNotificacionReservaDisponible(reserva);
-    }
-
-  }
-
   // ==================== SCHEDULED JOBS ====================
 
   /**
@@ -409,7 +334,7 @@ public class ReservaServiceImpl implements ReservaService {
    * redundante,
    * pero las reservas tienen su propio ciclo de vencimiento).
    */
-  @Scheduled(cron = "0 59 10 * * *")
+  @Scheduled(cron = "0 05 11 * * *")
   @Transactional
   public void expirarReservasVencidas() {
     List<Reserva> vencidas = reservaRepository.findReservasVencidasParaExpirar(LocalDate.now());
@@ -434,7 +359,7 @@ public class ReservaServiceImpl implements ReservaService {
 
         // Intentar asignar el ejemplar liberado al siguiente en la cola
         if (ejemplar != null) {
-          procesarDisponibilidad(
+          asignacionReservaService.procesarDisponibilidad(
               reserva.getLibro().getIdLibro(),
               reserva.getBiblioteca().getIdBiblioteca());
         }
@@ -460,32 +385,8 @@ public class ReservaServiceImpl implements ReservaService {
   // @Scheduled(cron = "0 0 20 * * *")
   @Scheduled(cron = "0 59 10 * * *")
   @Transactional
-  public void detectarYAsignarDisponibles() {
-    List<Object[]> pendientes = reservaRepository
-        .findLibrosBibliotecaConReservaActivaYEjemplarDisponible();
-
-    log.info("CRON detectarYAsignarDisponibles: {} combinaciones libro/biblioteca a procesar",
-        pendientes.size());
-    int index = 0;
-    for (Object[] fila : pendientes) {
-      index++;
-      Long libroId = (Long) fila[0];
-      Long bibliotecaId = (Long) fila[1];
-      log.debug("===============Procesando registro #{} -> libroId: {}, bibliotecaId: {}",
-          index, libroId, bibliotecaId);
-      try {
-        long start = System.currentTimeMillis();
-
-        procesarDisponibilidad(libroId, bibliotecaId);
-
-        long end = System.currentTimeMillis();
-        log.info("✔ Procesado OK -> libroId: {}, bibliotecaId: {} ({} ms)",
-            libroId, bibliotecaId, (end - start));
-      } catch (Exception e) {
-        log.error("Error al procesar disponibilidad para libro={} biblioteca={}: {}",
-            libroId, bibliotecaId, e.getMessage());
-      }
-    }
+  public void detectarYAsignarDisponiblesProgramado() {
+    asignacionReservaService.detectarYAsignarDisponibles();
   }
 
   // ==================== PRIVATE HELPERS ====================
