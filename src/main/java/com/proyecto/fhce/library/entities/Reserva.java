@@ -25,11 +25,6 @@ import java.time.LocalDateTime;
     @Index(name = "idx_reserva_libro", columnList = "libro_id"),
     @Index(name = "idx_reserva_estado", columnList = "estado_reserva"),
     @Index(name = "idx_reserva_biblioteca", columnList = "library_id")
-}, uniqueConstraints = {
-    // Un usuario no puede tener más de una reserva ACTIVA o NOTIFICADA del mismo
-    // libro en la misma biblioteca
-    @UniqueConstraint(name = "uk_reserva_usuario_libro_activa", columnNames = { "user_id", "libro_id", "library_id",
-        "estado_reserva" })
 })
 public class Reserva {
 
