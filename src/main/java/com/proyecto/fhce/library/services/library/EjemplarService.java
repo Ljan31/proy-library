@@ -48,4 +48,6 @@ public interface EjemplarService {
 
   // public DisponibilidadLibroResponse verificarDisponibilidad(Long libroId);
   public DisponibilidadLibroResponse verificarDisponibilidad(Long libroId);
+
+  public void delete(Long id);
 }

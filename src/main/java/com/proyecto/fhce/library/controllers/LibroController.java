@@ -82,7 +82,7 @@ public class LibroController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
     libroService.delete(id);
     return ResponseEntity.ok(ApiResponse.success("Libro eliminado", null));

@@ -38,6 +38,7 @@ import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.HistorialEstadoEjemplarRepository;
 import com.proyecto.fhce.library.repositories.LibroRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
+import com.proyecto.fhce.library.repositories.ReservaRepository;
 import com.proyecto.fhce.library.security.SecurityService;
 
 @Service
@@ -59,6 +60,9 @@ public class EjemplarServiceImpl implements EjemplarService {
 
   @Autowired
   private PrestamoRepository prestamoRepository;
+
+  @Autowired
+  private ReservaRepository reservaRepository;
 
   private final SecurityService securityService;
 
@@ -85,6 +89,9 @@ public class EjemplarServiceImpl implements EjemplarService {
     ejemplar.setBiblioteca(biblioteca);
     ejemplar.setCodigoEjemplar(request.getCodigoEjemplar());
     ejemplar.setCodigoTopografico(request.getCodigoTopografico());
+    ejemplar.setClasificacionDecimal(request.getClasificacionDecimal());
+    ejemplar.setCutterAutor(request.getCutterAutor());
+    ejemplar.setCutterTitulo(request.getCutterTitulo());
     ejemplar.setUbicacionFisica(request.getUbicacionFisica());
     ejemplar.setEstadoEjemplar(
         request.getEstadoEjemplar() != null ? request.getEstadoEjemplar() : EstadoEjemplar.DISPONIBLE);
@@ -114,6 +121,9 @@ public class EjemplarServiceImpl implements EjemplarService {
 
     ejemplar.setCodigoEjemplar(request.getCodigoEjemplar());
     ejemplar.setCodigoTopografico(request.getCodigoTopografico());
+    ejemplar.setClasificacionDecimal(request.getClasificacionDecimal());
+    ejemplar.setCutterAutor(request.getCutterAutor());
+    ejemplar.setCutterTitulo(request.getCutterTitulo());
     ejemplar.setUbicacionFisica(request.getUbicacionFisica());
     ejemplar.setObservaciones(request.getObservaciones());
 
@@ -356,6 +366,40 @@ public class EjemplarServiceImpl implements EjemplarService {
         .collect(Collectors.toList());
   }
 
+  @Transactional
+  public void delete(Long id) {
+
+    Ejemplar ejemplar = ejemplarRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "Ejemplar no encontrado con id: " + id));
+
+    // Validar que no esté prestado actualmente
+    if (ejemplar.getEstadoEjemplar() == EstadoEjemplar.PRESTADO) {
+      throw new BusinessException(
+          "No se puede eliminar un ejemplar prestado");
+    }
+
+    // Validar préstamos asociados
+    boolean tienePrestamos = prestamoRepository
+        .existsByEjemplar_IdEjemplar(id);
+
+    if (tienePrestamos) {
+      throw new BusinessException(
+          "No se puede eliminar un ejemplar con préstamos registrados");
+    }
+
+    // Validar reservas asociadas
+    boolean tieneReservas = reservaRepository
+        .existsByEjemplar_IdEjemplar(id);
+
+    if (tieneReservas) {
+      throw new BusinessException(
+          "No se puede eliminar un ejemplar con reservas registradas");
+    }
+
+    ejemplarRepository.delete(ejemplar);
+  }
+
   private void validarCambioEstado(Ejemplar ejemplar, EstadoEjemplar nuevoEstado) {
     EstadoEjemplar estadoActual = ejemplar.getEstadoEjemplar();
     // 🔹 No permitir mismo estado
@@ -414,6 +458,17 @@ public class EjemplarServiceImpl implements EjemplarService {
     response.setId_ejemplar(ejemplar.getIdEjemplar());
     response.setCodigoEjemplar(ejemplar.getCodigoEjemplar());
     response.setCodigoTopografico(ejemplar.getCodigoTopografico());
+    response.setClasificacionDecimal(
+        ejemplar.getClasificacionDecimal());
+
+    response.setCutterAutor(
+        ejemplar.getCutterAutor());
+
+    response.setCutterTitulo(
+        ejemplar.getCutterTitulo());
+
+    response.setCodigoTopograficoConcat(
+        ejemplar.getCodigoTopograficoConcat());
     response.setUbicacionFisica(ejemplar.getUbicacionFisica());
     response.setEstadoEjemplar(ejemplar.getEstadoEjemplar());
     response.setFechaAdquisicion(ejemplar.getFechaAdquisicion());
