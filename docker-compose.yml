@@ -20,7 +20,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   backend:
-    build: .
+    build:
+      context: ./springboot-library
 
     container_name: springboot_library
 
@@ -43,6 +44,20 @@ services:
 
     volumes:
       - ./uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./library-sigeb
+
+    container_name: vue_library
+
+    restart: always
+
+    depends_on:
+      - backend
+
+    ports:
+      - "80:80"
 
 volumes:
   postgres_data:
