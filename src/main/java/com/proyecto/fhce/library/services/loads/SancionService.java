@@ -370,7 +370,7 @@ public class SancionService {
    * Idempotente: la verificación de duplicados garantiza que ejecutarlo
    * dos veces produce el mismo resultado.
    */
-  @Scheduled(cron = "0 34 11 * * *")
+  @Scheduled(cron = "0 30 2 * * *")
   @Transactional
   public void procesarPrestamosVencidos() {
     log.info("==================================================");
@@ -447,7 +447,7 @@ public class SancionService {
    * Si el usuario paga en el día 4 (Bs 12), el CRON no lo toca porque
    * el estado ya no es ACTIVA.
    */
-  @Scheduled(cron = "0 50 22 * * *")
+  @Scheduled(cron = "0 30 2 * * *")
   @Transactional
   public void actualizarMultasSanciones() {
     log.info("CRON inicio — actualizarMultasSanciones");

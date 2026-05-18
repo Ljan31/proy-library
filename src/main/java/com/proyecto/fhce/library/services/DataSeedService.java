@@ -108,19 +108,17 @@ public class DataSeedService {
     createUserIfNotExists("admin", "Admin", "System", "n/n", 1111,
         "admin@localhost", "11111", "Admin123!", RoleName.ROLE_ADMIN);
 
-    createUserIfNotExists("crali", "Juan", "Perez", "Gomez", 1234567,
-        "bibliotecario@localhost", "22222", "123456", RoleName.ROLE_BIBLIOTECARIO);
-
+    createUserIfNotExists("crali", "crali", "", "", 1001,
+        "crali@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
     createUserIfNotExists("maria", "Maria", "Lopez", "Diaz", 7654321,
         "estudiante@localhost", "33333", "123456", RoleName.ROLE_ESTUDIANTE);
 
     // Bibliotecarios
-    createUserIfNotExists("historia", "Luis", "Mamani", "Quispe", 2233445,
-        "biblio2@localhost", "700001", "123456", RoleName.ROLE_BIBLIOTECARIO);
+    createUserIfNotExists("historia", "historia", "", "", 1002,
+        "historia@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
 
-    createUserIfNotExists("bibliotecario3", "Ana", "Choque", "Rojas", 3344556,
-        "biblio3@localhost", "700002", "123456", RoleName.ROLE_BIBLIOTECARIO);
-
+    createUserIfNotExists("bibliotecario3", "bibliotecario3", "", "", 1003,
+        "bibliotecario3@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
     // Estudiantes (10)
     createUserIfNotExists("carlos", "Carlos", "Perez", "Lopez", 12,
         "est2@localhost", "710002", "123456", RoleName.ROLE_ESTUDIANTE);
@@ -154,7 +152,8 @@ public class DataSeedService {
     // ==================== 4️⃣ ASIGNAR PERMISOS A ROLES ====================
     assignPermisos();
     seedCarrerasYBibliotecas();
-    seedLibrosEjemplares();
+    // seedLibrosEjemplares();
+    seedLibrosEjemplaresPrueba();
     seedCategorias();
     seedConfiguracionPrestamo();
     return "Data seed completed successfully ✅";
@@ -244,6 +243,10 @@ public class DataSeedService {
       cienciasInfo.setNombre_carrera("Ciencias de la Información");
       cienciasInfo.setCodigo_carrera("CIN");
       cienciasInfo = carreraRepository.save(cienciasInfo);
+      Carrera pruebas = new Carrera();
+      pruebas.setNombre_carrera("Carrera Prueba");
+      pruebas.setCodigo_carrera("TEST");
+      pruebas = carreraRepository.save(pruebas);
 
       System.out.println("Carreras FHCE creadas ✅");
 
@@ -267,7 +270,7 @@ public class DataSeedService {
       crearBibliotecaCarrera(linguistica, "Biblioteca Lingüística");
       crearBibliotecaCarrera(filosofia, "Biblioteca Filosofía");
       crearBibliotecaCarrera(cienciasInfo, "Biblioteca Ciencias de la Información");
-
+      crearBibliotecaCarrera(pruebas, "Biblioteca Prueba");
       System.out.println("Bibliotecas FHCE creadas ✅");
     }
   }
@@ -367,6 +370,45 @@ public class DataSeedService {
     crearEjemplares(ed4, linguistica, "LIN-EJ-", 2);
 
     System.out.println("Libros y ejemplares creados ✅");
+  }
+
+  private void seedLibrosEjemplaresPrueba() {
+
+    Biblioteca prueba = bibliotecaRepository
+        .findByNombre("Biblioteca Prueba")
+        .orElseThrow();
+
+    // ==================== LIBROS PRUEBA ====================
+
+    Libro libro1 = crearLibro(
+        "Historia de Bolivia",
+        "Español",
+        "Historia general del país");
+
+    Edicion ed1 = crearEdicion(
+        libro1,
+        "ISBN-TEST-001",
+        "Editorial Andina",
+        2010,
+        "https://covers.openlibrary.org/b/id/8231996-L.jpg");
+
+    crearEjemplares(ed1, prueba, "TEST-", 5);
+
+    Libro libro2 = crearLibro(
+        "Introducción a la Lingüística",
+        "Español",
+        "Fundamentos lingüísticos");
+
+    Edicion ed2 = crearEdicion(
+        libro2,
+        "ISBN-TEST-002",
+        "McGraw-Hill",
+        2020,
+        "https://covers.openlibrary.org/b/id/8235083-L.jpg");
+
+    crearEjemplares(ed2, prueba, "TEST-", 5);
+
+    System.out.println("Inventario de prueba creado ✅");
   }
 
   private void seedCategorias() {
@@ -471,8 +513,11 @@ public class DataSeedService {
     return edicionRepository.save(ed);
   }
 
-  private void crearEjemplares(Edicion edicion, Biblioteca biblioteca,
-      String prefijo, int cantidad) {
+  private void crearEjemplares(
+      Edicion edicion,
+      Biblioteca biblioteca,
+      String prefijo,
+      int cantidad) {
 
     for (int i = 1; i <= cantidad; i++) {
 
@@ -482,17 +527,33 @@ public class DataSeedService {
         continue;
 
       Ejemplar ej = new Ejemplar();
+
       ej.setEdicion(edicion);
       ej.setBiblioteca(biblioteca);
+
       ej.setCodigoEjemplar(codigo);
-      ej.setCodigoTopografico("TOP-" + codigo);
+
+      ej.setClasificacionDecimal("900");
+      ej.setCutterAutor("AUT");
+      ej.setCutterTitulo("TIT");
+
+      ej.setCodigoTopografico(
+          ej.getClasificacionDecimal()
+              + "-"
+              + ej.getCutterAutor()
+              + "-"
+              + ej.getCutterTitulo());
+
       ej.setUbicacionFisica("Estante " + i);
+
       ej.setEstadoEjemplar(EstadoEjemplar.DISPONIBLE);
+
       ej.setFechaAdquisicion(LocalDate.now());
+
+      ej.setObservaciones("Ejemplar generado automáticamente para pruebas");
 
       Ejemplar saved = ejemplarRepository.save(ej);
 
-      // historial inicial (igual que tu service)
       registrarCambioEstadoSeed(saved);
     }
   }
