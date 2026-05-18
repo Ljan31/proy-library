@@ -143,20 +143,20 @@ public class CertificadoController {
     Path path = Paths.get(rutaBase).resolve(nombreArchivo).normalize();
 
     Resource resource = new UrlResource(path.toUri());
-    System.out.println("ID recibido: " + id);
-    System.out.println("Authentication: " + authentication);
-    System.out.println("Authorities: " + authentication.getAuthorities());
-    System.out.println("nombreArchivo: " + nombreArchivo);
-    System.out.println("rutaBase: " + rutaBase);
-    System.out.println("path completo: " + path.toString());
-    System.out.println("URI del recurso: " + path.toUri());
-    System.out.println("exists: " + resource.exists());
-    System.out.println("isReadable: " + resource.isReadable());
+    // System.out.println("ID recibido: " + id);
+    // System.out.println("Authentication: " + authentication);
+    // System.out.println("Authorities: " + authentication.getAuthorities());
+    // System.out.println("nombreArchivo: " + nombreArchivo);
+    // System.out.println("rutaBase: " + rutaBase);
+    // System.out.println("path completo: " + path.toString());
+    // System.out.println("URI del recurso: " + path.toUri());
+    // System.out.println("exists: " + resource.exists());
+    // System.out.println("isReadable: " + resource.isReadable());
     if (!resource.exists() || !resource.isReadable()) {
       throw new ResourceNotFoundException(
           "Archivo PDF no encontrado para el certificado: " + id);
     }
-    System.out.println("Header filename: certificado-" + nombreArchivo + ".pdf");
+    // System.out.println("Header filename: certificado-" + nombreArchivo + ".pdf");
     return ResponseEntity.ok()
         .contentType(MediaType.APPLICATION_PDF)
         .header(HttpHeaders.CONTENT_DISPOSITION,
