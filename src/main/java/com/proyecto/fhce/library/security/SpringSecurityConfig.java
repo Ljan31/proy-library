@@ -77,9 +77,11 @@ public class SpringSecurityConfig {
     http
         .csrf(csrf -> csrf.disable())
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        // .headers(headers -> headers
+        // .contentSecurityPolicy(csp -> csp
+        // .policyDirectives("frame-ancestors 'self' http://localhost:5173")))
         .headers(headers -> headers
-            .contentSecurityPolicy(csp -> csp
-                .policyDirectives("frame-ancestors 'self' http://localhost:5173")))
+            .frameOptions(frame -> frame.disable()))
         .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/auth/**").permitAll()
