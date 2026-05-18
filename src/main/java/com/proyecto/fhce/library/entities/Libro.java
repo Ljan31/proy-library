@@ -108,7 +108,6 @@ public class Libro {
   public void setAutores(List<Autor> autores) {
     this.autores = autores;
   }
-
   // @OneToMany(mappedBy = "libro")
   // private List<Reserva> reservas;
 

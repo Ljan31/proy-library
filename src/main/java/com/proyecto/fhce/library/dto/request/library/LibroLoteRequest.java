@@ -195,6 +195,14 @@ public class LibroLoteRequest {
     private String codigoEjemplar;
     @Size(max = 200)
     private String observaciones;
+    @Size(max = 20)
+    private String clasificacionDecimal;
+
+    @Size(max = 10)
+    private String cutterAutor;
+
+    @Size(max = 10)
+    private String cutterTitulo;
 
     public Long getBibliotecaId() {
       return bibliotecaId;
@@ -228,6 +236,49 @@ public class LibroLoteRequest {
       this.observaciones = observaciones;
     }
 
+    public String getClasificacionDecimal() {
+      return clasificacionDecimal;
+    }
+
+    public void setClasificacionDecimal(String clasificacionDecimal) {
+      this.clasificacionDecimal = clasificacionDecimal;
+    }
+
+    public String getCutterAutor() {
+      return cutterAutor;
+    }
+
+    public void setCutterAutor(String cutterAutor) {
+      this.cutterAutor = cutterAutor;
+    }
+
+    public String getCutterTitulo() {
+      return cutterTitulo;
+    }
+
+    public void setCutterTitulo(String cutterTitulo) {
+      this.cutterTitulo = cutterTitulo;
+    }
+
+    public String getCodigoTopograficoConcat() {
+
+      String decimal = clasificacionDecimal != null
+          ? clasificacionDecimal.trim()
+          : "";
+
+      String autor = cutterAutor != null
+          ? cutterAutor.trim()
+          : "";
+
+      String titulo = cutterTitulo != null
+          ? cutterTitulo.trim()
+          : "";
+
+      return String.join(" ",
+          decimal,
+          autor,
+          titulo).trim();
+    }
   }
 
   public static class AutorItem {

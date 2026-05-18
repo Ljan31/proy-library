@@ -5,6 +5,11 @@ import com.proyecto.fhce.library.enums.EstadoEjemplar;
 public class EjemplarSimpleResponse {
   private Long id_ejemplar;
   private String codigo_ejemplar;
+  private String clasificacionDecimal;
+
+  private String cutterAutor;
+
+  private String cutterTitulo;
   private EstadoEjemplar estadoEjemplar;
   private String ubicacion_fisica;
 
@@ -40,4 +45,23 @@ public class EjemplarSimpleResponse {
     this.ubicacion_fisica = ubicacion_fisica;
   }
 
+  public String getCodigoTopografico() {
+
+    String decimal = clasificacionDecimal != null
+        ? clasificacionDecimal.trim()
+        : "";
+
+    String autor = cutterAutor != null
+        ? cutterAutor.trim()
+        : "";
+
+    String titulo = cutterTitulo != null
+        ? cutterTitulo.trim()
+        : "";
+
+    return String.join(" ",
+        decimal,
+        autor,
+        titulo).trim();
+  }
 }

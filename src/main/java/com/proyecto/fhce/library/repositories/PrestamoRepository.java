@@ -20,6 +20,8 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
 
         List<Prestamo> findByEjemplar_IdEjemplar(Long ejemplarId);
 
+        boolean existsByEjemplar_IdEjemplar(Long ejemplarId);
+
         List<Prestamo> findByBiblioteca_IdBiblioteca(Long bibliotecaId);
 
         @Query("""

@@ -2,6 +2,8 @@ package com.proyecto.fhce.library.dto.response.library;
 
 import java.util.List;
 
+import jakarta.validation.constraints.Size;
+
 /**
  * Resultado de la carga en lote.
  * Devuelve exactamente lo que se creó para que el frontend
@@ -169,6 +171,10 @@ public class LibroLoteResponse {
     private Long idEjemplar;
     private String codigoEjemplar;
     private String codigoTopografico;
+    private String codigoTopograficoConcat;
+    private String clasificacionDecimal;
+    private String cutterAutor;
+    private String cutterTitulo;
     private String estadoEjemplar;
     private Long bibliotecaId;
     private String nombreBiblioteca;
@@ -230,5 +236,52 @@ public class LibroLoteResponse {
       this.observaciones = observaciones;
     }
 
+    public String getClasificacionDecimal() {
+      return clasificacionDecimal;
+    }
+
+    public void setClasificacionDecimal(String clasificacionDecimal) {
+      this.clasificacionDecimal = clasificacionDecimal;
+    }
+
+    public String getCutterAutor() {
+      return cutterAutor;
+    }
+
+    public void setCutterAutor(String cutterAutor) {
+      this.cutterAutor = cutterAutor;
+    }
+
+    public String getCutterTitulo() {
+      return cutterTitulo;
+    }
+
+    public void setCutterTitulo(String cutterTitulo) {
+      this.cutterTitulo = cutterTitulo;
+    }
+
+    public String getCodigoTopograficoConcat() {
+
+      String decimal = clasificacionDecimal != null
+          ? clasificacionDecimal.trim()
+          : "";
+
+      String autor = cutterAutor != null
+          ? cutterAutor.trim()
+          : "";
+
+      String titulo = cutterTitulo != null
+          ? cutterTitulo.trim()
+          : "";
+
+      return String.join(" ",
+          decimal,
+          autor,
+          titulo).trim();
+    }
+
+    public void setCodigoTopograficoConcat(String codigoTopograficoConcat) {
+      this.codigoTopograficoConcat = codigoTopograficoConcat;
+    }
   }
 }

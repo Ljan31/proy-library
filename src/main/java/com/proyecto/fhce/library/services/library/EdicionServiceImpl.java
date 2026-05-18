@@ -122,8 +122,27 @@ public class EdicionServiceImpl implements EdicionService {
         .orElseThrow(() -> new ResourceNotFoundException("Edición no encontrada con id: " + id));
 
     boolean tieneEjemplares = !ejemplarRepository.findByEdicion_IdEdicion(id).isEmpty();
+    // Ver valor
     if (tieneEjemplares) {
       throw new BusinessException("No se puede eliminar una edición que tiene ejemplares registrados");
+    }
+
+    // Eliminar portada
+    if (edicion.getImagenPortada() != null &&
+        !edicion.getImagenPortada().isBlank()) {
+
+      storageService.eliminar(
+          edicion.getImagenPortada(),
+          TipoArchivo.PORTADAS);
+    }
+
+    // Eliminar PDF
+    if (edicion.getPdfUrl() != null &&
+        !edicion.getPdfUrl().isBlank()) {
+
+      storageService.eliminar(
+          edicion.getPdfUrl(),
+          TipoArchivo.PDFS);
     }
 
     edicionRepository.delete(edicion);

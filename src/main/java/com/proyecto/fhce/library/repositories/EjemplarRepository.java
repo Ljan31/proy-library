@@ -91,4 +91,42 @@ public interface EjemplarRepository extends JpaRepository<Ejemplar, Long> {
                         "LEFT JOIN FETCH ed.libro " +
                         "WHERE e.idEjemplar = :id")
         Optional<Ejemplar> findByIdWithLibro(@Param("id") Long id);
+
+        // =========================================================
+        // NUEVAS CONSULTAS PARA CLASIFICACIÓN
+        // =========================================================
+
+        List<Ejemplar> findByClasificacionDecimal(String clasificacionDecimal);
+
+        List<Ejemplar> findByCutterAutor(String cutterAutor);
+
+        List<Ejemplar> findByCutterTitulo(String cutterTitulo);
+
+        @Query("""
+                        SELECT e
+                        FROM Ejemplar e
+                        WHERE e.clasificacionDecimal = :decimal
+                        AND e.biblioteca.idBiblioteca = :bibliotecaId
+                        """)
+        List<Ejemplar> findByClasificacionAndBiblioteca(
+                        @Param("decimal") String decimal,
+                        @Param("bibliotecaId") Long bibliotecaId);
+
+        // =========================================================
+        // VALIDACIÓN DE CÓDIGO TOPOGRÁFICO
+        // =========================================================
+
+        @Query("""
+                        SELECT COUNT(e) > 0
+                        FROM Ejemplar e
+                        WHERE e.clasificacionDecimal = :decimal
+                        AND e.cutterAutor = :autor
+                        AND e.cutterTitulo = :titulo
+                        AND e.biblioteca.idBiblioteca = :bibliotecaId
+                        """)
+        boolean existsCodigoTopografico(
+                        @Param("decimal") String decimal,
+                        @Param("autor") String autor,
+                        @Param("titulo") String titulo,
+                        @Param("bibliotecaId") Long bibliotecaId);
 }

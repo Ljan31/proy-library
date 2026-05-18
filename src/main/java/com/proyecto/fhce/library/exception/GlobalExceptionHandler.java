@@ -2,6 +2,7 @@ package com.proyecto.fhce.library.exception;
 
 import java.util.Arrays;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -166,5 +167,33 @@ public class GlobalExceptionHandler {
     return ResponseEntity
         .status(HttpStatus.CONFLICT)
         .body(ApiResponse.error(ex.getMessage()));
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(
+      DataIntegrityViolationException ex) {
+
+    String message = "Error de integridad de datos";
+
+    Throwable root = ex.getRootCause();
+
+    if (root != null && root.getMessage() != null) {
+
+      String rootMessage = root.getMessage();
+
+      // ISBN único
+      if (rootMessage.contains("uk_ediciones_isbn")) {
+        message = "El ISBN ya está registrado";
+      }
+
+      // Código ejemplar único (por si luego lo haces unique)
+      else if (rootMessage.contains("codigo_ejemplar")) {
+        message = "El código del ejemplar ya existe";
+      }
+    }
+
+    return ResponseEntity
+        .status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(message));
   }
 }

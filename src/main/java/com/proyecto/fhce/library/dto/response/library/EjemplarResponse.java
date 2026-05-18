@@ -10,6 +10,10 @@ public class EjemplarResponse {
   private Long id_ejemplar;
   private String codigoEjemplar;
   private String codigoTopografico;
+  private String codigoTopograficoConcat;
+  private String clasificacionDecimal;
+  private String cutterAutor;
+  private String cutterTitulo;
   private String ubicacionFisica;
   private EstadoEjemplar estadoEjemplar;
   private LocalDate fechaAdquisicion;
@@ -108,4 +112,51 @@ public class EjemplarResponse {
     this.libro = libro;
   }
 
+  public String getClasificacionDecimal() {
+    return clasificacionDecimal;
+  }
+
+  public void setClasificacionDecimal(String clasificacionDecimal) {
+    this.clasificacionDecimal = clasificacionDecimal;
+  }
+
+  public String getCutterAutor() {
+    return cutterAutor;
+  }
+
+  public void setCutterAutor(String cutterAutor) {
+    this.cutterAutor = cutterAutor;
+  }
+
+  public String getCutterTitulo() {
+    return cutterTitulo;
+  }
+
+  public void setCutterTitulo(String cutterTitulo) {
+    this.cutterTitulo = cutterTitulo;
+  }
+
+  public String getCodigoTopograficoConcat() {
+
+    String decimal = clasificacionDecimal != null
+        ? clasificacionDecimal.trim()
+        : "";
+
+    String autor = cutterAutor != null
+        ? cutterAutor.trim()
+        : "";
+
+    String titulo = cutterTitulo != null
+        ? cutterTitulo.trim()
+        : "";
+
+    return String.join(" ",
+        decimal,
+        autor,
+        titulo).trim();
+  }
+
+  public void setCodigoTopograficoConcat(String codigoTopograficoConcat) {
+    this.codigoTopograficoConcat = codigoTopograficoConcat;
+  }
 }

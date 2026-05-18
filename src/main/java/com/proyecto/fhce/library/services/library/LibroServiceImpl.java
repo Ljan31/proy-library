@@ -209,7 +209,6 @@ public class LibroServiceImpl implements LibroService {
     if (libro.getAutores() != null) {
       response.setAutores(mapAutoresToResponse(libro.getAutores()));
     }
-
     // ✅ Ediciones del libro
     List<Edicion> ediciones = edicionRepository.findByLibro_IdLibro(libro.getIdLibro());
     response.setEdiciones(ediciones.stream().map(ed -> {
@@ -220,6 +219,7 @@ public class LibroServiceImpl implements LibroService {
       er.setAnoPublicacion(ed.getAnoPublicacion());
       er.setEdicion(ed.getEdicion());
       er.setImagenPortada(ed.getImagenPortada());
+      er.setPdfUrl(ed.getPdfUrl());
       return er;
     }).collect(Collectors.toList()));
 

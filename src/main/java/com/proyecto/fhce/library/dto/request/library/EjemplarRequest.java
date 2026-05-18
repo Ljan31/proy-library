@@ -10,13 +10,20 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class EjemplarRequest {
-  @NotBlank(message = "El código del ejemplar es obligatorio")
+  // @NotBlank(message = "El código del ejemplar es obligatorio")
   @Size(max = 50)
   private String codigoEjemplar;
 
   @Size(max = 100)
   private String codigoTopografico;
+  @Size(max = 20)
+  private String clasificacionDecimal;
 
+  @Size(max = 10)
+  private String cutterAutor;
+
+  @Size(max = 10)
+  private String cutterTitulo;
   @Size(max = 200)
   private String ubicacionFisica;
 
@@ -97,4 +104,47 @@ public class EjemplarRequest {
     this.edicionId = edicionId;
   }
 
+  public String getClasificacionDecimal() {
+    return clasificacionDecimal;
+  }
+
+  public void setClasificacionDecimal(String clasificacionDecimal) {
+    this.clasificacionDecimal = clasificacionDecimal;
+  }
+
+  public String getCutterAutor() {
+    return cutterAutor;
+  }
+
+  public void setCutterAutor(String cutterAutor) {
+    this.cutterAutor = cutterAutor;
+  }
+
+  public String getCutterTitulo() {
+    return cutterTitulo;
+  }
+
+  public void setCutterTitulo(String cutterTitulo) {
+    this.cutterTitulo = cutterTitulo;
+  }
+
+  public String getCodigoTopograficoConcat() {
+
+    String decimal = clasificacionDecimal != null
+        ? clasificacionDecimal.trim()
+        : "";
+
+    String autor = cutterAutor != null
+        ? cutterAutor.trim()
+        : "";
+
+    String titulo = cutterTitulo != null
+        ? cutterTitulo.trim()
+        : "";
+
+    return String.join(" ",
+        decimal,
+        autor,
+        titulo).trim();
+  }
 }

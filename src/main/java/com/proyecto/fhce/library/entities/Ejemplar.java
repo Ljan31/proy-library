@@ -20,6 +20,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "ejemplares")
@@ -37,11 +38,19 @@ public class Ejemplar {
   @JoinColumn(name = "library_id", nullable = false)
   private Biblioteca biblioteca;
 
-  @Column(nullable = false, length = 50, name = "codigo_ejemplar")
+  @Column(length = 50, name = "codigo_ejemplar")
   private String codigoEjemplar;
 
   @Column(length = 100, name = "codigo_topografico")
   private String codigoTopografico;
+  @Column(length = 20, name = "clasificacion_decimal")
+  private String clasificacionDecimal;
+
+  @Column(length = 10, name = "cutter_autor")
+  private String cutterAutor;
+
+  @Column(length = 10, name = "cutter_titulo")
+  private String cutterTitulo;
 
   @Column(length = 200, name = "ubicacion_fisica")
   private String ubicacionFisica;
@@ -156,4 +165,48 @@ public class Ejemplar {
     this.edicion = edicion;
   }
 
+  public String getClasificacionDecimal() {
+    return clasificacionDecimal;
+  }
+
+  public void setClasificacionDecimal(String clasificacionDecimal) {
+    this.clasificacionDecimal = clasificacionDecimal;
+  }
+
+  public String getCutterAutor() {
+    return cutterAutor;
+  }
+
+  public void setCutterAutor(String cutterAutor) {
+    this.cutterAutor = cutterAutor;
+  }
+
+  public String getCutterTitulo() {
+    return cutterTitulo;
+  }
+
+  public void setCutterTitulo(String cutterTitulo) {
+    this.cutterTitulo = cutterTitulo;
+  }
+
+  @Transient
+  public String getCodigoTopograficoConcat() {
+
+    String decimal = clasificacionDecimal != null
+        ? clasificacionDecimal.trim()
+        : "";
+
+    String autor = cutterAutor != null
+        ? cutterAutor.trim()
+        : "";
+
+    String titulo = cutterTitulo != null
+        ? cutterTitulo.trim()
+        : "";
+
+    return String.join(" ",
+        decimal,
+        autor,
+        titulo).trim();
+  }
 }

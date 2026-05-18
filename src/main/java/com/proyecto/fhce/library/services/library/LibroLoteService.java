@@ -180,6 +180,9 @@ public class LibroLoteService {
             ejemplar.setEdicion(edicion);
             ejemplar.setBiblioteca(biblioteca);
             ejemplar.setCodigoTopografico(ejItem.getCodigoTopografico());
+            ejemplar.setClasificacionDecimal(ejItem.getClasificacionDecimal());
+            ejemplar.setCutterAutor(ejItem.getCutterAutor());
+            ejemplar.setCutterTitulo(ejItem.getCutterTitulo());
             ejemplar.setCodigoEjemplar(ejItem.getCodigoEjemplar());
             ejemplar.setObservaciones(ejItem.getObservaciones());
             ejemplar.setEstadoEjemplar(EstadoEjemplar.DISPONIBLE);
@@ -192,6 +195,10 @@ public class LibroLoteService {
             LibroLoteResponse.EjemplarLoteResult ejResult = new LibroLoteResponse.EjemplarLoteResult();
             ejResult.setIdEjemplar(ejemplar.getIdEjemplar());
             ejResult.setCodigoTopografico(ejemplar.getCodigoTopografico());
+            ejResult.setCodigoTopograficoConcat(ejemplar.getCodigoTopograficoConcat());
+            ejResult.setClasificacionDecimal(ejemplar.getClasificacionDecimal());
+            ejResult.setCutterAutor(ejemplar.getCutterAutor());
+            ejResult.setCutterTitulo(ejemplar.getCutterTitulo());
             ejResult.setEstadoEjemplar(ejemplar.getEstadoEjemplar().name());
             ejResult.setBibliotecaId(biblioteca.getIdBiblioteca());
             ejResult.setNombreBiblioteca(biblioteca.getNombre());
