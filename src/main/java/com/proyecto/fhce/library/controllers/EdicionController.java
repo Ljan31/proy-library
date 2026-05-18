@@ -73,7 +73,7 @@ public class EdicionController {
 
   @Operation(summary = "Eliminar edición", security = @SecurityRequirement(name = "bearer-jwt"))
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
     edicionService.delete(id);
     return ResponseEntity.ok(ApiResponse.success("Edición eliminada exitosamente", null));
