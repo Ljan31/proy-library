@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import com.proyecto.fhce.library.dto.request.users.UsuarioCarreraRequestEst;
 import com.proyecto.fhce.library.dto.request.users.UsuarioUpdateRequest;
 import com.proyecto.fhce.library.dto.response.CarreraSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
+import com.proyecto.fhce.library.dto.response.users.AdminResetPasswordResponse;
 import com.proyecto.fhce.library.dto.response.users.PersonaResponse;
 import com.proyecto.fhce.library.dto.response.users.RoleSimpleResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioCarreraResponse;
@@ -217,6 +219,41 @@ public class UserServiceImpl implements UserService {
 
     // auditoriaService.registrar("CHANGE_PASSWORD", "users",
     // usuario.getId_usuario(), null, usuario.getUsername());
+  }
+
+  @Override
+  public AdminResetPasswordResponse adminResetPassword(Long userId) {
+
+    Usuario usuario = usuarioRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "Usuario no encontrado con id: " + userId));
+
+    // Evitar resetear admins (opcional pero recomendado)
+    boolean isAdmin = usuario.getRoles()
+        .stream()
+        .anyMatch(role -> role.getName().equals("ROLE_ADMIN"));
+
+    if (isAdmin) {
+      throw new BadRequestException(
+          "No se puede resetear la contraseña de un administrador");
+    }
+
+    // Generar password temporal
+    String temporaryPassword = UUID.randomUUID()
+        .toString()
+        .replace("-", "")
+        .substring(0, 8);
+
+    usuario.setPassword(
+        passwordEncoder.encode(temporaryPassword));
+
+    // FUTURO:
+    // usuario.setMustChangePassword(true);
+
+    usuarioRepository.save(usuario);
+
+    return new AdminResetPasswordResponse(
+        temporaryPassword);
   }
 
   public void toggleEnabled(Long id) {

@@ -8,6 +8,7 @@ import com.proyecto.fhce.library.dto.request.users.RegisterRequest;
 import com.proyecto.fhce.library.dto.request.users.RegisterRequestEst;
 import com.proyecto.fhce.library.dto.request.users.UsuarioUpdateRequest;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
+import com.proyecto.fhce.library.dto.response.users.AdminResetPasswordResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioResponse;
 import com.proyecto.fhce.library.entities.Usuario;
 
@@ -20,6 +21,8 @@ public interface UserService {
   UsuarioResponse update(Long id, UsuarioUpdateRequest request);
 
   void changePassword(String username, ChangePasswordRequest request);
+
+  AdminResetPasswordResponse adminResetPassword(Long userId);
 
   void toggleEnabled(Long id);
 

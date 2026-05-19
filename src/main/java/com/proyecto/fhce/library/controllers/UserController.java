@@ -21,6 +21,7 @@ import com.proyecto.fhce.library.dto.request.users.RegisterRequest;
 import com.proyecto.fhce.library.dto.request.users.RegisterRequestEst;
 import com.proyecto.fhce.library.dto.request.users.UsuarioUpdateRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
+import com.proyecto.fhce.library.dto.response.users.AdminResetPasswordResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioResponse;
 import com.proyecto.fhce.library.services.users.UserService;
 
@@ -74,6 +75,19 @@ public class UserController {
 
     userService.changePassword(authentication.getName(), request);
     return ResponseEntity.ok(ApiResponse.success("Password actualizado", null));
+  }
+
+  // ===================== ADMIN RESET PASSWORD =====================
+  @PutMapping("/{id}/reset-password")
+  @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO')")
+  public ResponseEntity<ApiResponse<AdminResetPasswordResponse>> adminResetPassword(@PathVariable Long id) {
+
+    AdminResetPasswordResponse response = userService.adminResetPassword(id);
+
+    return ResponseEntity.ok(
+        ApiResponse.success(
+            "Contraseña restablecida correctamente",
+            response));
   }
 
   // ===================== ENABLE / DISABLE =====================
