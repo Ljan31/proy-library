@@ -62,6 +62,9 @@ public class Biblioteca {
   @OneToMany(mappedBy = "biblioteca")
   private List<Ejemplar> ejemplares;
 
+  @OneToMany(mappedBy = "biblioteca", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<RazonCertificado> razonesCertificado = new ArrayList<>();
+
   public Long getId_biblioteca() {
     return idBiblioteca;
   }
@@ -164,6 +167,14 @@ public class Biblioteca {
 
   public void setLogoUrl(String logoUrl) {
     this.logoUrl = logoUrl;
+  }
+
+  public List<RazonCertificado> getRazonesCertificado() {
+    return razonesCertificado;
+  }
+
+  public void setRazonesCertificado(List<RazonCertificado> razonesCertificado) {
+    this.razonesCertificado = razonesCertificado;
   }
 
   // @OneToMany(mappedBy = "biblioteca")
