@@ -11,13 +11,13 @@ import com.proyecto.fhce.library.entities.Persona;
 
 public interface PersonaRepository extends JpaRepository<Persona, Long> {
 
-  Optional<Persona> findByCi(Integer ci);
+  Optional<Persona> findByCi(String ci);
 
   Optional<Persona> findByEmail(String email);
 
   // Optional<Persona> findByMatricula(String matricula);
 
-  boolean existsByCi(Integer ci);
+  boolean existsByCi(String ci);
 
   boolean existsByEmail(String email);
 

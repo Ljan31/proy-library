@@ -105,49 +105,49 @@ public class DataSeedService {
       System.out.println("Permisos por defecto creados");
     }
     // ==================== 3️⃣ CREAR USUARIOS ====================
-    createUserIfNotExists("admin", "Admin", "System", "n/n", 1111,
+    createUserIfNotExists("admin", "Admin", "System", "n/n", "1111",
         "admin@localhost", "11111", "Admin123!", RoleName.ROLE_ADMIN);
 
-    createUserIfNotExists("crali", "crali", "", "", 1001,
+    createUserIfNotExists("crali", "crali", "", "", "1001",
         "crali@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
-    createUserIfNotExists("maria", "Maria", "Lopez", "Diaz", 7654321,
+    createUserIfNotExists("maria", "Maria", "Lopez", "Diaz", "7654321",
         "estudiante@localhost", "33333", "123456", RoleName.ROLE_ESTUDIANTE);
 
     // Bibliotecarios
-    createUserIfNotExists("historia", "historia", "", "", 1002,
+    createUserIfNotExists("historia", "historia", "", "", "1002",
         "historia@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
 
-    createUserIfNotExists("bibliotecario3", "bibliotecario3", "", "", 1003,
+    createUserIfNotExists("bibliotecario3", "bibliotecario3", "", "", "1003",
         "bibliotecario3@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
     // Estudiantes (10)
-    createUserIfNotExists("carlos", "Carlos", "Perez", "Lopez", 12,
+    createUserIfNotExists("carlos", "Carlos", "Perez", "Lopez", "12",
         "est2@localhost", "710002", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("lucia", "Lucia", "Gomez", "Ramos", 13,
+    createUserIfNotExists("lucia", "Lucia", "Gomez", "Ramos", "13",
         "est3@localhost", "710003", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("diego", "Diego", "Fernandez", "Torrez", 14,
+    createUserIfNotExists("diego", "Diego", "Fernandez", "Torrez", "14",
         "est4@localhost", "710004", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("sofia", "Sofia", "Vargas", "Mendoza", 15,
+    createUserIfNotExists("sofia", "Sofia", "Vargas", "Mendoza", "15",
         "est5@localhost", "710005", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("jorge", "Jorge", "Castro", "Quisbert", 16,
+    createUserIfNotExists("jorge", "Jorge", "Castro", "Quisbert", "16",
         "est6@localhost", "710006", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("elena", "Elena", "Flores", "Condori", 17,
+    createUserIfNotExists("elena", "Elena", "Flores", "Condori", "17",
         "est7@localhost", "710007", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("miguel", "Miguel", "Huanca", "Perez", 18,
+    createUserIfNotExists("miguel", "Miguel", "Huanca", "Perez", "18",
         "est8@localhost", "710008", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("alejandra", "alejandra", "Rojas", "Loza", 19,
+    createUserIfNotExists("alejandra", "alejandra", "Rojas", "Loza", "19",
         "est9@localhost", "710009", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("andres", "Andres", "Gutierrez", "Silva", 21,
+    createUserIfNotExists("andres", "Andres", "Gutierrez", "Silva", "21",
         "est10@localhost", "710010", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    createUserIfNotExists("paola", "Paola", "Navarro", "Ortiz", 22,
+    createUserIfNotExists("paola", "Paola", "Navarro", "Ortiz", "22",
         "est11@localhost", "710011", "123456", RoleName.ROLE_ESTUDIANTE);
     // ==================== 4️⃣ ASIGNAR PERMISOS A ROLES ====================
     assignPermisos();
@@ -161,7 +161,7 @@ public class DataSeedService {
 
   // ==================== MÉTODO AUXILIAR: CREAR USUARIOS ====================
   private void createUserIfNotExists(String username,
-      String nombre, String apellidoPat, String apellidoMat, int ci,
+      String nombre, String apellidoPat, String apellidoMat, String ci,
       String email, String celular, String password,
       RoleName roleName) {
     if (!userRepository.existsByUsername(username)) {

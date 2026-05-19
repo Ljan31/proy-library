@@ -6,7 +6,7 @@ public class PersonaResponse {
   private String apellido_pat;
   private String apellido_mat;
   private String nombreCompleto; // computed
-  private Integer ci;
+  private String ci;
   private String celular;
   private String email;
 
@@ -50,11 +50,11 @@ public class PersonaResponse {
     this.nombreCompleto = nombreCompleto;
   }
 
-  public Integer getCi() {
+  public String getCi() {
     return ci;
   }
 
-  public void setCi(Integer ci) {
+  public void setCi(String ci) {
     this.ci = ci;
   }
 

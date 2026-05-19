@@ -7,6 +7,7 @@ public class UsuarioUpdateRequest {
   private String celular;
   private String email;
   private String matricula;
+  private String ci;
   private Boolean enabled;
 
   public String getNombre() {
@@ -63,6 +64,14 @@ public class UsuarioUpdateRequest {
 
   public void setMatricula(String matricula) {
     this.matricula = matricula;
+  }
+
+  public String getCi() {
+    return ci;
+  }
+
+  public void setCi(String ci) {
+    this.ci = ci;
   }
 
 }

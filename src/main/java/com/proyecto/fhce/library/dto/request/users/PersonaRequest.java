@@ -19,7 +19,7 @@ public class PersonaRequest {
 
   @NotNull(message = "CI es requerido")
   @Min(value = 1, message = "CI debe ser mayor a 0")
-  private Integer ci;
+  private String ci;
 
   @Pattern(regexp = "^[0-9]{7,8}$", message = "Celular debe tener 7-8 dígitos")
   private String celular;
@@ -51,11 +51,11 @@ public class PersonaRequest {
     this.apellido_mat = apellido_mat;
   }
 
-  public Integer getCi() {
+  public String getCi() {
     return ci;
   }
 
-  public void setCi(Integer ci) {
+  public void setCi(String ci) {
     this.ci = ci;
   }
 

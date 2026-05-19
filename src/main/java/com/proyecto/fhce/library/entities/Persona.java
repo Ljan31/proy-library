@@ -19,7 +19,7 @@ public class Persona {
   private String apellido_pat;
   private String apellido_mat;
   @Column(unique = true, nullable = false)
-  private Integer ci;
+  private String ci;
 
   private String celular;
 
@@ -58,11 +58,11 @@ public class Persona {
     this.apellido_mat = apellido_mat;
   }
 
-  public int getCi() {
+  public String getCi() {
     return ci;
   }
 
-  public void setCi(int ci) {
+  public void setCi(String ci) {
     this.ci = ci;
   }
 
@@ -80,10 +80,6 @@ public class Persona {
 
   public void setEmail(String email) {
     this.email = email;
-  }
-
-  public void setCi(Integer ci) {
-    this.ci = ci;
   }
 
   @Override
