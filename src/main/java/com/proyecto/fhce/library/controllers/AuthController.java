@@ -89,6 +89,16 @@ public class AuthController {
       PersonaResponse personaResponse = new PersonaResponse();
       personaResponse.setId_persona(persona.getId_persona());
       personaResponse.setNombre(persona.getNombre());
+      personaResponse.setApellido_pat(persona.getApellido_pat());
+      personaResponse.setApellido_mat(persona.getApellido_mat());
+      personaResponse.setNombreCompleto(
+          String.format(
+              "%s %s %s",
+              persona.getNombre() != null ? persona.getNombre() : "",
+              persona.getApellido_pat() != null ? persona.getApellido_pat() : "",
+              persona.getApellido_mat() != null ? persona.getApellido_mat() : "").trim());
+      personaResponse.setCi(persona.getCi());
+      personaResponse.setCelular(persona.getCelular());
       personaResponse.setEmail(persona.getEmail());
       response.setPersona(personaResponse);
 
