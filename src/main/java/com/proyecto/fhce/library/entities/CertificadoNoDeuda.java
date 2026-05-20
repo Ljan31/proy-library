@@ -54,6 +54,10 @@ public class CertificadoNoDeuda {
   @JoinColumn(name = "biblioteca_id", nullable = false)
   private Biblioteca biblioteca;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "razon_id")
+  private RazonCertificado razonCertificado;
+
   @PrePersist
   protected void onCreate() {
     fechaEmision = LocalDateTime.now();
@@ -150,6 +154,14 @@ public class CertificadoNoDeuda {
 
   public void setBiblioteca(Biblioteca biblioteca) {
     this.biblioteca = biblioteca;
+  }
+
+  public RazonCertificado getRazonCertificado() {
+    return razonCertificado;
+  }
+
+  public void setRazonCertificado(RazonCertificado razonCertificado) {
+    this.razonCertificado = razonCertificado;
   }
 
 }
