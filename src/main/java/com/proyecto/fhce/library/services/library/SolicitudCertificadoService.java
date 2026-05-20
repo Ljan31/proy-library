@@ -13,11 +13,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.proyecto.fhce.library.dto.request.library.SolicitudCertificadoRequest;
 import com.proyecto.fhce.library.dto.response.library.SolicitudCertificadoResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
+import com.proyecto.fhce.library.entities.RazonCertificado;
 import com.proyecto.fhce.library.entities.SolicitudCertificado;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoSolicitud;
+import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
+import com.proyecto.fhce.library.repositories.RazonCertificadoRepository;
 import com.proyecto.fhce.library.repositories.SolicitudCertificadoRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 
@@ -27,14 +30,17 @@ public class SolicitudCertificadoService {
   private final SolicitudCertificadoRepository solicitudRepository;
   private final BibliotecaRepository bibliotecaRepository;
   private final UserRepository usuarioRepository;
+  private final RazonCertificadoRepository razonCertificadoRepository;
 
   public SolicitudCertificadoService(
       SolicitudCertificadoRepository solicitudRepository,
       BibliotecaRepository bibliotecaRepository,
-      UserRepository usuarioRepository) {
+      UserRepository usuarioRepository,
+      RazonCertificadoRepository razonCertificadoRepository) {
     this.solicitudRepository = solicitudRepository;
     this.bibliotecaRepository = bibliotecaRepository;
     this.usuarioRepository = usuarioRepository;
+    this.razonCertificadoRepository = razonCertificadoRepository;
   }
 
   // =====================================================
@@ -49,6 +55,16 @@ public class SolicitudCertificadoService {
     Biblioteca biblioteca = bibliotecaRepository.findById(
         request.getBibliotecaId()).orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada"));
 
+    RazonCertificado razon = razonCertificadoRepository
+        .findById(request.getRazonCertificadoId())
+        .orElseThrow(() -> new ResourceNotFoundException("Razón no encontrada"));
+    if (razon.getBiblioteca() != null &&
+        !razon.getBiblioteca().getIdBiblioteca()
+            .equals(biblioteca.getIdBiblioteca())) {
+
+      throw new BusinessException(
+          "Esta razón no está disponible para la biblioteca seleccionada");
+    }
     SolicitudCertificado solicitud = new SolicitudCertificado();
 
     solicitud.setBiblioteca(biblioteca);
@@ -64,7 +80,7 @@ public class SolicitudCertificadoService {
     solicitud.setMatricula(request.getMatricula());
     solicitud.setEmail(request.getEmail());
     solicitud.setTelefono(request.getTelefono());
-    solicitud.setRazon(request.getRazon());
+    solicitud.setRazonCertificado(razon);
     solicitud.setDescripcion(request.getDescripcion());
 
     solicitud.setEstado(EstadoSolicitud.PENDIENTE);
@@ -180,7 +196,9 @@ public class SolicitudCertificadoService {
     response.setBibliotecaNombre(
         solicitud.getBiblioteca().getNombre());
 
-    response.setRazon(solicitud.getRazon());
+    response.setRazonId(solicitud.getRazonCertificado().getIdRazon());
+    response.setRazonNombre(solicitud.getRazonCertificado().getNombre());
+    response.setRequisitos(solicitud.getRazonCertificado().getRequisitos());
     response.setDescripcion(solicitud.getDescripcion());
 
     response.setEstado(
