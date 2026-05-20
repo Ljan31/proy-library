@@ -1,34 +1,57 @@
-package com.proyecto.fhce.library.dto.response.library;
+package com.proyecto.fhce.library.entities;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-public class SolicitudCertificadoResponse {
+import com.proyecto.fhce.library.enums.EstadoSolicitud;
 
+@Entity
+@Table(name = "solicitudes_certificado")
+public class SolicitudCertificado {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  // Relación opcional con usuario
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "usuario_id", nullable = true)
+  private Usuario usuario;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "biblioteca_id", nullable = false)
+  private Biblioteca biblioteca;
+
+  @Column(nullable = false)
   private String nombres;
 
+  @Column(nullable = false)
   private String apellidos;
 
+  @Column(nullable = false, length = 20)
   private String ci;
 
+  @Column(length = 50)
   private String matricula;
 
-  private String bibliotecaNombre;
-
+  @Column(nullable = false, length = 200)
   private String razon;
 
+  @Column(length = 500)
   private String descripcion;
 
-  private String estado;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private EstadoSolicitud estado;
 
+  @Column(nullable = false)
   private LocalDateTime fechaSolicitud;
 
   private LocalDateTime fechaRespuesta;
 
+  @Column(length = 500)
   private String observacionRespuesta;
 
-  public SolicitudCertificadoResponse() {
+  public SolicitudCertificado() {
   }
 
   public Long getId() {
@@ -37,6 +60,22 @@ public class SolicitudCertificadoResponse {
 
   public void setId(Long id) {
     this.id = id;
+  }
+
+  public Usuario getUsuario() {
+    return usuario;
+  }
+
+  public void setUsuario(Usuario usuario) {
+    this.usuario = usuario;
+  }
+
+  public Biblioteca getBiblioteca() {
+    return biblioteca;
+  }
+
+  public void setBiblioteca(Biblioteca biblioteca) {
+    this.biblioteca = biblioteca;
   }
 
   public String getNombres() {
@@ -71,14 +110,6 @@ public class SolicitudCertificadoResponse {
     this.matricula = matricula;
   }
 
-  public String getBibliotecaNombre() {
-    return bibliotecaNombre;
-  }
-
-  public void setBibliotecaNombre(String bibliotecaNombre) {
-    this.bibliotecaNombre = bibliotecaNombre;
-  }
-
   public String getRazon() {
     return razon;
   }
@@ -95,11 +126,11 @@ public class SolicitudCertificadoResponse {
     this.descripcion = descripcion;
   }
 
-  public String getEstado() {
+  public EstadoSolicitud getEstado() {
     return estado;
   }
 
-  public void setEstado(String estado) {
+  public void setEstado(EstadoSolicitud estado) {
     this.estado = estado;
   }
 
