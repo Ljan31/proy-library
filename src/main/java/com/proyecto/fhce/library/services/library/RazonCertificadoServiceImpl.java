@@ -48,7 +48,7 @@ public class RazonCertificadoServiceImpl implements RazonCertificadoService {
 
   @Override
   public List<RazonCertificadoResponseDTO> listarPorBiblioteca(Long bibliotecaId) {
-    return razonRepository.findByBibliotecaIdBiblioteca(bibliotecaId)
+    return razonRepository.findByBiblioteca_IdBiblioteca(bibliotecaId)
         .stream()
         .map(RazonCertificadoMapper::toDTO)
         .collect(Collectors.toList());

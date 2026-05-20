@@ -39,8 +39,9 @@ public class SolicitudCertificado {
   @Column(length = 20)
   private String telefono;
 
-  @Column(nullable = false, length = 200)
-  private String razon;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "razon_certificado_id", nullable = false)
+  private RazonCertificado razonCertificado;
 
   @Column(length = 500)
   private String descripcion;
@@ -116,14 +117,6 @@ public class SolicitudCertificado {
     this.matricula = matricula;
   }
 
-  public String getRazon() {
-    return razon;
-  }
-
-  public void setRazon(String razon) {
-    this.razon = razon;
-  }
-
   public String getDescripcion() {
     return descripcion;
   }
@@ -178,6 +171,14 @@ public class SolicitudCertificado {
 
   public void setTelefono(String telefono) {
     this.telefono = telefono;
+  }
+
+  public RazonCertificado getRazonCertificado() {
+    return razonCertificado;
+  }
+
+  public void setRazonCertificado(RazonCertificado razonCertificado) {
+    this.razonCertificado = razonCertificado;
   }
 
 }

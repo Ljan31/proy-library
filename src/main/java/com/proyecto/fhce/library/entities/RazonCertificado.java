@@ -20,7 +20,7 @@ public class RazonCertificado {
   private Long idRazon;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "biblioteca_id", nullable = false)
+  @JoinColumn(name = "biblioteca_id", nullable = true)
   private Biblioteca biblioteca;
 
   @Column(nullable = false, length = 150)
