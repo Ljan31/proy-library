@@ -93,9 +93,8 @@ public class SpringSecurityConfig {
             .requestMatchers(HttpMethod.POST, "/api/libros/busqueda-avanzada").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/ejemplares/**").permitAll()
             .requestMatchers("/api/certificados/validar/**").permitAll()
-            // .requestMatchers("/api/users/**").permitAll()
-            // .requestMatchers("/api/personas/**").permitAll()
-            // .requestMatchers("/api/roles/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/razones-certificado/**").permitAll()
+            .requestMatchers("/api/razones-certificado/**").hasAnyRole("ADMIN", "BIBLIOTECARIO")
             // Swagger/OpenAPI
             .requestMatchers("/portadas/**").permitAll()
             .requestMatchers("/logos/**").permitAll()
