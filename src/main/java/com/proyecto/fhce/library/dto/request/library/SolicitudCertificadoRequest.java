@@ -12,7 +12,7 @@ public class SolicitudCertificadoRequest {
 
   private String matricula;
 
-  private String razon;
+  private Long razonCertificadoId;
 
   private String descripcion;
 
@@ -63,14 +63,6 @@ public class SolicitudCertificadoRequest {
     this.matricula = matricula;
   }
 
-  public String getRazon() {
-    return razon;
-  }
-
-  public void setRazon(String razon) {
-    this.razon = razon;
-  }
-
   public String getDescripcion() {
     return descripcion;
   }
@@ -93,6 +85,14 @@ public class SolicitudCertificadoRequest {
 
   public void setTelefono(String telefono) {
     this.telefono = telefono;
+  }
+
+  public Long getRazonCertificadoId() {
+    return razonCertificadoId;
+  }
+
+  public void setRazonCertificadoId(Long razonCertificadoId) {
+    this.razonCertificadoId = razonCertificadoId;
   }
 
 }

@@ -11,9 +11,11 @@ public interface RazonCertificadoRepository extends JpaRepository<RazonCertifica
 
   List<RazonCertificado> findByBiblioteca(Biblioteca biblioteca);
 
-  List<RazonCertificado> findByBibliotecaIdBiblioteca(Long bibliotecaId);
+  List<RazonCertificado> findByBiblioteca_IdBiblioteca(Long bibliotecaId);
 
   List<RazonCertificado> findByActivoTrue();
 
-  Optional<RazonCertificado> findByIdRazonAndBibliotecaIdBiblioteca(Long idRazon, Long bibliotecaId);
+  Optional<RazonCertificado> findByIdRazonAndBiblioteca_IdBiblioteca(Long idRazon, Long bibliotecaId);
+
+  Optional<RazonCertificado> findByIdRazonAndActivoTrue(Long id);
 }
