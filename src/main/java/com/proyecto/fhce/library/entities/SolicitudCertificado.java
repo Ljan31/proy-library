@@ -33,6 +33,12 @@ public class SolicitudCertificado {
   @Column(length = 50)
   private String matricula;
 
+  @Column(length = 100)
+  private String email;
+
+  @Column(length = 20)
+  private String telefono;
+
   @Column(nullable = false, length = 200)
   private String razon;
 
@@ -156,6 +162,22 @@ public class SolicitudCertificado {
 
   public void setObservacionRespuesta(String observacionRespuesta) {
     this.observacionRespuesta = observacionRespuesta;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
+  public String getTelefono() {
+    return telefono;
+  }
+
+  public void setTelefono(String telefono) {
+    this.telefono = telefono;
   }
 
 }

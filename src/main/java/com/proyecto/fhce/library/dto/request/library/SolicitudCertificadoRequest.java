@@ -16,6 +16,10 @@ public class SolicitudCertificadoRequest {
 
   private String descripcion;
 
+  private String email;
+
+  private String telefono;
+
   public SolicitudCertificadoRequest() {
   }
 
@@ -73,6 +77,22 @@ public class SolicitudCertificadoRequest {
 
   public void setDescripcion(String descripcion) {
     this.descripcion = descripcion;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
+  public String getTelefono() {
+    return telefono;
+  }
+
+  public void setTelefono(String telefono) {
+    this.telefono = telefono;
   }
 
 }

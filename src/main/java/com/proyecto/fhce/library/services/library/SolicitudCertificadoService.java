@@ -62,7 +62,8 @@ public class SolicitudCertificadoService {
     solicitud.setApellidos(request.getApellidos());
     solicitud.setCi(request.getCi());
     solicitud.setMatricula(request.getMatricula());
-
+    solicitud.setEmail(request.getEmail());
+    solicitud.setTelefono(request.getTelefono());
     solicitud.setRazon(request.getRazon());
     solicitud.setDescripcion(request.getDescripcion());
 
@@ -174,7 +175,8 @@ public class SolicitudCertificadoService {
     response.setApellidos(solicitud.getApellidos());
     response.setCi(solicitud.getCi());
     response.setMatricula(solicitud.getMatricula());
-
+    response.setEmail(solicitud.getEmail());
+    response.setTelefono(solicitud.getTelefono());
     response.setBibliotecaNombre(
         solicitud.getBiblioteca().getNombre());
 

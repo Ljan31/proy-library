@@ -27,6 +27,9 @@ public class SolicitudCertificadoResponse {
   private LocalDateTime fechaRespuesta;
 
   private String observacionRespuesta;
+  private String email;
+
+  private String telefono;
 
   public SolicitudCertificadoResponse() {
   }
@@ -125,6 +128,22 @@ public class SolicitudCertificadoResponse {
 
   public void setObservacionRespuesta(String observacionRespuesta) {
     this.observacionRespuesta = observacionRespuesta;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
+  public String getTelefono() {
+    return telefono;
+  }
+
+  public void setTelefono(String telefono) {
+    this.telefono = telefono;
   }
 
 }
