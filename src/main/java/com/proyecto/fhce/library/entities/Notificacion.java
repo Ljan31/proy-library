@@ -60,7 +60,7 @@ public class Notificacion {
     @Column(name = "id_referencia")
     private Long idReferencia;
 
-    @Column(name = "tipo_referencia", length = 20)
+    @Column(name = "tipo_referencia", length = 30)
     private String tipoReferencia;
 
     @Column(name = "intentos_envio", nullable = false)

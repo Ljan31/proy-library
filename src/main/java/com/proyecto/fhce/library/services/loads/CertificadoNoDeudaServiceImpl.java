@@ -12,22 +12,36 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import com.proyecto.fhce.library.dto.request.CrearNotificacionRequest;
+import com.proyecto.fhce.library.dto.request.library.SolicitudCertificadoEstudianteRequest;
+import com.proyecto.fhce.library.dto.request.library.SolicitudCertificadoRequest;
 import com.proyecto.fhce.library.dto.request.loads.CertificadoRequest;
+import com.proyecto.fhce.library.dto.response.library.SolicitudCertificadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.CertificadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.ValidacionCertificadoResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
+import com.proyecto.fhce.library.entities.BibliotecaEncargado;
 import com.proyecto.fhce.library.entities.CertificadoNoDeuda;
+import com.proyecto.fhce.library.entities.RazonCertificado;
+import com.proyecto.fhce.library.entities.SolicitudCertificado;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoCertificado;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
+import com.proyecto.fhce.library.enums.EstadoSolicitud;
+import com.proyecto.fhce.library.enums.RolEncargado;
+import com.proyecto.fhce.library.enums.notificaciones.TipoNotificacion;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.CertificadoNoDeudaRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
+import com.proyecto.fhce.library.repositories.RazonCertificadoRepository;
+import com.proyecto.fhce.library.repositories.SolicitudCertificadoRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.notificaciones.NotificacionService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,12 +60,19 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
 
   @Autowired
   private BibliotecaRepository bibliotecaRepository;
+
+  @Autowired
+  private RazonCertificadoRepository razonCertificadoRepository;
+  @Autowired
+  private SolicitudCertificadoRepository solicitudCertificadoRepository;
+
   @Autowired
   private PdfCertificadoGenerator pdfGenerator;
   private static final Logger log = LoggerFactory.getLogger(CertificadoNoDeudaServiceImpl.class);
 
-  // @Autowired
-  // private NotificacionService notificacionService;
+  @Autowired
+  private NotificacionService notificacionService;
+
   // @Autowired
   // private AuditoriaService auditoriaService;
   public CertificadoResponse generar(CertificadoRequest request, Long solicitanteId,
@@ -299,6 +320,153 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
 
     certificado.setEstadoCertificado(EstadoCertificado.ANULADO);
     return mapToResponse(certificadoRepository.save(certificado));
+  }
+
+  public SolicitudCertificadoResponse solicitarCertificado(
+      SolicitudCertificadoRequest request, Long estudianteId) {
+
+    // 1. Validar biblioteca
+    Biblioteca biblioteca = bibliotecaRepository.findById(request.getBibliotecaId())
+        .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada"));
+
+    // 2. Validar razón (importante)
+    RazonCertificado razon = razonCertificadoRepository
+        .findByIdRazonAndActivoTrue(request.getRazonCertificadoId())
+        .orElseThrow(() -> new BusinessException("Razón de certificado no válida o inactiva"));
+
+    // 3. Validar que la razón corresponda a la biblioteca (si es específica)
+    if (razon.getBiblioteca() != null &&
+        !razon.getBiblioteca().getIdBiblioteca().equals(biblioteca.getIdBiblioteca())) {
+      throw new BusinessException("Esta razón no está disponible para la biblioteca seleccionada");
+    }
+
+    // 4. Obtener usuario si está registrado
+    Usuario usuario = null;
+    if (estudianteId != null) {
+      usuario = usuarioRepository.findById(estudianteId)
+          .orElseThrow(() -> new ResourceNotFoundException("Estudiante no encontrado"));
+    }
+    // 5. Crear solicitud
+    SolicitudCertificado solicitud = new SolicitudCertificado();
+    solicitud.setUsuario(usuario);
+    solicitud.setBiblioteca(biblioteca);
+    solicitud.setNombres(request.getNombres());
+    solicitud.setApellidos(request.getApellidos());
+    solicitud.setCi(request.getCi());
+    solicitud.setMatricula(request.getMatricula());
+    solicitud.setEmail(request.getEmail());
+    solicitud.setTelefono(request.getTelefono());
+    solicitud.setRazonCertificado(razon); // ← Relación con la entidad
+    solicitud.setDescripcion(request.getDescripcion());
+    solicitud.setEstado(EstadoSolicitud.PENDIENTE);
+    solicitud.setFechaSolicitud(LocalDateTime.now());
+
+    SolicitudCertificado saved = solicitudCertificadoRepository.save(solicitud);
+
+    // 6. Enviar notificaciones a encargados
+    enviarNotificacionesEncargados(saved, biblioteca);
+
+    return mapToSolicitudResponse(saved);
+  }
+
+  private void enviarNotificacionesEncargados(SolicitudCertificado solicitud,
+      Biblioteca biblioteca) {
+
+    // Nombre del solicitante (funciona tanto si está registrado como si no)
+    String nombreSolicitante = solicitud.getUsuario() != null
+        ? solicitud.getUsuario().getPersona().getApellido_pat() + " " +
+            solicitud.getUsuario().getPersona().getNombre()
+        : solicitud.getNombres() + " " + solicitud.getApellidos();
+
+    String idSolicitante = solicitud.getUsuario() != null
+        ? solicitud.getUsuario().getId_usuario().toString()
+        : solicitud.getCi();
+
+    // Razón del certificado
+    String nombreRazon = solicitud.getRazonCertificado() != null
+        ? solicitud.getRazonCertificado().getNombre()
+        : ""; // fallback por si acaso
+
+    String asunto = "Nueva solicitud de Certificado No Deuda";
+
+    String mensaje = String.format("""
+        Se ha recibido una nueva solicitud de Certificado de No Deuda.
+
+        Solicitante: %s
+        %s: %s
+        Razón: %s
+        Biblioteca: %s
+
+        Descripción: %s
+        Por favor revisar y procesar la solicitud.""",
+
+        nombreSolicitante,
+        solicitud.getUsuario() != null ? "ID Usuario" : "CI",
+        idSolicitante,
+        nombreRazon,
+        biblioteca.getNombre(),
+        StringUtils.hasText(solicitud.getDescripcion()) ? solicitud.getDescripcion()
+            : "Sin descripción");
+
+    // Obtener todos los encargados de la biblioteca
+    for (BibliotecaEncargado encargado : biblioteca.getEncargados()) {
+      Usuario usuarioEncargado = encargado.getUsuario();
+
+      // Filtrar solo quienes tengan ROLE_BIBLIOTECARIO o ROLE_AUXILIAR
+      if (encargado.getRolEncargado() == RolEncargado.PRINCIPAL ||
+          encargado.getRolEncargado() == RolEncargado.AUXILIAR) {
+
+        CrearNotificacionRequest notifRequest = new CrearNotificacionRequest(
+            usuarioEncargado.getId_usuario(),
+            TipoNotificacion.CERTIFICADO, // Puedes crear SOLICITUD_CERTIFICADO después
+            asunto,
+            mensaje,
+            null, // canal
+            solicitud.getId(), // idReferencia
+            "SOLICITUD_CERTIFICADO" // tipoReferencia
+        );
+
+        try {
+          notificacionService.crear(notifRequest);
+        } catch (Exception e) {
+          log.warn("No se pudo crear notificación para usuario {}",
+              usuarioEncargado.getId_usuario(), e);
+        }
+      }
+    }
+  }
+
+  private SolicitudCertificadoResponse mapToSolicitudResponse(SolicitudCertificado solicitud) {
+
+    RazonCertificado razon = solicitud.getRazonCertificado();
+
+    return new SolicitudCertificadoResponse(
+        solicitud.getId(),
+
+        // Datos del usuario (puede ser null)
+        solicitud.getUsuario() != null ? solicitud.getUsuario().getId_usuario() : null,
+        solicitud.getNombres(),
+        solicitud.getApellidos(),
+        solicitud.getCi(),
+        solicitud.getMatricula(),
+        solicitud.getEmail(),
+        solicitud.getTelefono(),
+
+        // Biblioteca
+        solicitud.getBiblioteca().getIdBiblioteca(),
+        solicitud.getBiblioteca().getNombre(),
+
+        // Razón
+        razon != null ? razon.getIdRazon() : null,
+        razon != null ? razon.getNombre() : null,
+        razon != null ? razon.getRequisitos() : null,
+
+        // Otros campos
+        solicitud.getDescripcion(),
+        solicitud.getEstado().name(),
+        solicitud.getFechaSolicitud(),
+        solicitud.getFechaRespuesta(),
+        solicitud.getObservacionRespuesta());
   }
 
   private void validarDeudas(Long usuarioId, Long bibliotecaId) {

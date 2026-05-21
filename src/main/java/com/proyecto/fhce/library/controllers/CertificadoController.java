@@ -24,8 +24,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.MediaType;
 
+import com.proyecto.fhce.library.dto.request.library.SolicitudCertificadoRequest;
 import com.proyecto.fhce.library.dto.request.loads.CertificadoRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
+import com.proyecto.fhce.library.dto.response.library.SolicitudCertificadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.CertificadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.ValidacionCertificadoResponse;
 import com.proyecto.fhce.library.entities.CertificadoNoDeuda;
@@ -65,6 +67,24 @@ public class CertificadoController {
 
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success("Certificado generado exitosamente", certificado));
+  }
+
+  @PostMapping("/solicitar")
+  @PreAuthorize("permitAll()") // Temporalmente permitimos a cualquiera (incluyendo no logueados)
+  // @PreAuthorize("hasRole('ESTUDIANTE')") // Descomentar cuando solo estudiantes
+  // logueados puedan usar
+  public ResponseEntity<ApiResponse<SolicitudCertificadoResponse>> solicitar(
+      @Valid @RequestBody SolicitudCertificadoRequest request,
+      Authentication authentication) {
+
+    // Obtener ID del usuario logueado (puede ser null)
+    Long solicitanteId = authentication != null ? obtenerUsuarioId(authentication) : null;
+
+    SolicitudCertificadoResponse response = certificadoService.solicitarCertificado(request, solicitanteId);
+
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.success("Solicitud de certificado registrada correctamente. "
+            + "Los encargados de la biblioteca han sido notificados.", response));
   }
 
   /**

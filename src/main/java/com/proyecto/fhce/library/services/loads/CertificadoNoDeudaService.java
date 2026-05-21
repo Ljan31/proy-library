@@ -5,32 +5,38 @@ import java.util.List;
 
 import org.springframework.security.core.GrantedAuthority;
 
+import com.proyecto.fhce.library.dto.request.library.SolicitudCertificadoEstudianteRequest;
+import com.proyecto.fhce.library.dto.request.library.SolicitudCertificadoRequest;
 import com.proyecto.fhce.library.dto.request.loads.CertificadoRequest;
+import com.proyecto.fhce.library.dto.response.library.SolicitudCertificadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.CertificadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.ValidacionCertificadoResponse;
 import com.proyecto.fhce.library.enums.EstadoCertificado;
 
 public interface CertificadoNoDeudaService {
-  public CertificadoResponse findById(Long id);
+        public CertificadoResponse findById(Long id);
 
-  public List<CertificadoResponse> findByUsuario(Long usuarioId, Long solicitanteId,
-      Long bibliotecaId, Collection<? extends GrantedAuthority> authorities);
+        public List<CertificadoResponse> findByUsuario(Long usuarioId, Long solicitanteId,
+                        Long bibliotecaId, Collection<? extends GrantedAuthority> authorities);
 
-  public CertificadoResponse findByIdConAutorizacion(
-      Long id,
-      Long solicitanteId,
-      Collection<? extends GrantedAuthority> authorities);
+        public CertificadoResponse findByIdConAutorizacion(
+                        Long id,
+                        Long solicitanteId,
+                        Collection<? extends GrantedAuthority> authorities);
 
-  public CertificadoResponse generar(CertificadoRequest request, Long solicitanteId,
-      Collection<? extends GrantedAuthority> authorities);
+        public CertificadoResponse generar(CertificadoRequest request, Long solicitanteId,
+                        Collection<? extends GrantedAuthority> authorities);
 
-  public List<CertificadoResponse> findByBiblioteca(Long bibliotecaId, EstadoCertificado estado,
-      Long solicitanteId, Collection<? extends GrantedAuthority> authorities);
+        public List<CertificadoResponse> findByBiblioteca(Long bibliotecaId, EstadoCertificado estado,
+                        Long solicitanteId, Collection<? extends GrantedAuthority> authorities);
 
-  public CertificadoResponse anular(Long id, Long solicitanteId,
-      Collection<? extends GrantedAuthority> authorities);
+        public CertificadoResponse anular(Long id, Long solicitanteId,
+                        Collection<? extends GrantedAuthority> authorities);
 
-  public ValidacionCertificadoResponse validar(String codigoVerificacion);
+        public ValidacionCertificadoResponse validar(String codigoVerificacion);
 
-  public void actualizarCertificadosVencidos();
+        public void actualizarCertificadosVencidos();
+
+        public SolicitudCertificadoResponse solicitarCertificado(
+                        SolicitudCertificadoRequest request, Long estudianteId);
 }
