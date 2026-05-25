@@ -267,7 +267,7 @@ public class SolicitudCertificadoService {
                 Se ha recibido una nueva solicitud de Certificado de No Deuda.
 
                 Solicitante: %s
-                %s: %s
+                CI: %s
                 Razón: %s
                 Biblioteca: %s
 
@@ -275,7 +275,7 @@ public class SolicitudCertificadoService {
                 Por favor revisar y procesar la solicitud.""",
 
                 nombreSolicitante,
-                solicitud.getUsuario() != null ? "ID Usuario" : "CI",
+                solicitud.getUsuario().getPersona().getCi(),
                 idSolicitante,
                 nombreRazon,
                 biblioteca.getNombre(),
