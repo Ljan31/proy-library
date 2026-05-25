@@ -5,10 +5,7 @@ import java.util.List;
 
 import org.springframework.security.core.GrantedAuthority;
 
-import com.proyecto.fhce.library.dto.request.library.SolicitudCertificadoEstudianteRequest;
-import com.proyecto.fhce.library.dto.request.library.SolicitudCertificadoRequest;
 import com.proyecto.fhce.library.dto.request.loads.CertificadoRequest;
-import com.proyecto.fhce.library.dto.response.library.SolicitudCertificadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.CertificadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.ValidacionCertificadoResponse;
 import com.proyecto.fhce.library.enums.EstadoCertificado;
@@ -18,6 +15,10 @@ public interface CertificadoNoDeudaService {
 
         public List<CertificadoResponse> findByUsuario(Long usuarioId, Long solicitanteId,
                         Long bibliotecaId, Collection<? extends GrantedAuthority> authorities);
+
+        public List<CertificadoResponse> findByCiAndBiblioteca(
+                        String ci,
+                        Long bibliotecaId);
 
         public CertificadoResponse findByIdConAutorizacion(
                         Long id,
@@ -37,6 +38,4 @@ public interface CertificadoNoDeudaService {
 
         public void actualizarCertificadosVencidos();
 
-        public SolicitudCertificadoResponse solicitarCertificado(
-                        SolicitudCertificadoRequest request, Long estudianteId);
 }

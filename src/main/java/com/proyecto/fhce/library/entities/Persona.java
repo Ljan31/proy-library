@@ -82,6 +82,24 @@ public class Persona {
     this.email = email;
   }
 
+  public String getNombreCompleto() {
+    StringBuilder nombreCompleto = new StringBuilder();
+
+    if (nombre != null) {
+      nombreCompleto.append(nombre);
+    }
+
+    if (apellido_pat != null) {
+      nombreCompleto.append(" ").append(apellido_pat);
+    }
+
+    if (apellido_mat != null) {
+      nombreCompleto.append(" ").append(apellido_mat);
+    }
+
+    return nombreCompleto.toString().trim();
+  }
+
   @Override
   public int hashCode() {
     final int prime = 31;

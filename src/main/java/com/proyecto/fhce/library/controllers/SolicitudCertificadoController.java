@@ -3,6 +3,10 @@ package com.proyecto.fhce.library.controllers;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -24,164 +28,196 @@ import java.util.List;
 @RequestMapping("/api/solicitudes-certificado")
 public class SolicitudCertificadoController {
 
-    @Autowired
-    private SolicitudCertificadoService solicitudService;
+  @Autowired
+  private SolicitudCertificadoService solicitudService;
 
-    /**
-     * Crear solicitud de certificado.
-     *
-     * Puede hacerlo:
-     * - ESTUDIANTE
-     * - BIBLIOTECARIO
-     * - ADMIN
-     *
-     * Incluso si el usuario no existe,
-     * la solicitud queda registrada.
-     */
-    @PostMapping
-    @PreAuthorize("permitAll()")
-    public ResponseEntity<ApiResponse<SolicitudCertificadoResponse>> crearSolicitud(
-            @Valid @RequestBody SolicitudCertificadoRequest request,
-            Authentication authentication) {
+  /**
+   * Crear solicitud de certificado.
+   *
+   * Puede hacerlo:
+   * - ESTUDIANTE
+   * - BIBLIOTECARIO
+   * - ADMIN
+   *
+   * Incluso si el usuario no existe,
+   * la solicitud queda registrada.
+   */
+  @PostMapping
+  @PreAuthorize("permitAll()")
+  public ResponseEntity<ApiResponse<SolicitudCertificadoResponse>> crearSolicitud(
+      @Valid @RequestBody SolicitudCertificadoRequest request,
+      Authentication authentication) {
 
-        Long solicitanteId = obtenerUsuarioId(authentication);
+    Long solicitanteId = obtenerUsuarioId(authentication);
 
-        SolicitudCertificadoResponse response = solicitudService.crearSolicitud(
-                request,
-                solicitanteId,
-                authentication != null
-                        ? authentication.getAuthorities()
-                        : null);
+    SolicitudCertificadoResponse response = solicitudService.crearSolicitud(
+        request,
+        solicitanteId,
+        authentication != null
+            ? authentication.getAuthorities()
+            : null);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(
-                        ApiResponse.success(
-                                "Solicitud enviada correctamente",
-                                response));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(
+            ApiResponse.success(
+                "Solicitud de certificado registrada correctamente. "
+                    + "Los encargados de la biblioteca han sido notificados.",
+                response));
+  }
+
+  /**
+   * ADMIN/BIBLIOTECARIO:
+   * Ver solicitudes de una biblioteca.
+   */
+  @GetMapping("/biblioteca/{bibliotecaId}")
+  @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
+  public ResponseEntity<ApiResponse<List<SolicitudCertificadoResponse>>> listarPorBiblioteca(
+      @PathVariable Long bibliotecaId,
+      @RequestParam(required = false) EstadoSolicitud estado,
+      Authentication authentication) {
+
+    Long solicitanteId = obtenerUsuarioId(authentication);
+
+    List<SolicitudCertificadoResponse> response = solicitudService.listarPorBiblioteca(
+        bibliotecaId,
+        estado,
+        solicitanteId,
+        authentication.getAuthorities());
+
+    return ResponseEntity.ok(
+        ApiResponse.success(response));
+  }
+
+  /**
+   * Ver detalle de solicitud.
+   */
+  @GetMapping("/{id}")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ApiResponse<SolicitudCertificadoResponse>> obtenerPorId(
+      @PathVariable Long id,
+      Authentication authentication) {
+
+    Long solicitanteId = obtenerUsuarioId(authentication);
+
+    SolicitudCertificadoResponse response = solicitudService.obtenerPorId(
+        id,
+        solicitanteId,
+        authentication.getAuthorities());
+
+    return ResponseEntity.ok(
+        ApiResponse.success(response));
+  }
+
+  /**
+   * Aprobar solicitud.
+   *
+   * Solo ADMIN o BIBLIOTECARIO.
+   */
+  @PatchMapping("/{id}/aprobar")
+  @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
+  public ResponseEntity<ApiResponse<SolicitudCertificadoResponse>> aprobar(
+      @PathVariable Long id,
+      @RequestParam(required = false) String observacion,
+      Authentication authentication) {
+
+    Long solicitanteId = obtenerUsuarioId(authentication);
+
+    SolicitudCertificadoResponse response = solicitudService.aprobarSolicitud(
+        id,
+        observacion,
+        solicitanteId,
+        authentication.getAuthorities());
+
+    return ResponseEntity.ok(
+        ApiResponse.success(
+            "Solicitud aprobada",
+            response));
+  }
+
+  /**
+   * Rechazar solicitud.
+   */
+  @PatchMapping("/{id}/rechazar")
+  @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
+  public ResponseEntity<ApiResponse<SolicitudCertificadoResponse>> rechazar(
+      @PathVariable Long id,
+      @RequestParam(required = false) String observacion,
+      Authentication authentication) {
+
+    Long solicitanteId = obtenerUsuarioId(authentication);
+
+    SolicitudCertificadoResponse response = solicitudService.rechazarSolicitud(
+        id,
+        observacion,
+        solicitanteId,
+        authentication.getAuthorities());
+
+    return ResponseEntity.ok(
+        ApiResponse.success(
+            "Solicitud rechazada",
+            response));
+  }
+
+  /**
+   * ESTUDIANTE: Ver mis propias solicitudes (paginado)
+   */
+  @GetMapping("/mis-solicitudes")
+  @PreAuthorize("hasRole('ESTUDIANTE')")
+  public ResponseEntity<ApiResponse<Page<SolicitudCertificadoResponse>>> misSolicitudes(
+      Authentication authentication,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size,
+      @RequestParam(defaultValue = "fechaSolicitud") String sortBy,
+      @RequestParam(defaultValue = "desc") String direction) {
+
+    Long usuarioId = obtenerUsuarioId(authentication);
+
+    Pageable pageable = PageRequest.of(
+        page,
+        size,
+        Sort.by(Sort.Direction.fromString(direction), sortBy));
+
+    Page<SolicitudCertificadoResponse> response = solicitudService.obtenerMisSolicitudes(usuarioId, pageable);
+
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  /**
+   * ADMIN: Ver todas las solicitudes del sistema (paginado)
+   */
+  @GetMapping("/todas")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<ApiResponse<Page<SolicitudCertificadoResponse>>> listarTodas(
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size,
+      @RequestParam(defaultValue = "fechaSolicitud") String sortBy,
+      @RequestParam(defaultValue = "desc") String direction) {
+
+    Pageable pageable = PageRequest.of(
+        page,
+        size,
+        Sort.by(Sort.Direction.fromString(direction), sortBy));
+
+    Page<SolicitudCertificadoResponse> response = solicitudService.listarTodasLasSolicitudes(pageable);
+
+    return ResponseEntity.ok(ApiResponse.success(response));
+  }
+
+  // =====================================================
+  // HELPERS
+  // =====================================================
+
+  private Long obtenerUsuarioId(
+      Authentication authentication) {
+
+    if (authentication == null ||
+        !(authentication.getPrincipal() instanceof UserDetailsImpl)) {
+
+      return null;
     }
 
-    /**
-     * ADMIN/BIBLIOTECARIO:
-     * Ver solicitudes de una biblioteca.
-     */
-    @GetMapping("/biblioteca/{bibliotecaId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
-    public ResponseEntity<ApiResponse<List<SolicitudCertificadoResponse>>> listarPorBiblioteca(
-            @PathVariable Long bibliotecaId,
-            @RequestParam(required = false) EstadoSolicitud estado,
-            Authentication authentication) {
+    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        Long solicitanteId = obtenerUsuarioId(authentication);
-
-        List<SolicitudCertificadoResponse> response = solicitudService.listarPorBiblioteca(
-                bibliotecaId,
-                estado,
-                solicitanteId,
-                authentication.getAuthorities());
-
-        return ResponseEntity.ok(
-                ApiResponse.success(response));
-    }
-
-    // @GetMapping("/mis-solicitudes")
-    // @PreAuthorize("hasRole('ESTUDIANTE')")
-    // public ResponseEntity<ApiResponse<List<SolicitudCertificadoResponse>>>
-    // misSolicitudes(
-    // Authentication authentication) {
-
-    // Long estudianteId = obtenerUsuarioId(authentication);
-    // List<SolicitudCertificadoResponse> solicitudes =
-    // solicitudService.(estudianteId);
-
-    // return ResponseEntity.ok(ApiResponse.success("Solicitudes recuperadas",
-    // solicitudes));
-    // }
-
-    /**
-     * Ver detalle de solicitud.
-     */
-    @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<SolicitudCertificadoResponse>> obtenerPorId(
-            @PathVariable Long id,
-            Authentication authentication) {
-
-        Long solicitanteId = obtenerUsuarioId(authentication);
-
-        SolicitudCertificadoResponse response = solicitudService.obtenerPorId(
-                id,
-                solicitanteId,
-                authentication.getAuthorities());
-
-        return ResponseEntity.ok(
-                ApiResponse.success(response));
-    }
-
-    /**
-     * Aprobar solicitud.
-     *
-     * Solo ADMIN o BIBLIOTECARIO.
-     */
-    @PatchMapping("/{id}/aprobar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
-    public ResponseEntity<ApiResponse<SolicitudCertificadoResponse>> aprobar(
-            @PathVariable Long id,
-            @RequestParam(required = false) String observacion,
-            Authentication authentication) {
-
-        Long solicitanteId = obtenerUsuarioId(authentication);
-
-        SolicitudCertificadoResponse response = solicitudService.aprobarSolicitud(
-                id,
-                observacion,
-                solicitanteId,
-                authentication.getAuthorities());
-
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        "Solicitud aprobada",
-                        response));
-    }
-
-    /**
-     * Rechazar solicitud.
-     */
-    @PatchMapping("/{id}/rechazar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
-    public ResponseEntity<ApiResponse<SolicitudCertificadoResponse>> rechazar(
-            @PathVariable Long id,
-            @RequestParam(required = false) String observacion,
-            Authentication authentication) {
-
-        Long solicitanteId = obtenerUsuarioId(authentication);
-
-        SolicitudCertificadoResponse response = solicitudService.rechazarSolicitud(
-                id,
-                observacion,
-                solicitanteId,
-                authentication.getAuthorities());
-
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        "Solicitud rechazada",
-                        response));
-    }
-
-    // =====================================================
-    // HELPERS
-    // =====================================================
-
-    private Long obtenerUsuarioId(
-            Authentication authentication) {
-
-        if (authentication == null ||
-                !(authentication.getPrincipal() instanceof UserDetailsImpl)) {
-
-            return null;
-        }
-
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-
-        return userDetails.getId();
-    }
+    return userDetails.getId();
+  }
 }

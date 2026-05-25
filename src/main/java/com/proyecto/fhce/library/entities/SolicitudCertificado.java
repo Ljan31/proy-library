@@ -54,6 +54,9 @@ public class SolicitudCertificado {
   private LocalDateTime fechaSolicitud;
 
   private LocalDateTime fechaRespuesta;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "atendido_por_id", nullable = true)
+  private Usuario atendidoPor;
 
   @Column(length = 500)
   private String observacionRespuesta;
@@ -179,6 +182,14 @@ public class SolicitudCertificado {
 
   public void setRazonCertificado(RazonCertificado razonCertificado) {
     this.razonCertificado = razonCertificado;
+  }
+
+  public Usuario getAtendidoPor() {
+    return atendidoPor;
+  }
+
+  public void setAtendidoPor(Usuario atendidoPor) {
+    this.atendidoPor = atendidoPor;
   }
 
 }

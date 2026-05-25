@@ -33,6 +33,8 @@ public class SolicitudCertificadoResponse {
   private String email;
 
   private String telefono;
+  private Long atendidoPorId;
+  private String atendidoPorNombre;
 
   public SolicitudCertificadoResponse() {
   }
@@ -207,6 +209,22 @@ public class SolicitudCertificadoResponse {
 
   public void setBibliotecaId(Long bibliotecaId) {
     this.bibliotecaId = bibliotecaId;
+  }
+
+  public Long getAtendidoPorId() {
+    return atendidoPorId;
+  }
+
+  public void setAtendidoPorId(Long atendidoPorId) {
+    this.atendidoPorId = atendidoPorId;
+  }
+
+  public String getAtendidoPorNombre() {
+    return atendidoPorNombre;
+  }
+
+  public void setAtendidoPorNombre(String atendidoPorNombre) {
+    this.atendidoPorNombre = atendidoPorNombre;
   }
 
 }

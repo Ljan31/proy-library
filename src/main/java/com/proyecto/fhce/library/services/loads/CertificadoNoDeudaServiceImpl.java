@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.proyecto.fhce.library.dto.request.CrearNotificacionRequest;
 import com.proyecto.fhce.library.dto.request.library.SolicitudCertificadoEstudianteRequest;
@@ -62,11 +62,6 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
   private BibliotecaRepository bibliotecaRepository;
 
   @Autowired
-  private RazonCertificadoRepository razonCertificadoRepository;
-  @Autowired
-  private SolicitudCertificadoRepository solicitudCertificadoRepository;
-
-  @Autowired
   private PdfCertificadoGenerator pdfGenerator;
   private static final Logger log = LoggerFactory.getLogger(CertificadoNoDeudaServiceImpl.class);
 
@@ -94,21 +89,40 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
         throw new BusinessException("Solo puede generar certificados de la biblioteca a su cargo");
       }
     }
+    Usuario usuario = null;
+    String nombresFinal = request.getNombres();
+    String apellidosFinal = request.getApellidos();
+    String ciFinal = request.getCi();
 
-    // ESTUDIANTE: solo puede generar el suyo propio
-    if (esEstudiante && !esBibliotecario && !esAdmin) {
-      if (!request.getUsuarioId().equals(solicitanteId)) {
-        throw new BusinessException("Solo puede generar su propio certificado");
+    // Caso 1: Tiene usuarioId → buscar usuario registrado
+    if (request.getUsuarioId() != null) {
+      usuario = usuarioRepository.findById(request.getUsuarioId())
+          .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+      // Sobrescribir con datos del usuario registrado (más confiable)
+      nombresFinal = usuario.getPersona().getNombreCompleto() != null
+          ? usuario.getPersona().getNombreCompleto().split(" ")[0]
+          : nombresFinal;
+      apellidosFinal = usuario.getPersona().getNombreCompleto() != null
+          ? usuario.getPersona().getNombreCompleto().replaceFirst("^\\S+\\s+", "")
+          : apellidosFinal;
+      ciFinal = usuario.getPersona().getCi();
+    }
+    // Caso 2: No tiene usuarioId → validar que lleguen datos básicos
+    else {
+      if (StringUtils.isBlank(nombresFinal) || StringUtils.isBlank(apellidosFinal) || StringUtils.isBlank(ciFinal)) {
+        throw new BusinessException("Debe proporcionar nombres, apellidos y CI cuando no se usa usuarioId");
       }
     }
-
-    Usuario usuario = usuarioRepository.findById(request.getUsuarioId())
-        .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     Usuario solicitante = usuarioRepository.findById(solicitanteId)
         .orElseThrow(() -> new ResourceNotFoundException("Solicitante no encontrado"));
 
-    validarDeudas(usuario.getId_usuario(), biblioteca.getIdBiblioteca());
-
+    // validarDeudas(usuario.getId_usuario(), biblioteca.getIdBiblioteca());
+    validarDeudas(
+        usuario != null ? usuario.getId_usuario() : null,
+        biblioteca.getIdBiblioteca(),
+        request.getCi() // pasar ci si existe
+    );
     // ** Validar que no tenga sanciones activas
     // if (sancionRepository.hasUsuarioSancionesActivas(usuario.getId_usuario())) {
     // BigDecimal montoDeuda =
@@ -135,8 +149,8 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     CertificadoNoDeuda saved = certificadoRepository.save(certificado);
 
     // Generar PDF (implementación simplificada)
-    String pdfPath = generarPDF(saved);
-    saved.setPdf_generado(pdfPath);
+    // String pdfPath = generarPDF(saved);
+    // saved.setPdf_generado(pdfPath);
     certificadoRepository.save(saved);
 
     // auditoriaService.registrar("GENERATE_CERTIFICATE", "no_debt_certificates",
@@ -226,6 +240,19 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
         : certificadoRepository.findByUsuario_IdUsuario(usuarioId);
 
     return certificados.stream().map(this::mapToResponse).toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<CertificadoResponse> findByCiAndBiblioteca(
+      String ci,
+      Long bibliotecaId) {
+
+    List<CertificadoNoDeuda> certificados = certificadoRepository.findByBiblioteca_IdBibliotecaAndUsuario_Persona_Ci(
+        bibliotecaId, ci);
+
+    return certificados.stream()
+        .map(this::mapToResponse)
+        .toList();
   }
 
   @Transactional(readOnly = true)
@@ -322,154 +349,10 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     return mapToResponse(certificadoRepository.save(certificado));
   }
 
-  public SolicitudCertificadoResponse solicitarCertificado(
-      SolicitudCertificadoRequest request, Long estudianteId) {
-
-    // 1. Validar biblioteca
-    Biblioteca biblioteca = bibliotecaRepository.findById(request.getBibliotecaId())
-        .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada"));
-
-    // 2. Validar razón (importante)
-    RazonCertificado razon = razonCertificadoRepository
-        .findByIdRazonAndActivoTrue(request.getRazonCertificadoId())
-        .orElseThrow(() -> new BusinessException("Razón de certificado no válida o inactiva"));
-
-    // 3. Validar que la razón corresponda a la biblioteca (si es específica)
-    if (razon.getBiblioteca() != null &&
-        !razon.getBiblioteca().getIdBiblioteca().equals(biblioteca.getIdBiblioteca())) {
-      throw new BusinessException("Esta razón no está disponible para la biblioteca seleccionada");
-    }
-
-    // 4. Obtener usuario si está registrado
-    Usuario usuario = null;
-    if (estudianteId != null) {
-      usuario = usuarioRepository.findById(estudianteId)
-          .orElseThrow(() -> new ResourceNotFoundException("Estudiante no encontrado"));
-    }
-    // 5. Crear solicitud
-    SolicitudCertificado solicitud = new SolicitudCertificado();
-    solicitud.setUsuario(usuario);
-    solicitud.setBiblioteca(biblioteca);
-    solicitud.setNombres(request.getNombres());
-    solicitud.setApellidos(request.getApellidos());
-    solicitud.setCi(request.getCi());
-    solicitud.setMatricula(request.getMatricula());
-    solicitud.setEmail(request.getEmail());
-    solicitud.setTelefono(request.getTelefono());
-    solicitud.setRazonCertificado(razon); // ← Relación con la entidad
-    solicitud.setDescripcion(request.getDescripcion());
-    solicitud.setEstado(EstadoSolicitud.PENDIENTE);
-    solicitud.setFechaSolicitud(LocalDateTime.now());
-
-    SolicitudCertificado saved = solicitudCertificadoRepository.save(solicitud);
-
-    // 6. Enviar notificaciones a encargados
-    enviarNotificacionesEncargados(saved, biblioteca);
-
-    return mapToSolicitudResponse(saved);
-  }
-
-  private void enviarNotificacionesEncargados(SolicitudCertificado solicitud,
-      Biblioteca biblioteca) {
-
-    // Nombre del solicitante (funciona tanto si está registrado como si no)
-    String nombreSolicitante = solicitud.getUsuario() != null
-        ? solicitud.getUsuario().getPersona().getApellido_pat() + " " +
-            solicitud.getUsuario().getPersona().getNombre()
-        : solicitud.getNombres() + " " + solicitud.getApellidos();
-
-    String idSolicitante = solicitud.getUsuario() != null
-        ? solicitud.getUsuario().getId_usuario().toString()
-        : solicitud.getCi();
-
-    // Razón del certificado
-    String nombreRazon = solicitud.getRazonCertificado() != null
-        ? solicitud.getRazonCertificado().getNombre()
-        : ""; // fallback por si acaso
-
-    String asunto = "Nueva solicitud de Certificado No Deuda";
-
-    String mensaje = String.format("""
-        Se ha recibido una nueva solicitud de Certificado de No Deuda.
-
-        Solicitante: %s
-        %s: %s
-        Razón: %s
-        Biblioteca: %s
-
-        Descripción: %s
-        Por favor revisar y procesar la solicitud.""",
-
-        nombreSolicitante,
-        solicitud.getUsuario() != null ? "ID Usuario" : "CI",
-        idSolicitante,
-        nombreRazon,
-        biblioteca.getNombre(),
-        StringUtils.hasText(solicitud.getDescripcion()) ? solicitud.getDescripcion()
-            : "Sin descripción");
-
-    // Obtener todos los encargados de la biblioteca
-    for (BibliotecaEncargado encargado : biblioteca.getEncargados()) {
-      Usuario usuarioEncargado = encargado.getUsuario();
-
-      // Filtrar solo quienes tengan ROLE_BIBLIOTECARIO o ROLE_AUXILIAR
-      if (encargado.getRolEncargado() == RolEncargado.PRINCIPAL ||
-          encargado.getRolEncargado() == RolEncargado.AUXILIAR) {
-
-        CrearNotificacionRequest notifRequest = new CrearNotificacionRequest(
-            usuarioEncargado.getId_usuario(),
-            TipoNotificacion.CERTIFICADO, // Puedes crear SOLICITUD_CERTIFICADO después
-            asunto,
-            mensaje,
-            null, // canal
-            solicitud.getId(), // idReferencia
-            "SOLICITUD_CERTIFICADO" // tipoReferencia
-        );
-
-        try {
-          notificacionService.crear(notifRequest);
-        } catch (Exception e) {
-          log.warn("No se pudo crear notificación para usuario {}",
-              usuarioEncargado.getId_usuario(), e);
-        }
-      }
-    }
-  }
-
-  private SolicitudCertificadoResponse mapToSolicitudResponse(SolicitudCertificado solicitud) {
-
-    RazonCertificado razon = solicitud.getRazonCertificado();
-
-    return new SolicitudCertificadoResponse(
-        solicitud.getId(),
-
-        // Datos del usuario (puede ser null)
-        solicitud.getUsuario() != null ? solicitud.getUsuario().getId_usuario() : null,
-        solicitud.getNombres(),
-        solicitud.getApellidos(),
-        solicitud.getCi(),
-        solicitud.getMatricula(),
-        solicitud.getEmail(),
-        solicitud.getTelefono(),
-
-        // Biblioteca
-        solicitud.getBiblioteca().getIdBiblioteca(),
-        solicitud.getBiblioteca().getNombre(),
-
-        // Razón
-        razon != null ? razon.getIdRazon() : null,
-        razon != null ? razon.getNombre() : null,
-        razon != null ? razon.getRequisitos() : null,
-
-        // Otros campos
-        solicitud.getDescripcion(),
-        solicitud.getEstado().name(),
-        solicitud.getFechaSolicitud(),
-        solicitud.getFechaRespuesta(),
-        solicitud.getObservacionRespuesta());
-  }
-
   private void validarDeudas(Long usuarioId, Long bibliotecaId) {
+    if (usuarioId == null) {
+      return; // Opcional: puedes agregar una validación ligera por CI si tienes esa lógica
+    }
     Long activos = prestamoRepository
         .countPrestamosActivosByUsuarioAndBiblioteca(usuarioId, bibliotecaId);
     if (activos > 0)
@@ -487,6 +370,48 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     if (renovados > 0)
       throw new BusinessException(
           "El usuario tiene " + renovados + " préstamo(s) con renovación pendiente en esta biblioteca");
+  }
+
+  private void validarDeudas(Long usuarioId, Long bibliotecaId, String ci) {
+
+    if (usuarioId != null) {
+      // Validación normal por usuarioId (como arriba)
+      validarDeudas(usuarioId, bibliotecaId);
+    } else if (StringUtils.isNotBlank(ci)) {
+      // Validación alternativa por CI (si tienes queries por CI)
+      Long activos = prestamoRepository
+          .countPrestamosConEstadoByCiAndBiblioteca(ci, bibliotecaId, EstadoPrestamo.ACTIVO);
+
+      if (activos > 0) {
+        throw new BusinessException(
+            "La persona tiene " + activos +
+                " préstamo(s) activo(s) en esta biblioteca");
+      }
+
+      Long vencidos = prestamoRepository
+          .countPrestamosConEstadoByCiAndBiblioteca(
+              ci,
+              bibliotecaId,
+              EstadoPrestamo.VENCIDO);
+
+      if (vencidos > 0) {
+        throw new BusinessException(
+            "La persona tiene " + vencidos +
+                " préstamo(s) vencido(s) en esta biblioteca");
+      }
+
+      Long renovados = prestamoRepository
+          .countPrestamosConEstadoByCiAndBiblioteca(
+              ci,
+              bibliotecaId,
+              EstadoPrestamo.RENOVADO);
+
+      if (renovados > 0) {
+        throw new BusinessException(
+            "La persona tiene " + renovados +
+                " préstamo(s) con renovación pendiente en esta biblioteca");
+      }
+    }
   }
 
   private boolean tieneRol(Collection<? extends GrantedAuthority> authorities, String rol) {

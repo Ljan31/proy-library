@@ -9,6 +9,7 @@ import com.proyecto.fhce.library.dto.request.loads.DevolucionRequest;
 import com.proyecto.fhce.library.dto.request.loads.FiltroPrestamoRequest;
 import com.proyecto.fhce.library.dto.request.loads.PrestamoRequest;
 import com.proyecto.fhce.library.dto.request.loads.RenovacionRequest;
+import com.proyecto.fhce.library.dto.response.loads.EstadoPrestamoUsuarioDTO;
 import com.proyecto.fhce.library.dto.response.loads.PrestamoResponse;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
 
@@ -28,6 +29,8 @@ public interface PrestamoService {
   public List<PrestamoResponse> findPrestamosPorVencer(int dias);
 
   public List<PrestamoResponse> filtrar(FiltroPrestamoRequest filtro);
+
+  public EstadoPrestamoUsuarioDTO obtenerEstadoPrestamosPorCi(String ci);
 
   public PrestamoResponse realizarPrestamo(PrestamoRequest request, Long bibliotecarioId);
 

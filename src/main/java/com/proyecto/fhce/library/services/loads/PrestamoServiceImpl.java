@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ import com.proyecto.fhce.library.dto.response.library.EdicionSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.EjemplarResponse;
 import com.proyecto.fhce.library.dto.response.library.LibroSimpleResponse;
 import com.proyecto.fhce.library.dto.response.loads.ConfiguracionResueltaDTO;
+import com.proyecto.fhce.library.dto.response.loads.EstadoPrestamoUsuarioDTO;
 import com.proyecto.fhce.library.dto.response.loads.PrestamoResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
@@ -181,6 +183,64 @@ public class PrestamoServiceImpl implements PrestamoService {
     }
 
     return prestamos.stream().map(prestamoMapper::toResponse).collect(Collectors.toList());
+  }
+
+  @Transactional(readOnly = true)
+  public EstadoPrestamoUsuarioDTO obtenerEstadoPrestamosPorCi(String ci) {
+    log.info("Inicio obtenerEstadoPrestamosPorCi - CI recibido: {}", ci);
+    Optional<Usuario> usuarioOpt = usuarioRepository.findByPersona_Ci(ci);
+    log.info("Resultado búsqueda usuario: {}", usuarioOpt);
+
+    // No existe usuario => no tiene préstamos pendientes
+    if (usuarioOpt.isEmpty()) {
+      log.warn("No existe usuario con CI: {}", ci);
+
+      EstadoPrestamoUsuarioDTO dto = new EstadoPrestamoUsuarioDTO(
+          null,
+          false,
+          0,
+          0,
+          0);
+
+      log.info("DTO retornado: {}", dto);
+
+      return dto;
+
+    }
+
+    Usuario usuario = usuarioOpt.get();
+    log.info("Usuario encontrado - ID: {}", usuario.getId_usuario());
+    Long usuarioId = usuario.getId_usuario();
+
+    long activos = prestamoRepository.countPrestamosConEstadoByUsuario(
+        usuarioId,
+        EstadoPrestamo.ACTIVO);
+    log.info("Préstamos ACTIVOS: {}", activos);
+    long vencidos = prestamoRepository.countPrestamosConEstadoByUsuario(
+        usuarioId,
+        EstadoPrestamo.VENCIDO);
+    log.info("Préstamos VENCIDOS: {}", vencidos);
+
+    long renovados = prestamoRepository.countPrestamosConEstadoByUsuario(
+        usuarioId,
+        EstadoPrestamo.RENOVADO);
+    log.info("Préstamos RENOVADOS: {}", renovados);
+
+    boolean tienePendientes = activos > 0 ||
+        vencidos > 0 ||
+        renovados > 0;
+    log.info("¿Tiene pendientes?: {}", tienePendientes);
+
+    EstadoPrestamoUsuarioDTO dto = new EstadoPrestamoUsuarioDTO(
+        usuarioId,
+        tienePendientes,
+        activos,
+        vencidos,
+        renovados);
+
+    log.info("DTO final retornado: {}", dto);
+
+    return dto;
   }
 
   // ==================== OPERATIONS ====================

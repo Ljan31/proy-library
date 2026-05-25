@@ -94,6 +94,14 @@ public class SancionController {
     return ResponseEntity.ok(sancionService.historialPorUsuario(usuarioId));
   }
 
+  @GetMapping("/usuario/ci/{ci}/estado")
+  public ResponseEntity<EstadoSancionUsuarioDTO> obtenerEstadoSancionesPorCi(
+      @PathVariable String ci) {
+
+    return ResponseEntity.ok(
+        sancionService.obtenerEstadoSancionesPorCi(ci));
+  }
+
   /**
    * GET /api/sanciones/usuario/{usuarioId}/activas
    *

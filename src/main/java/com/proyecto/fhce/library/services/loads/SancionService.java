@@ -15,6 +15,7 @@ import com.proyecto.fhce.library.dto.SancionDTO.SancionResumenDTO;
 import com.proyecto.fhce.library.dto.request.CrearNotificacionRequest;
 import com.proyecto.fhce.library.dto.response.loads.ConfiguracionPrestamoResponseDTO;
 import com.proyecto.fhce.library.entities.ConfiguracionPrestamo;
+import com.proyecto.fhce.library.entities.Persona;
 import com.proyecto.fhce.library.entities.Prestamo;
 import com.proyecto.fhce.library.entities.Sancion;
 import com.proyecto.fhce.library.entities.Usuario;
@@ -28,6 +29,7 @@ import com.proyecto.fhce.library.exception.SancionException.SancionNoActivaExcep
 import com.proyecto.fhce.library.exception.SancionException.SancionNotFoundException;
 import com.proyecto.fhce.library.mapper.SancionMapper;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
+import com.proyecto.fhce.library.repositories.PersonaRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.SancionRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
@@ -38,6 +40,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
@@ -228,6 +231,30 @@ public class SancionService {
   public List<SancionResponseDTO> sancionesPorBiblioteca(Long bibliotecaId, EstadoSancion estado) {
     return mapper.toResponseDTOList(
         sancionRepository.findByBibliotecaAndEstado(bibliotecaId, estado));
+  }
+
+  public EstadoSancionUsuarioDTO obtenerEstadoSancionesPorCi(String ci) {
+
+    Optional<Usuario> usuarioOpt = usuarioRepository.findByPersona_Ci(ci);
+
+    // Si no existe usuario => no tiene sanciones
+    if (usuarioOpt.isEmpty()) {
+
+      return new EstadoSancionUsuarioDTO(
+          null,
+          false,
+          false,
+          0,
+          BigDecimal.ZERO,
+          null,
+          List.of());
+    }
+
+    Usuario usuario = usuarioOpt.get();
+
+    return obtenerEstadoSanciones(
+        usuario.getId_usuario());
+
   }
 
   /**

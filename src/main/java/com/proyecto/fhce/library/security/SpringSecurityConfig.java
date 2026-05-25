@@ -95,6 +95,7 @@ public class SpringSecurityConfig {
             .requestMatchers("/api/certificados/validar/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/razones-certificado/**").permitAll()
             .requestMatchers("/api/razones-certificado/**").hasAnyRole("ADMIN", "BIBLIOTECARIO")
+            .requestMatchers(HttpMethod.POST, "/api/solicitudes-certificado").permitAll()
             // Swagger/OpenAPI
             .requestMatchers("/portadas/**").permitAll()
             .requestMatchers("/logos/**").permitAll()

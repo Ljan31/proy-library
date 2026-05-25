@@ -56,7 +56,7 @@ public class CertificadoController {
    * POST /api/certificados
    */
   @PostMapping
-  @PreAuthorize("isAuthenticated()")
+  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
   public ResponseEntity<ApiResponse<CertificadoResponse>> generar(
       @Valid @RequestBody CertificadoRequest request,
       Authentication authentication) {
@@ -67,24 +67,6 @@ public class CertificadoController {
 
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success("Certificado generado exitosamente", certificado));
-  }
-
-  @PostMapping("/solicitar")
-  @PreAuthorize("permitAll()") // Temporalmente permitimos a cualquiera (incluyendo no logueados)
-  // @PreAuthorize("hasRole('ESTUDIANTE')") // Descomentar cuando solo estudiantes
-  // logueados puedan usar
-  public ResponseEntity<ApiResponse<SolicitudCertificadoResponse>> solicitar(
-      @Valid @RequestBody SolicitudCertificadoRequest request,
-      Authentication authentication) {
-
-    // Obtener ID del usuario logueado (puede ser null)
-    Long solicitanteId = authentication != null ? obtenerUsuarioId(authentication) : null;
-
-    SolicitudCertificadoResponse response = certificadoService.solicitarCertificado(request, solicitanteId);
-
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.success("Solicitud de certificado registrada correctamente. "
-            + "Los encargados de la biblioteca han sido notificados.", response));
   }
 
   /**
@@ -105,6 +87,17 @@ public class CertificadoController {
     Long solicitanteId = obtenerUsuarioId(authentication);
     List<CertificadoResponse> certificados = certificadoService
         .findByUsuario(usuarioId, solicitanteId, bibliotecaId, authentication.getAuthorities());
+
+    return ResponseEntity.ok(ApiResponse.success(certificados));
+  }
+
+  @GetMapping("/usuarioCi")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ApiResponse<List<CertificadoResponse>>> buscarPorCi(
+      @RequestParam String ci,
+      @RequestParam Long bibliotecaId) {
+
+    List<CertificadoResponse> certificados = certificadoService.findByCiAndBiblioteca(ci, bibliotecaId);
 
     return ResponseEntity.ok(ApiResponse.success(certificados));
   }

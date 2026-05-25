@@ -20,6 +20,7 @@ import com.proyecto.fhce.library.dto.request.loads.FiltroPrestamoRequest;
 import com.proyecto.fhce.library.dto.request.loads.PrestamoRequest;
 import com.proyecto.fhce.library.dto.request.loads.RenovacionRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
+import com.proyecto.fhce.library.dto.response.loads.EstadoPrestamoUsuarioDTO;
 import com.proyecto.fhce.library.dto.response.loads.PrestamoResponse;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
 import com.proyecto.fhce.library.security.UserDetailsImpl;
@@ -111,6 +112,16 @@ public class PrestamoController {
       @RequestBody FiltroPrestamoRequest filtro) {
     List<PrestamoResponse> prestamos = prestamoService.filtrar(filtro);
     return ResponseEntity.ok(ApiResponse.success(prestamos));
+  }
+
+  @GetMapping("/estado-usuario/{ci}")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ApiResponse<EstadoPrestamoUsuarioDTO>> obtenerEstadoPrestamosPorCi(
+      @PathVariable String ci) {
+
+    EstadoPrestamoUsuarioDTO estado = prestamoService.obtenerEstadoPrestamosPorCi(ci);
+
+    return ResponseEntity.ok(ApiResponse.success(estado));
   }
 
   @PostMapping
