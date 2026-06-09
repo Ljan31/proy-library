@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "persons")
@@ -15,15 +16,27 @@ public class Persona {
   @Column(unique = true, nullable = false)
   private Long id_persona;
 
+  @Size(min = 2, max = 50)
+  @Column(length = 50)
   private String nombre;
+
+  @Size(min = 2, max = 50)
+  @Column(length = 50)
   private String apellido_pat;
+
+  @Size(min = 2, max = 50)
+  @Column(length = 50)
   private String apellido_mat;
-  @Column(unique = true, nullable = false)
+
+  @Size(min = 5, max = 20)
+  @Column(length = 20, unique = true, nullable = false)
   private String ci;
 
+  @Column(length = 15)
   private String celular;
 
-  @Column(unique = true)
+  @Size(max = 50)
+  @Column(length = 100, unique = true)
   private String email;
 
   public Long getId_persona() {

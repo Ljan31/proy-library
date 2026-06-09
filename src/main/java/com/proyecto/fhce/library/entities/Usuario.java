@@ -21,6 +21,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "users")
@@ -30,13 +31,15 @@ public class Usuario {
   @Column(unique = true, nullable = false, name = "id_usuario")
   private Long idUsuario;
 
-  @Column(unique = true)
+  @Size(min = 4, max = 30)
+  @Column(unique = true, nullable = false, length = 30)
   private String username;
 
-  @Column(length = 60)
+  @Size(min = 8, max = 60)
+  @Column(length = 100, nullable = false)
   private String password;
 
-  @ManyToMany(fetch = FetchType.EAGER)
+  @ManyToMany(fetch = FetchType.LAZY)
   @JsonIgnoreProperties({ "users", "handler", "hibernateLazyInitializer" })
   @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"), uniqueConstraints = {
       @UniqueConstraint(columnNames = { "user_id", "role_id" }) })
@@ -45,11 +48,11 @@ public class Usuario {
 
   private Boolean enabled;
 
-  @OneToOne(fetch = FetchType.EAGER)
+  @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "persona_id", nullable = false, unique = true)
   private Persona persona;
 
-  @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL)
+  @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<UsuarioCarrera> carreras;
 
   @PrePersist
