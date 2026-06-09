@@ -144,7 +144,23 @@ public class BibliotecaServiceImpl implements BibliotecaService {
       throw new DuplicateResourceException("Ya existe una biblioteca con nombre: " +
           request.getNombre());
     }
+    // Actualizar carrera
+    if (request.getCarreraId() != null) {
+      Carrera carrera = carreraRepository.findById(request.getCarreraId())
+          .orElseThrow(() -> new ResourceNotFoundException("Carrera no encontrada"));
 
+      // ❗ Validar que no exista otra biblioteca para esta carrera
+      Optional<Biblioteca> existente = bibliotecaRepository
+          .findByCarrera_IdCarreraAndTipoBiblioteca(request.getCarreraId(), TipoBiblioteca.CARRERA);
+
+      if (existente.isPresent() && !existente.get().getId_biblioteca().equals(biblioteca.getId_biblioteca())) {
+        throw new BusinessException("Ya existe una biblioteca de carrera para: " + carrera.getNombre_carrera());
+      }
+
+      biblioteca.setCarrera(carrera);
+    } else {
+      biblioteca.setCarrera(null); // opcional, si puede eliminar la relación
+    }
     String nombreAnterior = biblioteca.getNombre();
 
     biblioteca.setNombre(request.getNombre());
@@ -325,7 +341,11 @@ public class BibliotecaServiceImpl implements BibliotecaService {
       Usuario usuario = usuarioRepository.findById(usuarioId)
           .orElseThrow(() -> new ResourceNotFoundException(
               "Usuario no encontrado con id: " + usuarioId));
-
+      if (!Boolean.TRUE.equals(usuario.isEnabled())) {
+        throw new BusinessException(
+            "El usuario " + usuario.getUsername()
+                + " está inhabilitado y no puede ser asignado como encargado");
+      }
       // Verificar rol válido
       boolean esBibliotecarioEst = usuario.getRoles().stream()
           .anyMatch(role -> role.getName().equals("ROLE_BIBLIOTECARIO") ||
@@ -342,7 +362,12 @@ public class BibliotecaServiceImpl implements BibliotecaService {
       if (yaAsignado) {
         continue; // Si ya está activo, saltar al siguiente
       }
-
+      if (encargadoRepository
+          .existsByUsuario_IdUsuarioAndActivoTrue(usuarioId)) {
+        throw new BusinessException(
+            "El usuario " + usuario.getUsername()
+                + " ya tiene una biblioteca asignada");
+      }
       // Asignar rol automático
       RolEncargado rol = usuario.getRoles().stream()
           .anyMatch(r -> r.getName().equals("ROLE_BIBLIOTECARIO")) ? RolEncargado.PRINCIPAL : RolEncargado.AUXILIAR;
