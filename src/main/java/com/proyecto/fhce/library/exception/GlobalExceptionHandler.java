@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 
+import jakarta.validation.ConstraintViolationException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -194,6 +196,20 @@ public class GlobalExceptionHandler {
 
     return ResponseEntity
         .status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(message));
+  }
+
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(ConstraintViolationException ex) {
+
+    String message = ex.getConstraintViolations()
+        .stream()
+        .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+        .findFirst()
+        .orElse("Error de validación");
+
+    return ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
         .body(ApiResponse.error(message));
   }
 }
