@@ -114,12 +114,14 @@ public class PrestamoController {
     return ResponseEntity.ok(ApiResponse.success(prestamos));
   }
 
-  @GetMapping("/estado-usuario/{ci}")
+  // @GetMapping("/estado-usuario/{ci}")
+  @GetMapping("/estado-usuario/{bibliotecaId}/{ci}")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<ApiResponse<EstadoPrestamoUsuarioDTO>> obtenerEstadoPrestamosPorCi(
+      @PathVariable Long bibliotecaId,
       @PathVariable String ci) {
 
-    EstadoPrestamoUsuarioDTO estado = prestamoService.obtenerEstadoPrestamosPorCi(ci);
+    EstadoPrestamoUsuarioDTO estado = prestamoService.obtenerEstadoPrestamosPorCi(ci, bibliotecaId);
 
     return ResponseEntity.ok(ApiResponse.success(estado));
   }

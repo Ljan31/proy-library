@@ -186,7 +186,7 @@ public class PrestamoServiceImpl implements PrestamoService {
   }
 
   @Transactional(readOnly = true)
-  public EstadoPrestamoUsuarioDTO obtenerEstadoPrestamosPorCi(String ci) {
+  public EstadoPrestamoUsuarioDTO obtenerEstadoPrestamosPorCi(String ci, Long bibliotecaId) {
     log.info("Inicio obtenerEstadoPrestamosPorCi - CI recibido: {}", ci);
     Optional<Usuario> usuarioOpt = usuarioRepository.findByPersona_Ci(ci);
     log.info("Resultado búsqueda usuario: {}", usuarioOpt);
@@ -212,18 +212,24 @@ public class PrestamoServiceImpl implements PrestamoService {
     log.info("Usuario encontrado - ID: {}", usuario.getId_usuario());
     Long usuarioId = usuario.getId_usuario();
 
-    long activos = prestamoRepository.countPrestamosConEstadoByUsuario(
-        usuarioId,
-        EstadoPrestamo.ACTIVO);
+    // long activos = prestamoRepository.countPrestamosConEstadoByUsuario(
+    // usuarioId,
+    // EstadoPrestamo.ACTIVO);
+    Long activos = prestamoRepository
+        .countPrestamosActivosByUsuarioAndBiblioteca(usuarioId, bibliotecaId);
     log.info("Préstamos ACTIVOS: {}", activos);
-    long vencidos = prestamoRepository.countPrestamosConEstadoByUsuario(
-        usuarioId,
-        EstadoPrestamo.VENCIDO);
+    // long vencidos = prestamoRepository.countPrestamosConEstadoByUsuario(
+    // usuarioId,
+    // EstadoPrestamo.VENCIDO);
+    Long vencidos = prestamoRepository
+        .countPrestamosConEstadoByUsuarioAndBiblioteca(usuarioId, bibliotecaId, EstadoPrestamo.VENCIDO);
     log.info("Préstamos VENCIDOS: {}", vencidos);
 
-    long renovados = prestamoRepository.countPrestamosConEstadoByUsuario(
-        usuarioId,
-        EstadoPrestamo.RENOVADO);
+    // long renovados = prestamoRepository.countPrestamosConEstadoByUsuario(
+    // usuarioId,
+    // EstadoPrestamo.RENOVADO);
+    Long renovados = prestamoRepository
+        .countPrestamosConEstadoByUsuarioAndBiblioteca(usuarioId, bibliotecaId, EstadoPrestamo.RENOVADO);
     log.info("Préstamos RENOVADOS: {}", renovados);
 
     boolean tienePendientes = activos > 0 ||

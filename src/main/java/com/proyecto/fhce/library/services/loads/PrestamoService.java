@@ -30,7 +30,7 @@ public interface PrestamoService {
 
   public List<PrestamoResponse> filtrar(FiltroPrestamoRequest filtro);
 
-  public EstadoPrestamoUsuarioDTO obtenerEstadoPrestamosPorCi(String ci);
+  public EstadoPrestamoUsuarioDTO obtenerEstadoPrestamosPorCi(String ci, Long bibliotecaId);
 
   public PrestamoResponse realizarPrestamo(PrestamoRequest request, Long bibliotecarioId);
 
