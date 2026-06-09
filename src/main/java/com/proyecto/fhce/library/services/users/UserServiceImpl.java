@@ -34,11 +34,13 @@ import com.proyecto.fhce.library.entities.Role;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.entities.UsuarioCarrera;
 import com.proyecto.fhce.library.exception.BadRequestException;
+import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaEncargadoRepository;
 import com.proyecto.fhce.library.repositories.CarreraRepository;
 import com.proyecto.fhce.library.repositories.PersonaRepository;
+import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.RoleRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 
@@ -66,6 +68,8 @@ public class UserServiceImpl implements UserService {
 
   @Autowired
   private PasswordEncoder passwordEncoder;
+  @Autowired
+  private PrestamoRepository prestamoRepository;
 
   public UsuarioResponse create(RegisterRequest request) {
     if (usuarioRepository.existsByUsername(request.getUsername())) {
@@ -272,6 +276,23 @@ public class UserServiceImpl implements UserService {
     // usuario.getUsername());
   }
 
+  public void delete(Long id) {
+
+    Usuario usuario = usuarioRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado: " + id));
+    if (prestamoRepository.existsByUsuario_IdUsuario(id)) {
+      throw new BusinessException(
+          "No se puede eliminar el usuario porque tiene préstamos registrados");
+    }
+    if (bibliotecaEncargadoRepository.existsByUsuario_IdUsuario(id)) {
+      throw new BusinessException(
+          "No se puede eliminar el usuario porque tiene historial como encargado de biblioteca");
+    }
+    usuario.getRoles().clear();
+
+    usuarioRepository.delete(usuario);
+  }
+
   @Transactional(readOnly = true)
   public UsuarioResponse findById(Long id) {
     Usuario usuario = usuarioRepository.findById(id)
@@ -336,7 +357,8 @@ public class UserServiceImpl implements UserService {
   @Override
   @Transactional(readOnly = true)
   public Optional<Usuario> findByUsername(String username) {
-    return usuarioRepository.findByUsernameWithPersona(username);
+    return usuarioRepository.findByUsernameForLogin(username);
+    // return usuarioRepository.findByUsernameWithPersona(username);
   }
 
   @Transactional(readOnly = true)

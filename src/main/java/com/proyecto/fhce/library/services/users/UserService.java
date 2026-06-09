@@ -43,7 +43,7 @@ public interface UserService {
 
   // Optional<Usuario> update(Usuario user, Long id);
 
-  // void delete(Long id);
+  void delete(Long id);
 
   // boolean existsByUsername(String username);
 
