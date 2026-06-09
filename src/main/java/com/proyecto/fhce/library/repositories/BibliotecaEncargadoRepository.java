@@ -59,4 +59,6 @@ public interface BibliotecaEncargadoRepository extends JpaRepository<BibliotecaE
             @Param("fechaFin") LocalDateTime fechaFin);
 
     boolean existsByUsuario_IdUsuarioAndActivoTrue(Long usuarioId);
+
+    boolean existsByUsuario_IdUsuario(Long usuarioId);
 }
