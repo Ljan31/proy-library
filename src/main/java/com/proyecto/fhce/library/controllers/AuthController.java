@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -112,6 +113,9 @@ public class AuthController {
       // usuarioService.incrementFailedAttempts(request.getUsername());
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body(ApiResponse.error("Credenciales inválidas"));
+    } catch (DisabledException e) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN)
+          .body(ApiResponse.error("El usuario está deshabilitado"));
     }
   }
 
