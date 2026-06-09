@@ -149,8 +149,8 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     CertificadoNoDeuda saved = certificadoRepository.save(certificado);
 
     // Generar PDF (implementación simplificada)
-    // String pdfPath = generarPDF(saved);
-    // saved.setPdf_generado(pdfPath);
+    String pdfPath = generarPDF(saved);
+    saved.setPdf_generado(pdfPath);
     certificadoRepository.save(saved);
 
     // auditoriaService.registrar("GENERATE_CERTIFICATE", "no_debt_certificates",
