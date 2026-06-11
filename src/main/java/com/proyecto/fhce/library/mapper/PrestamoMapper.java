@@ -33,9 +33,10 @@ public class PrestamoMapper {
     response.setIdConfigUsado(prestamo.getIdConfigUsado());
 
     // Flag de conveniencia: ¿está vencido en este momento?
-    boolean vencido = (prestamo.getEstadoPrestamo() == EstadoPrestamo.ACTIVO
-        || prestamo.getEstadoPrestamo() == EstadoPrestamo.RENOVADO)
-        && LocalDate.now().isAfter(prestamo.getFechaDevolucionEstimada());
+    boolean vencido = prestamo.getEstadoPrestamo() == EstadoPrestamo.VENCIDO
+        || ((prestamo.getEstadoPrestamo() == EstadoPrestamo.ACTIVO
+            || prestamo.getEstadoPrestamo() == EstadoPrestamo.RENOVADO)
+            && LocalDate.now().isAfter(prestamo.getFechaDevolucionEstimada()));
     response.setVencido(vencido);
 
     mapEjemplar(prestamo, response);
