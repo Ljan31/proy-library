@@ -196,4 +196,29 @@ public interface EjemplarRepository extends JpaRepository<Ejemplar, Long> {
   List<EstadoEjemplarBibliotecaDTO> obtenerEstadoEjemplaresPorBiblioteca(
       @Param("bibliotecaId") Long bibliotecaId);
 
+  // Ejemplares que nunca aparecen en la tabla loans
+  @Query("""
+      SELECT e FROM Ejemplar e
+      JOIN FETCH e.edicion ed
+      JOIN FETCH ed.libro l
+      JOIN FETCH e.biblioteca b
+      WHERE NOT EXISTS (
+          SELECT 1 FROM Prestamo p WHERE p.ejemplar = e
+      )
+      AND (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
+      ORDER BY b.nombre, l.titulo
+      """)
+  List<Ejemplar> findEjemplaresNuncaPrestados(
+      @Param("bibliotecaId") Long bibliotecaId);
+
+  @Query("""
+      SELECT COUNT(e) FROM Ejemplar e
+      WHERE NOT EXISTS (
+          SELECT 1 FROM Prestamo p WHERE p.ejemplar = e
+      )
+      AND (:bibliotecaId IS NULL OR e.biblioteca.idBiblioteca = :bibliotecaId)
+      """)
+  Long countEjemplaresNuncaPrestados(
+      @Param("bibliotecaId") Long bibliotecaId);
+
 }
