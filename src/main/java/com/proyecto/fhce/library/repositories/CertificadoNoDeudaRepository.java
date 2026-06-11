@@ -56,4 +56,25 @@ public interface CertificadoNoDeudaRepository extends JpaRepository<CertificadoN
       Long bibliotecaId,
       String ci);
 
+  @Query("""
+      SELECT c FROM CertificadoNoDeuda c
+      JOIN FETCH c.usuario u
+      JOIN FETCH u.persona
+      JOIN FETCH c.biblioteca b
+      LEFT JOIN FETCH c.bibliotecario bib
+      LEFT JOIN FETCH bib.persona
+      WHERE
+        (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
+        AND (:bibliotecarioId IS NULL OR bib.idUsuario = :bibliotecarioId)
+        AND (:estado IS NULL OR c.estadoCertificado = :estado)
+        AND (:fechaInicio IS NULL OR c.fechaEmision >= :fechaInicio)
+        AND (:fechaFin IS NULL OR c.fechaEmision <= :fechaFin)
+      ORDER BY c.fechaEmision DESC
+      """)
+  List<CertificadoNoDeuda> obtenerReporteCertificados(
+      @Param("bibliotecaId") Long bibliotecaId,
+      @Param("bibliotecarioId") Long bibliotecarioId,
+      @Param("estado") EstadoCertificado estado,
+      @Param("fechaInicio") LocalDateTime fechaInicio,
+      @Param("fechaFin") LocalDateTime fechaFin);
 }
