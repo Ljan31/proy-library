@@ -317,4 +317,28 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
       """)
   List<LibroMasPrestadoDTO> obtenerLibrosMenosPrestados(
       @Param("bibliotecaId") Long bibliotecaId);
+
+  // Préstamos devueltos con deterioro (condicionDevolucion > condicionEntrega en
+  // ordinal)
+  // Se filtra en Java después del fetch porque JPA no compara enums por ordinal
+  // en JPQL
+  @Query("""
+      SELECT p FROM Prestamo p
+      JOIN FETCH p.usuario u
+      JOIN FETCH u.persona
+      JOIN FETCH p.biblioteca b
+      JOIN FETCH p.ejemplar e
+      JOIN FETCH e.edicion ed
+      JOIN FETCH ed.libro l
+      WHERE p.estadoPrestamo = 'DEVUELTO'
+      AND p.condicionDevolucion IS NOT NULL
+      AND (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
+      AND (:fechaInicio IS NULL OR p.fechaDevolucionReal >= :fechaInicio)
+      AND (:fechaFin IS NULL OR p.fechaDevolucionReal <= :fechaFin)
+      ORDER BY p.fechaDevolucionReal DESC
+      """)
+  List<Prestamo> obtenerDevolucionesConCondicion(
+      @Param("bibliotecaId") Long bibliotecaId,
+      @Param("fechaInicio") LocalDateTime fechaInicio,
+      @Param("fechaFin") LocalDateTime fechaFin);
 }
