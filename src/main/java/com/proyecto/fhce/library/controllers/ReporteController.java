@@ -30,89 +30,89 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Reportes")
 public class ReporteController {
 
-    @Autowired
-    private ReporteService reporteService;
+  @Autowired
+  private ReporteService reporteService;
 
-    @Autowired
-    private ReportePrestamoService reportePrestamoService;
+  @Autowired
+  private ReportePrestamoService reportePrestamoService;
 
-    @GetMapping("/dashboard")
-    @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN', 'ESTUDIANTE')")
-    public ResponseEntity<ApiResponse<DashboardDTO>> dashboard(
-            @RequestParam(required = false) Long bibliotecaId) {
+  @GetMapping("/dashboard")
+  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN', 'ESTUDIANTE')")
+  public ResponseEntity<ApiResponse<DashboardDTO>> dashboard(
+      @RequestParam(required = false) Long bibliotecaId) {
 
-        DashboardDTO dto = reporteService.obtenerDashboard(bibliotecaId);
+    DashboardDTO dto = reporteService.obtenerDashboard(bibliotecaId);
 
-        return ResponseEntity.ok(
-                ApiResponse.success(dto));
-    }
+    return ResponseEntity.ok(
+        ApiResponse.success(dto));
+  }
 
-    @Operation(summary = "Reporte de inventario")
-    @GetMapping("/inventario")
-    @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
-    public ResponseEntity<ApiResponse<InventarioReporteDTO>> generarInventario(
+  @Operation(summary = "Reporte de inventario")
+  @GetMapping("/inventario")
+  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
+  public ResponseEntity<ApiResponse<InventarioReporteDTO>> generarInventario(
 
-            @RequestParam(required = false) Long bibliotecaId,
+      @RequestParam(required = false) Long bibliotecaId,
 
-            @RequestParam(required = false) Long categoriaId,
+      @RequestParam(required = false) Long categoriaId,
 
-            @RequestParam(required = false) EstadoEjemplar estado,
+      @RequestParam(required = false) EstadoEjemplar estado,
 
-            @RequestParam(required = false) String clasificacionDecimal) {
+      @RequestParam(required = false) String clasificacionDecimal) {
 
-        InventarioReporteFiltroDTO filtro = new InventarioReporteFiltroDTO();
+    InventarioReporteFiltroDTO filtro = new InventarioReporteFiltroDTO();
 
-        filtro.setBibliotecaId(bibliotecaId);
+    filtro.setBibliotecaId(bibliotecaId);
 
-        filtro.setCategoriaId(categoriaId);
+    filtro.setCategoriaId(categoriaId);
 
-        filtro.setEstado(estado);
+    filtro.setEstado(estado);
 
-        filtro.setClasificacionDecimal(clasificacionDecimal);
+    filtro.setClasificacionDecimal(clasificacionDecimal);
 
-        InventarioReporteDTO reporte = reporteService.generarInventario(filtro);
+    InventarioReporteDTO reporte = reporteService.generarInventario(filtro);
 
-        return ResponseEntity.ok(ApiResponse.success(reporte));
-    }
+    return ResponseEntity.ok(ApiResponse.success(reporte));
+  }
 
-    @PostMapping("/prestamos")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
-    public ResponseEntity<ApiResponse<PrestamoReporteResponseDTO>> reportePrestamos(
-            @RequestBody PrestamoFiltroDTO filtro) {
+  @PostMapping("/prestamos")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  public ResponseEntity<ApiResponse<PrestamoReporteResponseDTO>> reportePrestamos(
+      @RequestBody PrestamoFiltroDTO filtro) {
 
-        PrestamoReporteResponseDTO reporte = reportePrestamoService.generarReportePrestamos(filtro);
+    PrestamoReporteResponseDTO reporte = reportePrestamoService.generarReportePrestamos(filtro);
 
-        return ResponseEntity.ok(
-                ApiResponse.success(reporte));
-    }
+    return ResponseEntity.ok(
+        ApiResponse.success(reporte));
+  }
 
-    @Operation(summary = "Reporte de estado de ejemplares por biblioteca")
-    @GetMapping("/estado-ejemplares")
-    @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
-    public ResponseEntity<ApiResponse<EstadoEjemplarBibliotecaResponseDTO>> estadoEjemplares(
+  @Operation(summary = "Reporte de estado de ejemplares por biblioteca")
+  @GetMapping("/estado-ejemplares")
+  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
+  public ResponseEntity<ApiResponse<EstadoEjemplarBibliotecaResponseDTO>> estadoEjemplares(
 
-            @RequestParam(required = false) Long bibliotecaId) {
+      @RequestParam(required = false) Long bibliotecaId) {
 
-        EstadoEjemplarBibliotecaResponseDTO reporte = reporteService
-                .obtenerEstadoEjemplaresPorBiblioteca(
-                        bibliotecaId);
+    EstadoEjemplarBibliotecaResponseDTO reporte = reporteService
+        .obtenerEstadoEjemplaresPorBiblioteca(
+            bibliotecaId);
 
-        return ResponseEntity.ok(
-                ApiResponse.success(reporte));
-    }
+    return ResponseEntity.ok(
+        ApiResponse.success(reporte));
+  }
 
-    @Operation(summary = "Reporte de libros más prestados")
-    @GetMapping("/libros-mas-prestados")
-    @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
-    public ResponseEntity<ApiResponse<LibroMasPrestadoResponseDTO>> obtenerLibrosMasPrestados(
+  @Operation(summary = "Reporte de libros más prestados")
+  @GetMapping("/libros-mas-prestados")
+  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
+  public ResponseEntity<ApiResponse<LibroMasPrestadoResponseDTO>> obtenerLibrosMasPrestados(
 
-            @RequestParam(required = false) Long bibliotecaId) {
+      @RequestParam(required = false) Long bibliotecaId) {
 
-        LibroMasPrestadoResponseDTO reporte = reportePrestamoService
-                .obtenerLibrosMasPrestados(
-                        bibliotecaId);
+    LibroMasPrestadoResponseDTO reporte = reportePrestamoService
+        .obtenerLibrosMasPrestados(
+            bibliotecaId);
 
-        return ResponseEntity.ok(
-                ApiResponse.success(reporte));
-    }
+    return ResponseEntity.ok(
+        ApiResponse.success(reporte));
+  }
 }
