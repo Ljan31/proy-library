@@ -31,6 +31,7 @@ public class HistorialPrestamoDTO {
   private String condicionEntrega;
 
   private String condicionDevolucion;
+  private boolean entregadoConDeterioro;
 
   private Integer diasRetraso;
 
@@ -152,6 +153,14 @@ public class HistorialPrestamoDTO {
 
   public void setDiasRetraso(Integer diasRetraso) {
     this.diasRetraso = diasRetraso;
+  }
+
+  public boolean isEntregadoConDeterioro() {
+    return entregadoConDeterioro;
+  }
+
+  public void setEntregadoConDeterioro(boolean entregadoConDeterioro) {
+    this.entregadoConDeterioro = entregadoConDeterioro;
   }
 
 }
