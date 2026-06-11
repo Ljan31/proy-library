@@ -9,6 +9,8 @@ import com.proyecto.fhce.library.entities.Sancion;
 import com.proyecto.fhce.library.enums.EstadoSancion;
 import com.proyecto.fhce.library.enums.TipoSancion;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -152,4 +154,74 @@ public interface SancionRepository extends JpaRepository<Sancion, Long> {
   long contarActivasPorBiblioteca(@Param("bibliotecaId") Long bibliotecaId);
 
   List<Sancion> findByTipoSancionAndEstado(TipoSancion tipoSancion, EstadoSancion estado);
+
+  @Query("""
+      SELECT s FROM Sancion s
+      JOIN FETCH s.usuario u
+      JOIN FETCH u.persona
+      JOIN FETCH s.prestamo p
+      JOIN FETCH p.biblioteca b
+      JOIN FETCH p.ejemplar e
+      JOIN FETCH e.edicion ed
+      JOIN FETCH ed.libro l
+      WHERE
+        (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
+        AND (:usuarioId IS NULL OR u.idUsuario = :usuarioId)
+        AND (:tipo IS NULL OR s.tipoSancion = :tipo)
+        AND (:estado IS NULL OR s.estado = :estado)
+        AND (:fechaInicio IS NULL OR s.fechaInicioSuspension >= :fechaInicio)
+        AND (:fechaFin IS NULL OR s.fechaInicioSuspension <= :fechaFin)
+      ORDER BY s.fechaInicioSuspension DESC
+      """)
+  List<Sancion> obtenerReporteSanciones(
+      @Param("bibliotecaId") Long bibliotecaId,
+      @Param("usuarioId") Long usuarioId,
+      @Param("tipo") TipoSancion tipo,
+      @Param("estado") EstadoSancion estado,
+      @Param("fechaInicio") LocalDate fechaInicio,
+      @Param("fechaFin") LocalDate fechaFin);
+
+  // @Query("""
+  // SELECT COUNT(s) FROM Sancion s
+  // JOIN s.prestamo p
+  // WHERE s.tipoSancion = :tipo
+  // AND (:bibliotecaId IS NULL OR p.biblioteca.idBiblioteca = :bibliotecaId)
+  // AND (:estado IS NULL OR s.estado = :estado)
+  // """)
+  // Long countByTipoAndEstadoAndBiblioteca(
+  // @Param("tipo") TipoSancion tipo,
+  // @Param("estado") EstadoSancion estado,
+  // @Param("bibliotecaId") Long bibliotecaId);
+
+  // @Query("""
+  // SELECT COALESCE(SUM(s.montoMulta), 0) FROM Sancion s
+  // JOIN s.prestamo p
+  // WHERE (:bibliotecaId IS NULL OR p.biblioteca.idBiblioteca = :bibliotecaId)
+  // AND (:estado IS NULL OR s.estado = :estado)
+  // """)
+  // BigDecimal sumMontoByEstadoAndBiblioteca(
+  // @Param("estado") EstadoSancion estado,
+  // @Param("bibliotecaId") Long bibliotecaId);
+
+  @Query("""
+          SELECT COUNT(s)
+          FROM Sancion s
+          WHERE s.tipoSancion = :tipo
+            AND (:bibliotecaId IS NULL OR s.biblioteca.idBiblioteca = :bibliotecaId)
+            AND (:estado IS NULL OR s.estado = :estado)
+      """)
+  Long countByTipoAndEstadoAndBiblioteca(
+      @Param("tipo") TipoSancion tipo,
+      @Param("estado") EstadoSancion estado,
+      @Param("bibliotecaId") Long bibliotecaId);
+
+  @Query("""
+          SELECT COALESCE(SUM(s.montoMulta), 0)
+          FROM Sancion s
+          WHERE (:bibliotecaId IS NULL OR s.biblioteca.idBiblioteca = :bibliotecaId)
+            AND (:estado IS NULL OR s.estado = :estado)
+      """)
+  BigDecimal sumMontoByEstadoAndBiblioteca(
+      @Param("estado") EstadoSancion estado,
+      @Param("bibliotecaId") Long bibliotecaId);
 }
