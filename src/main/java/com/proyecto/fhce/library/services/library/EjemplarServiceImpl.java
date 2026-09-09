@@ -478,7 +478,6 @@ public class EjemplarServiceImpl implements EjemplarService {
     if (ejemplar.getEdicion() != null) {
       EdicionSimpleResponse ed = new EdicionSimpleResponse();
       ed.setIdEdicion(ejemplar.getEdicion().getIdEdicion());
-      ed.setIsbn(ejemplar.getEdicion().getIsbn());
       ed.setEditorial(ejemplar.getEdicion().getEditorial());
       ed.setAnoPublicacion(ejemplar.getEdicion().getAnoPublicacion());
       ed.setEdicion(ejemplar.getEdicion().getEdicion());

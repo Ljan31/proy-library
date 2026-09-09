@@ -6,10 +6,6 @@ import jakarta.validation.constraints.Size;
 
 public class EdicionRequest {
 
-  // @NotBlank(message = "El ISBN es obligatorio")
-  // @Size(max = 20)
-  private String isbn;
-
   // @NotBlank(message = "La editorial es obligatoria")
   // @Size(max = 200)
   private String editorial;
@@ -26,14 +22,6 @@ public class EdicionRequest {
 
   @NotNull(message = "El libro es obligatorio")
   private Long libroId;
-
-  public String getIsbn() {
-    return isbn;
-  }
-
-  public void setIsbn(String isbn) {
-    this.isbn = isbn;
-  }
 
   public String getEditorial() {
     return editorial;

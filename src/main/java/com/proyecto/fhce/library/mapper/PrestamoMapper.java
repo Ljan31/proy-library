@@ -61,7 +61,6 @@ public class PrestamoMapper {
     if (prestamo.getEjemplar().getEdicion() != null) {
       EdicionSimpleResponse ed = new EdicionSimpleResponse();
       ed.setIdEdicion(prestamo.getEjemplar().getEdicion().getIdEdicion());
-      ed.setIsbn(prestamo.getEjemplar().getEdicion().getIsbn());
       ed.setEditorial(prestamo.getEjemplar().getEdicion().getEditorial());
       ed.setAnoPublicacion(prestamo.getEjemplar().getEdicion().getAnoPublicacion());
       ed.setEdicion(prestamo.getEjemplar().getEdicion().getEdicion());

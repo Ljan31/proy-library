@@ -9,8 +9,6 @@ public class InventarioItemDTO {
 
   private String tituloLibro;
 
-  private String isbn;
-
   private String biblioteca;
 
   private EstadoEjemplar estado;
@@ -44,14 +42,6 @@ public class InventarioItemDTO {
 
   public void setTituloLibro(String tituloLibro) {
     this.tituloLibro = tituloLibro;
-  }
-
-  public String getIsbn() {
-    return isbn;
-  }
-
-  public void setIsbn(String isbn) {
-    this.isbn = isbn;
   }
 
   public String getBiblioteca() {

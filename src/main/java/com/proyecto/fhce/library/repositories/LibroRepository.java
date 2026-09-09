@@ -54,7 +54,6 @@ public interface LibroRepository extends JpaRepository<Libro, Long>, JpaSpecific
                         "LEFT JOIN l.autores a " +
                         "WHERE (" +
                         "LOWER(l.titulo) LIKE LOWER(CONCAT('%', :q, '%')) " +
-                        "OR LOWER(ed.isbn) LIKE LOWER(CONCAT('%', :q, '%')) " +
                         "OR LOWER(a.nombre) LIKE LOWER(CONCAT('%', :q, '%'))" +
                         "OR LOWER(ed.editorial) LIKE LOWER(CONCAT('%', :q, '%'))" +
                         ") " +

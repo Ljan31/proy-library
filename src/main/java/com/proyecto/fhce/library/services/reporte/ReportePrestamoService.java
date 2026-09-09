@@ -113,11 +113,6 @@ public class ReportePrestamoService {
             .getLibro()
             .getTitulo());
 
-    dto.setIsbn(
-        p.getEjemplar()
-            .getEdicion()
-            .getIsbn());
-
     dto.setBiblioteca(
         p.getBiblioteca()
             .getNombre());
@@ -351,7 +346,6 @@ public class ReportePrestamoService {
     dto.setIdEjemplar(p.getEjemplar().getIdEjemplar());
     dto.setCodigoEjemplar(p.getEjemplar().getCodigoEjemplar());
     dto.setTituloLibro(p.getEjemplar().getEdicion().getLibro().getTitulo());
-    dto.setIsbn(p.getEjemplar().getEdicion().getIsbn());
     dto.setEditorial(p.getEjemplar().getEdicion().getEditorial());
 
     // Biblioteca
@@ -368,7 +362,6 @@ public class ReportePrestamoService {
         + p.getUsuario().getPersona().getApellido_pat());
     dto.setCi(p.getUsuario().getPersona().getCi());
     dto.setLibro(p.getEjemplar().getEdicion().getLibro().getTitulo());
-    dto.setIsbn(p.getEjemplar().getEdicion().getIsbn());
     dto.setBiblioteca(p.getBiblioteca().getNombre());
     dto.setTipoPrestamo(p.getTipoPrestamo().name());
     dto.setEstadoPrestamo(p.getEstadoPrestamo().name());

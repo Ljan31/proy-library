@@ -28,7 +28,6 @@ public class PrestamoActivoDTO {
   private Long idEjemplar;
   private String codigoEjemplar;
   private String tituloLibro;
-  private String isbn;
   private String editorial;
 
   // Biblioteca
@@ -148,14 +147,6 @@ public class PrestamoActivoDTO {
 
   public void setTituloLibro(String tituloLibro) {
     this.tituloLibro = tituloLibro;
-  }
-
-  public String getIsbn() {
-    return isbn;
-  }
-
-  public void setIsbn(String isbn) {
-    this.isbn = isbn;
   }
 
   public String getEditorial() {

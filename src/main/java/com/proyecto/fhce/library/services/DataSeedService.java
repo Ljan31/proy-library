@@ -498,13 +498,8 @@ public class DataSeedService {
 
   private Edicion crearEdicion(Libro libro, String isbn, String editorial, int anio, String imagen) {
 
-    if (edicionRepository.existsByIsbn(isbn)) {
-      return edicionRepository.findByIsbn(isbn).orElseThrow();
-    }
-
     Edicion ed = new Edicion();
     ed.setLibro(libro);
-    ed.setIsbn(isbn);
     ed.setEditorial(editorial);
     ed.setAnoPublicacion(anio);
     ed.setEdicion("1ra");

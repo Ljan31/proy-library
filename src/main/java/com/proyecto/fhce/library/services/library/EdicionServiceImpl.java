@@ -18,7 +18,6 @@ import com.proyecto.fhce.library.entities.Libro;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
 import com.proyecto.fhce.library.enums.TipoArchivo;
 import com.proyecto.fhce.library.exception.BusinessException;
-import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.EdicionRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
@@ -50,7 +49,6 @@ public class EdicionServiceImpl implements EdicionService {
         .orElseThrow(() -> new ResourceNotFoundException("Libro no encontrado con id: " + request.getLibroId()));
 
     Edicion edicion = new Edicion();
-    edicion.setIsbn(request.getIsbn());
     edicion.setEditorial(request.getEditorial());
     edicion.setAnoPublicacion(request.getAnoPublicacion());
     edicion.setEdicion(request.getEdicion());
@@ -72,12 +70,6 @@ public class EdicionServiceImpl implements EdicionService {
     Edicion edicion = edicionRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Edición no encontrada con id: " + id));
 
-    if (!edicion.getIsbn().equals(request.getIsbn()) &&
-        edicionRepository.existsByIsbn(request.getIsbn())) {
-      throw new DuplicateResourceException("Ya existe una edición con ISBN: " + request.getIsbn());
-    }
-
-    edicion.setIsbn(request.getIsbn());
     edicion.setEditorial(request.getEditorial());
     edicion.setAnoPublicacion(request.getAnoPublicacion());
     edicion.setEdicion(request.getEdicion());
@@ -151,7 +143,6 @@ public class EdicionServiceImpl implements EdicionService {
   private EdicionResponse mapToResponse(Edicion edicion) {
     EdicionResponse response = new EdicionResponse();
     response.setIdEdicion(edicion.getIdEdicion());
-    response.setIsbn(edicion.getIsbn());
     response.setEditorial(edicion.getEditorial());
     response.setAnoPublicacion(edicion.getAnoPublicacion());
     response.setEdicion(edicion.getEdicion());

@@ -139,9 +139,6 @@ public class LibroLoteService {
         Edicion edicion = new Edicion();
         edicion.setLibro(libro);
         edicion.setAnoPublicacion(item.getAnoPublicacion());
-        edicion.setIsbn(item.getIsbn() != null
-            ? item.getIsbn()
-            : item.getAnoPublicacion() + "-1");
         edicion.setEdicion(item.getEdicion());
         edicion.setEditorial(item.getEditorial());
         // ── Portada ──────────────────────────────────────────────────

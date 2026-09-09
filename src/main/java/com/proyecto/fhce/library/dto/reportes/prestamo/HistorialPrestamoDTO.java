@@ -12,8 +12,6 @@ public class HistorialPrestamoDTO {
 
   private String libro;
 
-  private String isbn;
-
   private String biblioteca;
 
   private String tipoPrestamo;
@@ -65,14 +63,6 @@ public class HistorialPrestamoDTO {
 
   public void setLibro(String libro) {
     this.libro = libro;
-  }
-
-  public String getIsbn() {
-    return isbn;
-  }
-
-  public void setIsbn(String isbn) {
-    this.isbn = isbn;
   }
 
   public String getBiblioteca() {

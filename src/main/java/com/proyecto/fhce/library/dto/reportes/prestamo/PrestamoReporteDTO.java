@@ -10,7 +10,6 @@ public class PrestamoReporteDTO {
   private String ci;
 
   private String libro;
-  private String isbn;
   private String biblioteca;
 
   private LocalDateTime fechaPrestamo;
@@ -55,14 +54,6 @@ public class PrestamoReporteDTO {
 
   public void setLibro(String libro) {
     this.libro = libro;
-  }
-
-  public String getIsbn() {
-    return isbn;
-  }
-
-  public void setIsbn(String isbn) {
-    this.isbn = isbn;
   }
 
   public String getBiblioteca() {

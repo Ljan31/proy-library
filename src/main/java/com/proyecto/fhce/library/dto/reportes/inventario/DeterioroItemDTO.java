@@ -5,7 +5,6 @@ public class DeterioroItemDTO {
     private Long idEjemplar;
     private String codigoEjemplar;
     private String libro;
-    private String isbn;
     private String biblioteca;
     private String usuario;
     private String ci;
@@ -44,14 +43,6 @@ public class DeterioroItemDTO {
 
     public void setLibro(String libro) {
         this.libro = libro;
-    }
-
-    public String getIsbn() {
-        return isbn;
-    }
-
-    public void setIsbn(String isbn) {
-        this.isbn = isbn;
     }
 
     public String getBiblioteca() {

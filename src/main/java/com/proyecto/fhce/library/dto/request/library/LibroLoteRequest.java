@@ -112,7 +112,6 @@ public class LibroLoteRequest {
      * Si se sube archivo (pdf_N), este campo se ignora.
      */
     private String pdfUrl;
-    private String isbn;
 
     private String editorial;
 
@@ -152,14 +151,6 @@ public class LibroLoteRequest {
 
     public void setEjemplares(List<EjemplarLoteItem> ejemplares) {
       this.ejemplares = ejemplares;
-    }
-
-    public String getIsbn() {
-      return isbn;
-    }
-
-    public void setIsbn(String isbn) {
-      this.isbn = isbn;
     }
 
     public String getEditorial() {

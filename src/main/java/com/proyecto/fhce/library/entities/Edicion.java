@@ -22,9 +22,6 @@ public class Edicion {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long idEdicion;
 
-  @Column(unique = true, length = 20)
-  private String isbn;
-
   @Column(length = 200)
   private String editorial;
 
@@ -53,14 +50,6 @@ public class Edicion {
 
   public void setIdEdicion(Long idEdicion) {
     this.idEdicion = idEdicion;
-  }
-
-  public String getIsbn() {
-    return isbn;
-  }
-
-  public void setIsbn(String isbn) {
-    this.isbn = isbn;
   }
 
   public String getEditorial() {

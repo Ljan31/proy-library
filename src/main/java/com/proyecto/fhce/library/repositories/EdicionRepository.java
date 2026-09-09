@@ -13,10 +13,6 @@ import com.proyecto.fhce.library.entities.Edicion;
 @Repository
 public interface EdicionRepository extends JpaRepository<Edicion, Long> {
 
-  Optional<Edicion> findByIsbn(String isbn);
-
-  boolean existsByIsbn(String isbn);
-
   List<Edicion> findByLibro_IdLibro(Long libroId);
 
   List<Edicion> findByEditorialContainingIgnoreCase(String editorial);

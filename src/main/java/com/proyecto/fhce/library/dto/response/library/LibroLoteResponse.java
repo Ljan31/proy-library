@@ -92,7 +92,6 @@ public class LibroLoteResponse {
   public static class EdicionLoteResult {
     private Long idEdicion;
     private Integer anoPublicacion;
-    private String isbn;
     private String editorial;
     private String edicion;
     private String imagenPortada;
@@ -137,14 +136,6 @@ public class LibroLoteResponse {
 
     public void setEjemplares(List<EjemplarLoteResult> ejemplares) {
       this.ejemplares = ejemplares;
-    }
-
-    public String getIsbn() {
-      return isbn;
-    }
-
-    public void setIsbn(String isbn) {
-      this.isbn = isbn;
     }
 
     public String getEditorial() {

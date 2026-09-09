@@ -100,7 +100,7 @@ public class LibroServiceImpl implements LibroService {
         .collect(Collectors.toList());
   }
 
-  @Transactional(readOnly = true)
+  @Transactional(readOnly = true) // *
   public PageResponse<LibroResponse> busquedaAvanzada(BusquedaLibroRequest request, Pageable pageable) {
     // Aquí implementarías una búsqueda con Specification o Criteria API
     // Por simplicidad, usamos búsqueda básica
@@ -144,13 +144,6 @@ public class LibroServiceImpl implements LibroService {
           request.getCategoriaId()));
     }
 
-    // ✅ isbn y editorial ahora viven en Edicion — se buscan por join
-    if (request.getIsbn() != null) {
-      spec = spec.and((root, query, cb) -> {
-        query.distinct(true);
-        return cb.equal(root.join("ediciones").get("isbn"), request.getIsbn());
-      });
-    }
     if (request.getAnoPublicacion() != null) {
       spec = spec.and((root, query, cb) -> {
         query.distinct(true);
@@ -214,7 +207,6 @@ public class LibroServiceImpl implements LibroService {
     response.setEdiciones(ediciones.stream().map(ed -> {
       EdicionResponse er = new EdicionResponse();
       er.setIdEdicion(ed.getIdEdicion());
-      er.setIsbn(ed.getIsbn());
       er.setEditorial(ed.getEditorial());
       er.setAnoPublicacion(ed.getAnoPublicacion());
       er.setEdicion(ed.getEdicion());

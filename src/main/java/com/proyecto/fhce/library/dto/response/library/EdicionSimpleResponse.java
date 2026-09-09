@@ -2,7 +2,6 @@ package com.proyecto.fhce.library.dto.response.library;
 
 public class EdicionSimpleResponse {
   private Long idEdicion;
-  private String isbn;
   private String editorial;
   private Integer anoPublicacion;
   private String edicion;
@@ -18,14 +17,6 @@ public class EdicionSimpleResponse {
 
   public void setIdEdicion(Long idEdicion) {
     this.idEdicion = idEdicion;
-  }
-
-  public String getIsbn() {
-    return isbn;
-  }
-
-  public void setIsbn(String isbn) {
-    this.isbn = isbn;
   }
 
   public String getEditorial() {

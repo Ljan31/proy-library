@@ -5,18 +5,14 @@ public class LibroMasPrestadoDTO {
 
   private String titulo;
 
-  private String isbn;
-
   private Long cantidadPrestamos;
 
   public LibroMasPrestadoDTO(
       Long idLibro,
       String titulo,
-      String isbn,
       Long totalPrestamos) {
     this.libroId = idLibro;
     this.titulo = titulo;
-    this.isbn = isbn;
     this.cantidadPrestamos = totalPrestamos;
   }
 
@@ -34,14 +30,6 @@ public class LibroMasPrestadoDTO {
 
   public void setTitulo(String titulo) {
     this.titulo = titulo;
-  }
-
-  public String getIsbn() {
-    return isbn;
-  }
-
-  public void setIsbn(String isbn) {
-    this.isbn = isbn;
   }
 
   public Long getCantidadPrestamos() {
