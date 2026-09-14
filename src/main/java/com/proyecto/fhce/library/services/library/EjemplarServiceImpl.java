@@ -22,6 +22,7 @@ import com.proyecto.fhce.library.dto.response.library.EjemplarResponse;
 import com.proyecto.fhce.library.dto.response.loads.HistorialEstadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.PrestamoActivoResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
+import com.proyecto.fhce.library.entities.Autor;
 import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.Edicion;
 import com.proyecto.fhce.library.entities.Ejemplar;
@@ -487,6 +488,7 @@ public class EjemplarServiceImpl implements EjemplarService {
       if (ejemplar.getEdicion().getLibro() != null) {
         ed.setIdLibro(ejemplar.getEdicion().getLibro().getIdLibro());
         ed.setTitulo(ejemplar.getEdicion().getLibro().getTitulo());
+        ed.setIdioma(ejemplar.getEdicion().getLibro().getIdioma());
       }
 
       response.setEdicion(ed);
@@ -500,7 +502,16 @@ public class EjemplarServiceImpl implements EjemplarService {
       biblioteca.setTipoBiblioteca(ejemplar.getBiblioteca().getTipoBiblioteca());
       response.setBiblioteca(biblioteca);
     }
-
+    if (ejemplar.getEdicion().getLibro().getAutores() != null
+        && !ejemplar.getEdicion().getLibro().getAutores().isEmpty()) {
+      String autores = ejemplar.getEdicion()
+          .getLibro()
+          .getAutores()
+          .stream()
+          .map(Autor::getNombre)
+          .collect(Collectors.joining(", "));
+      response.setAutores(autores);
+    }
     // Préstamo activo si está prestado
     if (ejemplar.getEstadoEjemplar() == EstadoEjemplar.PRESTADO) {
       Optional<Prestamo> prestamoActivo = prestamoRepository

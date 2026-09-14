@@ -23,6 +23,7 @@ public class EjemplarResponse {
   private BibliotecaSimpleResponse biblioteca;
   private PrestamoActivoResponse prestamoActivo; // si está prestado
   private LibroSimpleResponse libro;
+  private String autores;
 
   public Long getId_ejemplar() {
     return id_ejemplar;
@@ -158,5 +159,13 @@ public class EjemplarResponse {
 
   public void setCodigoTopograficoConcat(String codigoTopograficoConcat) {
     this.codigoTopograficoConcat = codigoTopograficoConcat;
+  }
+
+  public String getAutores() {
+    return autores;
+  }
+
+  public void setAutores(String autores) {
+    this.autores = autores;
   }
 }

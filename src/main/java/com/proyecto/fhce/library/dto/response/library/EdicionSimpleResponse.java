@@ -10,6 +10,7 @@ public class EdicionSimpleResponse {
   // Info mínima del libro padre
   private Long idLibro;
   private String titulo;
+  private String idioma;
 
   public Long getIdEdicion() {
     return idEdicion;
@@ -73,6 +74,14 @@ public class EdicionSimpleResponse {
 
   public void setPdfUrl(String pdfUrl) {
     this.pdfUrl = pdfUrl;
+  }
+
+  public String getIdioma() {
+    return idioma;
+  }
+
+  public void setIdioma(String idioma) {
+    this.idioma = idioma;
   }
 
 }
