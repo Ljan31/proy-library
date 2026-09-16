@@ -24,12 +24,16 @@ import com.proyecto.fhce.library.entities.Edicion;
 import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.Libro;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
+import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.AutorRepository;
 import com.proyecto.fhce.library.repositories.CategoriaLibroRepository;
 import com.proyecto.fhce.library.repositories.EdicionRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
+import com.proyecto.fhce.library.repositories.HistorialEstadoEjemplarRepository;
 import com.proyecto.fhce.library.repositories.LibroRepository;
+import com.proyecto.fhce.library.repositories.PrestamoRepository;
+import com.proyecto.fhce.library.repositories.ReservaRepository;
 
 import jakarta.persistence.criteria.Predicate;
 
@@ -49,6 +53,15 @@ public class LibroServiceImpl implements LibroService {
 
   @Autowired
   private AutorRepository autorRepository;
+
+  @Autowired
+  private PrestamoRepository prestamoRepository;
+
+  @Autowired
+  private HistorialEstadoEjemplarRepository historialEstadoEjemplarRepository;
+
+  @Autowired
+  private ReservaRepository reservaRepository;
 
   @Transactional
   public LibroResponse create(LibroRequest request) {
@@ -180,10 +193,27 @@ public class LibroServiceImpl implements LibroService {
 
   @Transactional
   public void delete(Long id) {
-    Libro categoria = libroRepository.findById(id)
+    Libro libro = libroRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Libro no encontrada con id: " + id));
 
-    libroRepository.delete(categoria);
+    if (prestamoRepository.existsByEjemplarEdicionLibroIdLibro(id)) {
+      throw new BusinessException(
+          "No se puede eliminar el libro porque tiene préstamos asociados.");
+    }
+
+    if (historialEstadoEjemplarRepository
+        .existsByEjemplarEdicionLibroIdLibro(id)) {
+
+      throw new BusinessException(
+          "No se puede eliminar el libro porque tiene historial de estados asociado.");
+    }
+
+    if (reservaRepository.existsByEjemplarEdicionLibroIdLibro(id)) {
+      throw new BusinessException(
+          "No se puede eliminar el libro porque tiene reservas asociadas.");
+    }
+
+    libroRepository.delete(libro);
 
   }
 

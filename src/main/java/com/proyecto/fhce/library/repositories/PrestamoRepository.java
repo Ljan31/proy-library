@@ -18,389 +18,391 @@ import com.proyecto.fhce.library.enums.TipoPrestamo;
 @Repository
 public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
 
-        List<Prestamo> findByUsuario_IdUsuario(Long usuarioId);
+    List<Prestamo> findByUsuario_IdUsuario(Long usuarioId);
 
-        List<Prestamo> findByEjemplar_IdEjemplar(Long ejemplarId);
+    List<Prestamo> findByEjemplar_IdEjemplar(Long ejemplarId);
 
-        boolean existsByEjemplar_IdEjemplar(Long ejemplarId);
+    boolean existsByEjemplar_IdEjemplar(Long ejemplarId);
 
-        boolean existsByUsuario_IdUsuario(Long usuarioId);
+    boolean existsByUsuario_IdUsuario(Long usuarioId);
 
-        List<Prestamo> findByBiblioteca_IdBiblioteca(Long bibliotecaId);
+    boolean existsByEjemplarEdicionLibroIdLibro(Long libroId);
 
-        @Query("""
-                        SELECT p FROM Prestamo p
-                        WHERE p.biblioteca.idBiblioteca = :bibliotecaId
-                        AND (:estado IS NULL OR p.estadoPrestamo = :estado)
-                                """)
-        List<Prestamo> findByBibliotecaConFiltroEstado(
-                        @Param("bibliotecaId") Long bibliotecaId,
-                        @Param("estado") EstadoPrestamo estado);
+    List<Prestamo> findByBiblioteca_IdBiblioteca(Long bibliotecaId);
 
-        List<Prestamo> findByEstadoPrestamo(EstadoPrestamo estadoPrestamo);
+    @Query("""
+            SELECT p FROM Prestamo p
+            WHERE p.biblioteca.idBiblioteca = :bibliotecaId
+            AND (:estado IS NULL OR p.estadoPrestamo = :estado)
+                    """)
+    List<Prestamo> findByBibliotecaConFiltroEstado(
+            @Param("bibliotecaId") Long bibliotecaId,
+            @Param("estado") EstadoPrestamo estado);
 
-        @Query("SELECT p FROM Prestamo p WHERE p.usuario.idUsuario = :usuarioId " +
-                        "AND p.estadoPrestamo = :estado")
-        List<Prestamo> findByUsuarioAndEstado(
-                        @Param("usuarioId") Long usuarioId,
-                        @Param("estado") EstadoPrestamo estado);
+    List<Prestamo> findByEstadoPrestamo(EstadoPrestamo estadoPrestamo);
 
-        @Query("SELECT p FROM Prestamo p WHERE p.estadoPrestamo = 'ACTIVO' " +
-                        "AND p.fechaDevolucionEstimada < :fecha")
-        List<Prestamo> findPrestamosVencidos(@Param("fecha") LocalDate fecha);
+    @Query("SELECT p FROM Prestamo p WHERE p.usuario.idUsuario = :usuarioId " +
+            "AND p.estadoPrestamo = :estado")
+    List<Prestamo> findByUsuarioAndEstado(
+            @Param("usuarioId") Long usuarioId,
+            @Param("estado") EstadoPrestamo estado);
 
-        @Query("""
-                        SELECT COUNT(p)
-                        FROM Prestamo p
-                        WHERE p.estadoPrestamo = 'ACTIVO'
-                        """)
-        Long countPrestamosActivos();
+    @Query("SELECT p FROM Prestamo p WHERE p.estadoPrestamo = 'ACTIVO' " +
+            "AND p.fechaDevolucionEstimada < :fecha")
+    List<Prestamo> findPrestamosVencidos(@Param("fecha") LocalDate fecha);
 
-        @Query("""
-                        SELECT COUNT(p)
-                        FROM Prestamo p
-                        WHERE p.estadoPrestamo = 'VENCIDO'
-                        """)
-        Long countPrestamosVencidos();
+    @Query("""
+            SELECT COUNT(p)
+            FROM Prestamo p
+            WHERE p.estadoPrestamo = 'ACTIVO'
+            """)
+    Long countPrestamosActivos();
 
-        @Query("SELECT p FROM Prestamo p WHERE p.estadoPrestamo = 'ACTIVO' " +
-                        "AND p.fechaDevolucionEstimada BETWEEN :fechaInicio AND :fechaFin")
-        List<Prestamo> findPrestamosPorVencer(
-                        @Param("fechaInicio") LocalDate fechaInicio,
-                        @Param("fechaFin") LocalDate fechaFin);
+    @Query("""
+            SELECT COUNT(p)
+            FROM Prestamo p
+            WHERE p.estadoPrestamo = 'VENCIDO'
+            """)
+    Long countPrestamosVencidos();
 
-        @Query("SELECT COUNT(p) FROM Prestamo p WHERE p.usuario.idUsuario = :usuarioId " +
-                        "AND p.estadoPrestamo = 'ACTIVO'")
-        Long countPrestamosActivosByUsuario(@Param("usuarioId") Long usuarioId);
+    @Query("SELECT p FROM Prestamo p WHERE p.estadoPrestamo = 'ACTIVO' " +
+            "AND p.fechaDevolucionEstimada BETWEEN :fechaInicio AND :fechaFin")
+    List<Prestamo> findPrestamosPorVencer(
+            @Param("fechaInicio") LocalDate fechaInicio,
+            @Param("fechaFin") LocalDate fechaFin);
 
-        @Query("SELECT p FROM Prestamo p LEFT JOIN FETCH p.ejemplar e " +
-                        "LEFT JOIN FETCH e.edicion ed " +
-                        "LEFT JOIN FETCH ed.libro " +
-                        "WHERE p.usuario.idUsuario = :usuarioId " +
-                        "AND p.estadoPrestamo = 'ACTIVO'")
-        List<Prestamo> findPrestamosActivosWithDetalles(@Param("usuarioId") Long usuarioId);
+    @Query("SELECT COUNT(p) FROM Prestamo p WHERE p.usuario.idUsuario = :usuarioId " +
+            "AND p.estadoPrestamo = 'ACTIVO'")
+    Long countPrestamosActivosByUsuario(@Param("usuarioId") Long usuarioId);
 
-        @Query("SELECT p FROM Prestamo p WHERE p.biblioteca.idBiblioteca = :bibliotecaId " +
-                        "AND p.fechaPrestamo BETWEEN :fechaInicio AND :fechaFin")
-        List<Prestamo> findByBibliotecaAndFechaBetween(
-                        @Param("bibliotecaId") Long bibliotecaId,
-                        @Param("fechaInicio") LocalDateTime fechaInicio,
-                        @Param("fechaFin") LocalDateTime fechaFin);
+    @Query("SELECT p FROM Prestamo p LEFT JOIN FETCH p.ejemplar e " +
+            "LEFT JOIN FETCH e.edicion ed " +
+            "LEFT JOIN FETCH ed.libro " +
+            "WHERE p.usuario.idUsuario = :usuarioId " +
+            "AND p.estadoPrestamo = 'ACTIVO'")
+    List<Prestamo> findPrestamosActivosWithDetalles(@Param("usuarioId") Long usuarioId);
 
-        @Query("SELECT p.ejemplar.edicion.libro.titulo, COUNT(p) FROM Prestamo p " +
-                        "WHERE p.biblioteca.idBiblioteca = :bibliotecaId " +
-                        "GROUP BY p.ejemplar.edicion.libro.idLibro, p.ejemplar.edicion.libro.titulo " +
-                        "ORDER BY COUNT(p) DESC")
-        List<Object[]> findLibrosMasPrestadosByBiblioteca(@Param("bibliotecaId") Long bibliotecaId);
+    @Query("SELECT p FROM Prestamo p WHERE p.biblioteca.idBiblioteca = :bibliotecaId " +
+            "AND p.fechaPrestamo BETWEEN :fechaInicio AND :fechaFin")
+    List<Prestamo> findByBibliotecaAndFechaBetween(
+            @Param("bibliotecaId") Long bibliotecaId,
+            @Param("fechaInicio") LocalDateTime fechaInicio,
+            @Param("fechaFin") LocalDateTime fechaFin);
 
-        @Query("SELECT p FROM Prestamo p WHERE p.usuario.idUsuario = :usuarioId " +
-                        "AND p.ejemplar.idEjemplar = :ejemplarId " +
-                        "AND p.estadoPrestamo = 'ACTIVO'")
-        Optional<Prestamo> findPrestamoActivoByUsuarioAndEjemplar(
-                        @Param("usuarioId") Long usuarioId,
-                        @Param("ejemplarId") Long ejemplarId);
+    @Query("SELECT p.ejemplar.edicion.libro.titulo, COUNT(p) FROM Prestamo p " +
+            "WHERE p.biblioteca.idBiblioteca = :bibliotecaId " +
+            "GROUP BY p.ejemplar.edicion.libro.idLibro, p.ejemplar.edicion.libro.titulo " +
+            "ORDER BY COUNT(p) DESC")
+    List<Object[]> findLibrosMasPrestadosByBiblioteca(@Param("bibliotecaId") Long bibliotecaId);
 
-        @Query("SELECT p FROM Prestamo p WHERE p.ejemplar.idEjemplar = :ejemplarId " +
-                        "AND p.estadoPrestamo = 'ACTIVO'")
-        Optional<Prestamo> findPrestamoActivoByEjemplar(@Param("ejemplarId") Long ejemplarId);
+    @Query("SELECT p FROM Prestamo p WHERE p.usuario.idUsuario = :usuarioId " +
+            "AND p.ejemplar.idEjemplar = :ejemplarId " +
+            "AND p.estadoPrestamo = 'ACTIVO'")
+    Optional<Prestamo> findPrestamoActivoByUsuarioAndEjemplar(
+            @Param("usuarioId") Long usuarioId,
+            @Param("ejemplarId") Long ejemplarId);
 
-        @Query("SELECT COUNT(p) FROM Prestamo p " +
-                        "WHERE p.usuario.idUsuario = :usuarioId " +
-                        "AND p.estadoPrestamo = :estado")
-        Long countPrestamosConEstadoByUsuario(
-                        @Param("usuarioId") Long usuarioId,
-                        @Param("estado") EstadoPrestamo estado);
+    @Query("SELECT p FROM Prestamo p WHERE p.ejemplar.idEjemplar = :ejemplarId " +
+            "AND p.estadoPrestamo = 'ACTIVO'")
+    Optional<Prestamo> findPrestamoActivoByEjemplar(@Param("ejemplarId") Long ejemplarId);
 
-        @Query("""
-                            SELECT COUNT(p)
-                            FROM Prestamo p
-                            WHERE p.usuario.persona.ci = :ci
-                            AND p.biblioteca.id = :bibliotecaId
-                            AND p.estadoPrestamo = :estado
-                        """)
-        Long countPrestamosConEstadoByCiAndBiblioteca(
-                        @Param("ci") String ci,
-                        @Param("bibliotecaId") Long bibliotecaId,
-                        @Param("estado") EstadoPrestamo estado);
+    @Query("SELECT COUNT(p) FROM Prestamo p " +
+            "WHERE p.usuario.idUsuario = :usuarioId " +
+            "AND p.estadoPrestamo = :estado")
+    Long countPrestamosConEstadoByUsuario(
+            @Param("usuarioId") Long usuarioId,
+            @Param("estado") EstadoPrestamo estado);
 
-        /**
-         * Cuenta préstamos ACTIVOS de un usuario en una biblioteca específica.
-         */
-        @Query("SELECT COUNT(p) FROM Prestamo p " +
-                        "WHERE p.usuario.idUsuario = :usuarioId " +
-                        "AND p.biblioteca.idBiblioteca = :bibliotecaId " +
-                        "AND p.estadoPrestamo = 'ACTIVO'")
-        Long countPrestamosActivosByUsuarioAndBiblioteca(
-                        @Param("usuarioId") Long usuarioId,
-                        @Param("bibliotecaId") Long bibliotecaId);
+    @Query("""
+                SELECT COUNT(p)
+                FROM Prestamo p
+                WHERE p.usuario.persona.ci = :ci
+                AND p.biblioteca.id = :bibliotecaId
+                AND p.estadoPrestamo = :estado
+            """)
+    Long countPrestamosConEstadoByCiAndBiblioteca(
+            @Param("ci") String ci,
+            @Param("bibliotecaId") Long bibliotecaId,
+            @Param("estado") EstadoPrestamo estado);
 
-        /**
-         * Cuenta préstamos de un usuario en una biblioteca específica filtrado por
-         * estado.
-         * Sirve para VENCIDO y RENOVADO.
-         */
-        @Query("SELECT COUNT(p) FROM Prestamo p " +
-                        "WHERE p.usuario.idUsuario = :usuarioId " +
-                        "AND p.biblioteca.idBiblioteca = :bibliotecaId " +
-                        "AND p.estadoPrestamo = :estado")
-        Long countPrestamosConEstadoByUsuarioAndBiblioteca(
-                        @Param("usuarioId") Long usuarioId,
-                        @Param("bibliotecaId") Long bibliotecaId,
-                        @Param("estado") EstadoPrestamo estado);
+    /**
+     * Cuenta préstamos ACTIVOS de un usuario en una biblioteca específica.
+     */
+    @Query("SELECT COUNT(p) FROM Prestamo p " +
+            "WHERE p.usuario.idUsuario = :usuarioId " +
+            "AND p.biblioteca.idBiblioteca = :bibliotecaId " +
+            "AND p.estadoPrestamo = 'ACTIVO'")
+    Long countPrestamosActivosByUsuarioAndBiblioteca(
+            @Param("usuarioId") Long usuarioId,
+            @Param("bibliotecaId") Long bibliotecaId);
 
-        /**
-         * Carga todas las relaciones necesarias para que SancionService
-         * pueda calcular multas sin lazy-loading adicional.
-         * REQUERIDO por el módulo de Sanciones
-         */
-        @Query("""
-                        SELECT p FROM Prestamo p
-                        JOIN FETCH p.usuario u
-                        JOIN FETCH u.roles
-                        JOIN FETCH p.biblioteca
-                        JOIN FETCH p.ejemplar
-                        WHERE p.idPrestamo = :id
-                        """)
-        Optional<Prestamo> findByIdWithRelations(@Param("id") Long id);
+    /**
+     * Cuenta préstamos de un usuario en una biblioteca específica filtrado por
+     * estado.
+     * Sirve para VENCIDO y RENOVADO.
+     */
+    @Query("SELECT COUNT(p) FROM Prestamo p " +
+            "WHERE p.usuario.idUsuario = :usuarioId " +
+            "AND p.biblioteca.idBiblioteca = :bibliotecaId " +
+            "AND p.estadoPrestamo = :estado")
+    Long countPrestamosConEstadoByUsuarioAndBiblioteca(
+            @Param("usuarioId") Long usuarioId,
+            @Param("bibliotecaId") Long bibliotecaId,
+            @Param("estado") EstadoPrestamo estado);
 
-        /**
-         * Préstamos vencidos que aún no tienen sanción ACTIVA.
-         * Usado por el CRON de SancionService para evitar duplicados.
-         * REQUERIDO por el módulo de Sanciones
-         */
-        @Query("""
-                        SELECT p FROM Prestamo p
-                        WHERE p.fechaDevolucionEstimada < CURRENT_DATE
-                        AND p.estadoPrestamo NOT IN ('DEVUELTO', 'CANCELADO')
-                        AND NOT EXISTS (
-                            SELECT 1 FROM Sancion s
-                            WHERE s.prestamo = p AND s.estado = 'ACTIVA'
-                        )
-                        """)
-        List<Prestamo> findPrestamosVencidosSinSancion();
+    /**
+     * Carga todas las relaciones necesarias para que SancionService
+     * pueda calcular multas sin lazy-loading adicional.
+     * REQUERIDO por el módulo de Sanciones
+     */
+    @Query("""
+            SELECT p FROM Prestamo p
+            JOIN FETCH p.usuario u
+            JOIN FETCH u.roles
+            JOIN FETCH p.biblioteca
+            JOIN FETCH p.ejemplar
+            WHERE p.idPrestamo = :id
+            """)
+    Optional<Prestamo> findByIdWithRelations(@Param("id") Long id);
 
-        @Query("""
-                        SELECT COUNT(p)
-                        FROM Prestamo p
-                        WHERE p.biblioteca.idBiblioteca = :bibliotecaId
-                        AND p.estadoPrestamo = 'ACTIVO'
-                        """)
-        Long countPrestamosActivosByBiblioteca(
-                        @Param("bibliotecaId") Long bibliotecaId);
+    /**
+     * Préstamos vencidos que aún no tienen sanción ACTIVA.
+     * Usado por el CRON de SancionService para evitar duplicados.
+     * REQUERIDO por el módulo de Sanciones
+     */
+    @Query("""
+            SELECT p FROM Prestamo p
+            WHERE p.fechaDevolucionEstimada < CURRENT_DATE
+            AND p.estadoPrestamo NOT IN ('DEVUELTO', 'CANCELADO')
+            AND NOT EXISTS (
+                SELECT 1 FROM Sancion s
+                WHERE s.prestamo = p AND s.estado = 'ACTIVA'
+            )
+            """)
+    List<Prestamo> findPrestamosVencidosSinSancion();
 
-        @Query("""
-                            SELECT COUNT(p)
-                            FROM Prestamo p
-                            WHERE p.biblioteca.idBiblioteca = :bibliotecaId
-                            AND p.estadoPrestamo = 'VENCIDO'
-                        """)
-        Long countPrestamosVencidosByBiblioteca(
-                        @Param("bibliotecaId") Long bibliotecaId);
+    @Query("""
+            SELECT COUNT(p)
+            FROM Prestamo p
+            WHERE p.biblioteca.idBiblioteca = :bibliotecaId
+            AND p.estadoPrestamo = 'ACTIVO'
+            """)
+    Long countPrestamosActivosByBiblioteca(
+            @Param("bibliotecaId") Long bibliotecaId);
 
-        @Query("""
-                              SELECT p
-                              FROM Prestamo p
-                              JOIN FETCH p.usuario u
-                              JOIN FETCH u.persona
-                              JOIN FETCH p.biblioteca
-                              JOIN FETCH p.ejemplar e
-                              JOIN FETCH e.edicion ed
-                              JOIN FETCH ed.libro l
-                              WHERE
-                              (:bibliotecaId IS NULL OR p.biblioteca.idBiblioteca = :bibliotecaId)
-                             AND (:estado IS NULL OR p.estadoPrestamo = :estado)
-                        AND p.fechaPrestamo BETWEEN :fechaInicio AND :fechaFin
-                                      """)
-        List<Prestamo> obtenerReportePrestamos(
-                        @Param("bibliotecaId") Long bibliotecaId,
-                        @Param("estado") EstadoPrestamo estado,
-                        @Param("fechaInicio") LocalDateTime fechaInicio,
-                        @Param("fechaFin") LocalDateTime fechaFin);
+    @Query("""
+                SELECT COUNT(p)
+                FROM Prestamo p
+                WHERE p.biblioteca.idBiblioteca = :bibliotecaId
+                AND p.estadoPrestamo = 'VENCIDO'
+            """)
+    Long countPrestamosVencidosByBiblioteca(
+            @Param("bibliotecaId") Long bibliotecaId);
 
-        @Query("""
-                        SELECT COUNT(p)
-                        FROM Prestamo p
-                        WHERE p.estadoPrestamo = :estado
-                        AND (:bibliotecaId IS NULL OR p.biblioteca.idBiblioteca = :bibliotecaId)
-                        """)
-        Long countByEstado(
-                        @Param("estado") EstadoPrestamo estado,
-                        @Param("bibliotecaId") Long bibliotecaId);
+    @Query("""
+                  SELECT p
+                  FROM Prestamo p
+                  JOIN FETCH p.usuario u
+                  JOIN FETCH u.persona
+                  JOIN FETCH p.biblioteca
+                  JOIN FETCH p.ejemplar e
+                  JOIN FETCH e.edicion ed
+                  JOIN FETCH ed.libro l
+                  WHERE
+                  (:bibliotecaId IS NULL OR p.biblioteca.idBiblioteca = :bibliotecaId)
+                 AND (:estado IS NULL OR p.estadoPrestamo = :estado)
+            AND p.fechaPrestamo BETWEEN :fechaInicio AND :fechaFin
+                          """)
+    List<Prestamo> obtenerReportePrestamos(
+            @Param("bibliotecaId") Long bibliotecaId,
+            @Param("estado") EstadoPrestamo estado,
+            @Param("fechaInicio") LocalDateTime fechaInicio,
+            @Param("fechaFin") LocalDateTime fechaFin);
 
-        @Query("""
-                        SELECT COUNT(p)
-                        FROM Prestamo p
-                        WHERE (:bibliotecaId IS NULL OR p.biblioteca.idBiblioteca = :bibliotecaId)
-                        """)
-        Long countPrestamos(
-                        @Param("bibliotecaId") Long bibliotecaId);
+    @Query("""
+            SELECT COUNT(p)
+            FROM Prestamo p
+            WHERE p.estadoPrestamo = :estado
+            AND (:bibliotecaId IS NULL OR p.biblioteca.idBiblioteca = :bibliotecaId)
+            """)
+    Long countByEstado(
+            @Param("estado") EstadoPrestamo estado,
+            @Param("bibliotecaId") Long bibliotecaId);
 
-        @Query("""
-                            SELECT p
-                            FROM Prestamo p
-                            JOIN FETCH p.usuario u
-                            JOIN FETCH u.persona
-                            JOIN FETCH p.biblioteca b
-                            JOIN FETCH p.ejemplar e
-                            JOIN FETCH e.edicion ed
-                            JOIN FETCH ed.libro l
-                            WHERE
-                            (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
+    @Query("""
+            SELECT COUNT(p)
+            FROM Prestamo p
+            WHERE (:bibliotecaId IS NULL OR p.biblioteca.idBiblioteca = :bibliotecaId)
+            """)
+    Long countPrestamos(
+            @Param("bibliotecaId") Long bibliotecaId);
 
-                            AND (:usuarioId IS NULL OR u.idUsuario = :usuarioId)
+    @Query("""
+                SELECT p
+                FROM Prestamo p
+                JOIN FETCH p.usuario u
+                JOIN FETCH u.persona
+                JOIN FETCH p.biblioteca b
+                JOIN FETCH p.ejemplar e
+                JOIN FETCH e.edicion ed
+                JOIN FETCH ed.libro l
+                WHERE
+                (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
 
-                            AND (:libroId IS NULL OR l.idLibro = :libroId)
+                AND (:usuarioId IS NULL OR u.idUsuario = :usuarioId)
 
-                            AND (:estado IS NULL OR p.estadoPrestamo = :estado)
+                AND (:libroId IS NULL OR l.idLibro = :libroId)
 
-                            AND (:tipoPrestamo IS NULL OR p.tipoPrestamo = :tipoPrestamo)
+                AND (:estado IS NULL OR p.estadoPrestamo = :estado)
 
-                            AND (
-                                (:fechaInicio IS NULL OR p.fechaPrestamo >= :fechaInicio)
-                                AND
-                                (:fechaFin IS NULL OR p.fechaPrestamo <= :fechaFin)
-                            )
+                AND (:tipoPrestamo IS NULL OR p.tipoPrestamo = :tipoPrestamo)
 
-                            ORDER BY p.fechaPrestamo DESC
-                        """)
-        List<Prestamo> obtenerHistorialPrestamos(
-                        @Param("bibliotecaId") Long bibliotecaId,
-                        @Param("usuarioId") Long usuarioId,
-                        @Param("libroId") Long libroId,
-                        @Param("estado") EstadoPrestamo estado,
-                        @Param("tipoPrestamo") TipoPrestamo tipoPrestamo,
-                        @Param("fechaInicio") LocalDateTime fechaInicio,
-                        @Param("fechaFin") LocalDateTime fechaFin);
+                AND (
+                    (:fechaInicio IS NULL OR p.fechaPrestamo >= :fechaInicio)
+                    AND
+                    (:fechaFin IS NULL OR p.fechaPrestamo <= :fechaFin)
+                )
 
-        @Query("""
-                        SELECT new com.proyecto.fhce.library.dto.reportes.prestamo.LibroMasPrestadoDTO(
-                            l.idLibro,
-                            l.titulo,
-                            COUNT(p.idPrestamo)
-                        )
-                        FROM Prestamo p
-                        JOIN p.ejemplar e
-                        JOIN e.edicion ed
-                        JOIN ed.libro l
-                        WHERE
-                        (:bibliotecaId IS NULL
-                         OR p.biblioteca.idBiblioteca = :bibliotecaId)
-                        GROUP BY
-                        l.idLibro,
-                        l.titulo
-                        ORDER BY COUNT(p.idPrestamo) DESC
-                        """)
-        List<LibroMasPrestadoDTO> obtenerLibrosMasPrestados(
-                        @Param("bibliotecaId") Long bibliotecaId);
+                ORDER BY p.fechaPrestamo DESC
+            """)
+    List<Prestamo> obtenerHistorialPrestamos(
+            @Param("bibliotecaId") Long bibliotecaId,
+            @Param("usuarioId") Long usuarioId,
+            @Param("libroId") Long libroId,
+            @Param("estado") EstadoPrestamo estado,
+            @Param("tipoPrestamo") TipoPrestamo tipoPrestamo,
+            @Param("fechaInicio") LocalDateTime fechaInicio,
+            @Param("fechaFin") LocalDateTime fechaFin);
 
-        @Query("""
-                            SELECT new com.proyecto.fhce.library.dto.reportes.prestamo.LibroMasPrestadoDTO(
-                                l.idLibro,
-                                l.titulo,
-                                COUNT(p.idPrestamo)
-                            )
-                            FROM Prestamo p
-                            JOIN p.ejemplar e
-                            JOIN e.edicion ed
-                            JOIN ed.libro l
-                            WHERE
-                            (:bibliotecaId IS NULL
-                             OR p.biblioteca.idBiblioteca = :bibliotecaId)
-                            GROUP BY
-                            l.idLibro,
-                            l.titulo
-                            ORDER BY COUNT(p.idPrestamo) ASC
-                        """)
-        List<LibroMasPrestadoDTO> obtenerLibrosMenosPrestados(
-                        @Param("bibliotecaId") Long bibliotecaId);
+    @Query("""
+            SELECT new com.proyecto.fhce.library.dto.reportes.prestamo.LibroMasPrestadoDTO(
+                l.idLibro,
+                l.titulo,
+                COUNT(p.idPrestamo)
+            )
+            FROM Prestamo p
+            JOIN p.ejemplar e
+            JOIN e.edicion ed
+            JOIN ed.libro l
+            WHERE
+            (:bibliotecaId IS NULL
+             OR p.biblioteca.idBiblioteca = :bibliotecaId)
+            GROUP BY
+            l.idLibro,
+            l.titulo
+            ORDER BY COUNT(p.idPrestamo) DESC
+            """)
+    List<LibroMasPrestadoDTO> obtenerLibrosMasPrestados(
+            @Param("bibliotecaId") Long bibliotecaId);
 
-        // Préstamos devueltos con deterioro (condicionDevolucion > condicionEntrega en
-        // ordinal)
-        // Se filtra en Java después del fetch porque JPA no compara enums por ordinal
-        // en JPQL
-        @Query("""
-                        SELECT p FROM Prestamo p
-                        JOIN FETCH p.usuario u
-                        JOIN FETCH u.persona
-                        JOIN FETCH p.biblioteca b
-                        JOIN FETCH p.ejemplar e
-                        JOIN FETCH e.edicion ed
-                        JOIN FETCH ed.libro l
-                        WHERE p.estadoPrestamo = 'DEVUELTO'
-                        AND p.condicionDevolucion IS NOT NULL
-                        AND (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
-                        AND (:fechaInicio IS NULL OR p.fechaDevolucionReal >= :fechaInicio)
-                        AND (:fechaFin IS NULL OR p.fechaDevolucionReal <= :fechaFin)
-                        ORDER BY p.fechaDevolucionReal DESC
-                        """)
-        List<Prestamo> obtenerDevolucionesConCondicion(
-                        @Param("bibliotecaId") Long bibliotecaId,
-                        @Param("fechaInicio") LocalDateTime fechaInicio,
-                        @Param("fechaFin") LocalDateTime fechaFin);
+    @Query("""
+                SELECT new com.proyecto.fhce.library.dto.reportes.prestamo.LibroMasPrestadoDTO(
+                    l.idLibro,
+                    l.titulo,
+                    COUNT(p.idPrestamo)
+                )
+                FROM Prestamo p
+                JOIN p.ejemplar e
+                JOIN e.edicion ed
+                JOIN ed.libro l
+                WHERE
+                (:bibliotecaId IS NULL
+                 OR p.biblioteca.idBiblioteca = :bibliotecaId)
+                GROUP BY
+                l.idLibro,
+                l.titulo
+                ORDER BY COUNT(p.idPrestamo) ASC
+            """)
+    List<LibroMasPrestadoDTO> obtenerLibrosMenosPrestados(
+            @Param("bibliotecaId") Long bibliotecaId);
 
-        /**
-         * Reporte 1: Préstamos activos del día.
-         * Carga todas las relaciones en una sola query para evitar N+1.
-         * 
-         * @param bibliotecaId null = todas las bibliotecas (vista ADMIN)
-         */
-        @Query("""
-                        SELECT p FROM Prestamo p
-                        JOIN FETCH p.usuario u
-                        JOIN FETCH u.persona
-                        JOIN FETCH p.biblioteca b
-                        JOIN FETCH p.ejemplar e
-                        JOIN FETCH e.edicion ed
-                        JOIN FETCH ed.libro l
-                        WHERE p.estadoPrestamo IN ('ACTIVO', 'RENOVADO')
-                        AND (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
-                        ORDER BY p.fechaDevolucionEstimada ASC
-                        """)
-        List<Prestamo> findPrestamosActivosParaReporte(
-                        @Param("bibliotecaId") Long bibliotecaId);
+    // Préstamos devueltos con deterioro (condicionDevolucion > condicionEntrega en
+    // ordinal)
+    // Se filtra en Java después del fetch porque JPA no compara enums por ordinal
+    // en JPQL
+    @Query("""
+            SELECT p FROM Prestamo p
+            JOIN FETCH p.usuario u
+            JOIN FETCH u.persona
+            JOIN FETCH p.biblioteca b
+            JOIN FETCH p.ejemplar e
+            JOIN FETCH e.edicion ed
+            JOIN FETCH ed.libro l
+            WHERE p.estadoPrestamo = 'DEVUELTO'
+            AND p.condicionDevolucion IS NOT NULL
+            AND (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
+            AND (:fechaInicio IS NULL OR p.fechaDevolucionReal >= :fechaInicio)
+            AND (:fechaFin IS NULL OR p.fechaDevolucionReal <= :fechaFin)
+            ORDER BY p.fechaDevolucionReal DESC
+            """)
+    List<Prestamo> obtenerDevolucionesConCondicion(
+            @Param("bibliotecaId") Long bibliotecaId,
+            @Param("fechaInicio") LocalDateTime fechaInicio,
+            @Param("fechaFin") LocalDateTime fechaFin);
 
-        /**
-         * Reporte 2: Devoluciones pendientes vencidas.
-         * Solo estado VENCIDO — el CRON ya los marcó.
-         * 
-         * @param bibliotecaId null = todas las bibliotecas
-         */
-        @Query("""
-                        SELECT p FROM Prestamo p
-                        JOIN FETCH p.usuario u
-                        JOIN FETCH u.persona
-                        JOIN FETCH p.biblioteca b
-                        JOIN FETCH p.ejemplar e
-                        JOIN FETCH e.edicion ed
-                        JOIN FETCH ed.libro l
-                        WHERE p.estadoPrestamo = 'VENCIDO'
-                        AND (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
-                        ORDER BY p.fechaDevolucionEstimada ASC
-                        """)
-        List<Prestamo> findDevolucionesPendientesVencidas(
-                        @Param("bibliotecaId") Long bibliotecaId);
+    /**
+     * Reporte 1: Préstamos activos del día.
+     * Carga todas las relaciones en una sola query para evitar N+1.
+     * 
+     * @param bibliotecaId null = todas las bibliotecas (vista ADMIN)
+     */
+    @Query("""
+            SELECT p FROM Prestamo p
+            JOIN FETCH p.usuario u
+            JOIN FETCH u.persona
+            JOIN FETCH p.biblioteca b
+            JOIN FETCH p.ejemplar e
+            JOIN FETCH e.edicion ed
+            JOIN FETCH ed.libro l
+            WHERE p.estadoPrestamo IN ('ACTIVO', 'RENOVADO')
+            AND (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
+            ORDER BY p.fechaDevolucionEstimada ASC
+            """)
+    List<Prestamo> findPrestamosActivosParaReporte(
+            @Param("bibliotecaId") Long bibliotecaId);
 
-        /**
-         * Reporte 3: Préstamos por vencer en N días.
-         * Incluye ACTIVO y RENOVADO cuya fecha estimada cae en la ventana dada.
-         * 
-         * @param bibliotecaId null = todas las bibliotecas
-         * @param fechaLimite  LocalDate.now().plusDays(N) — calculado en el servicio
-         */
-        @Query("""
-                        SELECT p FROM Prestamo p
-                        JOIN FETCH p.usuario u
-                        JOIN FETCH u.persona
-                        JOIN FETCH p.biblioteca b
-                        JOIN FETCH p.ejemplar e
-                        JOIN FETCH e.edicion ed
-                        JOIN FETCH ed.libro l
-                        WHERE p.estadoPrestamo IN ('ACTIVO', 'RENOVADO')
-                        AND (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
-                        AND p.fechaDevolucionEstimada BETWEEN CURRENT_DATE AND :fechaLimite
-                        ORDER BY p.fechaDevolucionEstimada ASC
-                        """)
-        List<Prestamo> findPrestamosPorVencerParaReporte(
-                        @Param("bibliotecaId") Long bibliotecaId,
-                        @Param("fechaLimite") LocalDate fechaLimite);
+    /**
+     * Reporte 2: Devoluciones pendientes vencidas.
+     * Solo estado VENCIDO — el CRON ya los marcó.
+     * 
+     * @param bibliotecaId null = todas las bibliotecas
+     */
+    @Query("""
+            SELECT p FROM Prestamo p
+            JOIN FETCH p.usuario u
+            JOIN FETCH u.persona
+            JOIN FETCH p.biblioteca b
+            JOIN FETCH p.ejemplar e
+            JOIN FETCH e.edicion ed
+            JOIN FETCH ed.libro l
+            WHERE p.estadoPrestamo = 'VENCIDO'
+            AND (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
+            ORDER BY p.fechaDevolucionEstimada ASC
+            """)
+    List<Prestamo> findDevolucionesPendientesVencidas(
+            @Param("bibliotecaId") Long bibliotecaId);
+
+    /**
+     * Reporte 3: Préstamos por vencer en N días.
+     * Incluye ACTIVO y RENOVADO cuya fecha estimada cae en la ventana dada.
+     * 
+     * @param bibliotecaId null = todas las bibliotecas
+     * @param fechaLimite  LocalDate.now().plusDays(N) — calculado en el servicio
+     */
+    @Query("""
+            SELECT p FROM Prestamo p
+            JOIN FETCH p.usuario u
+            JOIN FETCH u.persona
+            JOIN FETCH p.biblioteca b
+            JOIN FETCH p.ejemplar e
+            JOIN FETCH e.edicion ed
+            JOIN FETCH ed.libro l
+            WHERE p.estadoPrestamo IN ('ACTIVO', 'RENOVADO')
+            AND (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
+            AND p.fechaDevolucionEstimada BETWEEN CURRENT_DATE AND :fechaLimite
+            ORDER BY p.fechaDevolucionEstimada ASC
+            """)
+    List<Prestamo> findPrestamosPorVencerParaReporte(
+            @Param("bibliotecaId") Long bibliotecaId,
+            @Param("fechaLimite") LocalDate fechaLimite);
 }

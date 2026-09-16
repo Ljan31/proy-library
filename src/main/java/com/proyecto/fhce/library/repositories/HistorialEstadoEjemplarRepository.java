@@ -14,20 +14,23 @@ import com.proyecto.fhce.library.enums.EstadoEjemplar;
 @Repository
 public interface HistorialEstadoEjemplarRepository extends JpaRepository<HistorialEstadoEjemplar, Long> {
 
-    List<HistorialEstadoEjemplar> findByEjemplar_IdEjemplar(Long ejemplarId);
+  List<HistorialEstadoEjemplar> findByEjemplar_IdEjemplar(Long ejemplarId);
 
-    @Query("SELECT h FROM HistorialEstadoEjemplar h WHERE h.ejemplar.idEjemplar = :ejemplarId " +
-            "ORDER BY h.fechaCambio DESC")
-    List<HistorialEstadoEjemplar> findByEjemplarOrderByFechaDesc(@Param("ejemplarId") Long ejemplarId);
+  @Query("SELECT h FROM HistorialEstadoEjemplar h WHERE h.ejemplar.idEjemplar = :ejemplarId " +
+      "ORDER BY h.fechaCambio DESC")
+  List<HistorialEstadoEjemplar> findByEjemplarOrderByFechaDesc(@Param("ejemplarId") Long ejemplarId);
 
-    @Query("SELECT h FROM HistorialEstadoEjemplar h WHERE h.fechaCambio BETWEEN :fechaInicio AND :fechaFin")
-    List<HistorialEstadoEjemplar> findByFechaCambioBetween(
-            @Param("fechaInicio") LocalDateTime fechaInicio,
-            @Param("fechaFin") LocalDateTime fechaFin);
+  @Query("SELECT h FROM HistorialEstadoEjemplar h WHERE h.fechaCambio BETWEEN :fechaInicio AND :fechaFin")
+  List<HistorialEstadoEjemplar> findByFechaCambioBetween(
+      @Param("fechaInicio") LocalDateTime fechaInicio,
+      @Param("fechaFin") LocalDateTime fechaFin);
 
-    @Query("SELECT h FROM HistorialEstadoEjemplar h WHERE h.ejemplar.biblioteca.idBiblioteca = :bibliotecaId " +
-            "AND h.estadoNuevo = :estado")
-    List<HistorialEstadoEjemplar> findByBibliotecaAndEstadoNuevo(
-            @Param("bibliotecaId") Long bibliotecaId,
-            @Param("estado") EstadoEjemplar estado);
+  @Query("SELECT h FROM HistorialEstadoEjemplar h WHERE h.ejemplar.biblioteca.idBiblioteca = :bibliotecaId " +
+      "AND h.estadoNuevo = :estado")
+  List<HistorialEstadoEjemplar> findByBibliotecaAndEstadoNuevo(
+      @Param("bibliotecaId") Long bibliotecaId,
+      @Param("estado") EstadoEjemplar estado);
+
+  boolean existsByEjemplarEdicionLibroIdLibro(Long libroId);
+
 }

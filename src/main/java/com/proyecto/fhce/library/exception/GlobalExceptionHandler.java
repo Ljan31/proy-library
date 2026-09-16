@@ -192,6 +192,11 @@ public class GlobalExceptionHandler {
       else if (rootMessage.contains("codigo_ejemplar")) {
         message = "El código del ejemplar ya existe";
       }
+      // Ejemplar utilizado por una reserva
+      else if (rootMessage.contains("reservas")
+          && rootMessage.contains("id_ejemplar")) {
+        message = "No se puede eliminar el ejemplar porque tiene reservas asociadas";
+      }
     }
 
     return ResponseEntity
