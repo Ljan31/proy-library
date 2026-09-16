@@ -187,7 +187,7 @@ public class LibroLoteService {
             ejemplar = ejemplarRepository.save(ejemplar);
 
             // Historial de alta
-            registrarAlta(ejemplar);
+            // registrarAlta(ejemplar);
 
             LibroLoteResponse.EjemplarLoteResult ejResult = new LibroLoteResponse.EjemplarLoteResult();
             ejResult.setIdEjemplar(ejemplar.getIdEjemplar());
