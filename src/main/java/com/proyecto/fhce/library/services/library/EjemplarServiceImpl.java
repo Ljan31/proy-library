@@ -75,9 +75,10 @@ public class EjemplarServiceImpl implements EjemplarService {
 
   public EjemplarResponse create(EjemplarRequest request) {
     // Validar código único
-    if (ejemplarRepository.existsByCodigoEjemplar(request.getCodigoEjemplar())) {
-      throw new DuplicateResourceException("Ya existe un ejemplar con código: " + request.getCodigoEjemplar());
-    }
+    // if (ejemplarRepository.existsByCodigoEjemplar(request.getCodigoEjemplar())) {
+    // throw new DuplicateResourceException("Ya existe un ejemplar con código: " +
+    // request.getCodigoEjemplar());
+    // }
     Edicion edicion = edicionRepository.findById(request.getEdicionId())
         .orElseThrow(() -> new ResourceNotFoundException("Edición no encontrada con id: " + request.getEdicionId()));
 
@@ -115,10 +116,11 @@ public class EjemplarServiceImpl implements EjemplarService {
     Ejemplar ejemplar = ejemplarRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Ejemplar no encontrado con id: " + id));
 
-    if (!ejemplar.getCodigoEjemplar().equals(request.getCodigoEjemplar()) &&
-        ejemplarRepository.existsByCodigoEjemplar(request.getCodigoEjemplar())) {
-      throw new DuplicateResourceException("Ya existe un ejemplar con código: " + request.getCodigoEjemplar());
-    }
+    // if (!ejemplar.getCodigoEjemplar().equals(request.getCodigoEjemplar()) &&
+    // ejemplarRepository.existsByCodigoEjemplar(request.getCodigoEjemplar())) {
+    // throw new DuplicateResourceException("Ya existe un ejemplar con código: " +
+    // request.getCodigoEjemplar());
+    // }
 
     ejemplar.setCodigoEjemplar(request.getCodigoEjemplar());
     ejemplar.setCodigoTopografico(request.getCodigoTopografico());
