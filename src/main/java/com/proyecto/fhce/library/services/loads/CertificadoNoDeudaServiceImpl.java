@@ -121,7 +121,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     validarDeudas(
         usuario != null ? usuario.getId_usuario() : null,
         biblioteca.getIdBiblioteca(),
-        request.getCi() // pasar ci si existe
+        ciFinal// pasar ci si existe
     );
     // ** Validar que no tenga sanciones activas
     // if (sancionRepository.hasUsuarioSancionesActivas(usuario.getId_usuario())) {
