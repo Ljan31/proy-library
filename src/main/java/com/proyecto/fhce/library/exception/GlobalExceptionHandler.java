@@ -183,6 +183,12 @@ public class GlobalExceptionHandler {
 
       String rootMessage = root.getMessage();
 
+      // Certificado sin usuario
+      if (rootMessage.contains("no_debt_certificates")
+          && rootMessage.contains("user_id")) {
+        message = "No se puede emitir el certificado porque no se ha asignado un usuario";
+      }
+
       // ISBN único
       if (rootMessage.contains("uk_ediciones_isbn")) {
         message = "El ISBN ya está registrado";
