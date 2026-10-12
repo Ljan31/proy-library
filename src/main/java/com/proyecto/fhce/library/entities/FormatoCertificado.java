@@ -32,6 +32,12 @@ public class FormatoCertificado {
   @Column(name = "ruta_archivo", nullable = false, length = 500)
   private String rutaArchivo;
 
+  @Column(name = "firma_url", length = 500)
+  private String firmaUrl;
+
+  @Column(name = "sello_url", length = 500)
+  private String selloUrl;
+
   @Column(nullable = false)
   private Integer version;
 
@@ -56,4 +62,93 @@ public class FormatoCertificado {
     if (activo == null)
       activo = true;
   }
+
+  public Long getIdFormato() {
+    return idFormato;
+  }
+
+  public void setIdFormato(Long idFormato) {
+    this.idFormato = idFormato;
+  }
+
+  public Biblioteca getBiblioteca() {
+    return biblioteca;
+  }
+
+  public void setBiblioteca(Biblioteca biblioteca) {
+    this.biblioteca = biblioteca;
+  }
+
+  public String getNombreArchivo() {
+    return nombreArchivo;
+  }
+
+  public void setNombreArchivo(String nombreArchivo) {
+    this.nombreArchivo = nombreArchivo;
+  }
+
+  public String getRutaArchivo() {
+    return rutaArchivo;
+  }
+
+  public void setRutaArchivo(String rutaArchivo) {
+    this.rutaArchivo = rutaArchivo;
+  }
+
+  public Integer getVersion() {
+    return version;
+  }
+
+  public void setVersion(Integer version) {
+    this.version = version;
+  }
+
+  public Boolean getActivo() {
+    return activo;
+  }
+
+  public void setActivo(Boolean activo) {
+    this.activo = activo;
+  }
+
+  public Usuario getSubidoPor() {
+    return subidoPor;
+  }
+
+  public void setSubidoPor(Usuario subidoPor) {
+    this.subidoPor = subidoPor;
+  }
+
+  public LocalDateTime getFechaCreacion() {
+    return fechaCreacion;
+  }
+
+  public void setFechaCreacion(LocalDateTime fechaCreacion) {
+    this.fechaCreacion = fechaCreacion;
+  }
+
+  public LocalDateTime getFechaActualizacion() {
+    return fechaActualizacion;
+  }
+
+  public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
+    this.fechaActualizacion = fechaActualizacion;
+  }
+
+  public String getFirmaUrl() {
+    return firmaUrl;
+  }
+
+  public void setFirmaUrl(String firmaUrl) {
+    this.firmaUrl = firmaUrl;
+  }
+
+  public String getSelloUrl() {
+    return selloUrl;
+  }
+
+  public void setSelloUrl(String selloUrl) {
+    this.selloUrl = selloUrl;
+  }
+
 }
