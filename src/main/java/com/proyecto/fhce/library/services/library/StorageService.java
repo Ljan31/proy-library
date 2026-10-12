@@ -1,17 +1,21 @@
 package com.proyecto.fhce.library.services.library;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.proyecto.fhce.library.config.StorageProperties;
 import com.proyecto.fhce.library.enums.TipoArchivo;
+import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 
 @Service
 public class StorageService {
@@ -94,6 +98,30 @@ public class StorageService {
         }
 
         break;
+      case PLANTILLAS_CERTIFICADO: // ← nuevo case
+        boolean esDocx = contentType != null && (contentType.equals("application/vnd.openxmlformats-officedocument" +
+            ".wordprocessingml.document") ||
+            contentType.equals("application/octet-stream") // algunos OS lo envían así
+        );
+        // doble check por extensión, el content-type de .docx varía por OS
+        String nombre = archivo.getOriginalFilename() != null
+            ? archivo.getOriginalFilename()
+            : "";
+        if (!esDocx && !nombre.toLowerCase().endsWith(".docx"))
+          throw new RuntimeException("La plantilla debe ser un archivo .docx");
+
+        break;
+      case FIRMAS_CERTIFICADO, SELLOS_CERTIFICADO:
+        boolean esImagenC = contentType != null && (contentType.equals("image/png") ||
+            contentType.equals("image/jpeg") ||
+            contentType.equals("image/jpg") ||
+            contentType.equals("image/webp"));
+        if (!esImagenC)
+          throw new RuntimeException("La imagen debe ser PNG, JPG o WEBP");
+        if (archivo.getSize() > 2 * 1024 * 1024)
+          throw new RuntimeException("La imagen no puede superar 2 MB");
+
+        break;
     }
   }
 
@@ -123,5 +151,79 @@ public class StorageService {
       extension = nombreOriginal.substring(nombreOriginal.lastIndexOf(".")).toLowerCase();
     }
     return UUID.randomUUID().toString() + extension;
+  }
+
+  /**
+   * Carga un archivo almacenado como bytes en memoria, sin exponerlo por URL.
+   * Usado para leer plantillas .docx antes de procesar.
+   *
+   * @param urlRelativa la URL relativa devuelta por guardar(), ej:
+   *                    /plantillas_certificado/uuid.docx
+   * @param tipo        tipo de archivo para resolver la ruta base
+   */
+  public byte[] cargarEnMemoria(String urlRelativa, TipoArchivo tipo) {
+    StorageProperties.TipoStorage config = obtenerConfig(tipo);
+
+    if (!urlRelativa.startsWith(config.getUrlBase()))
+      throw new RuntimeException("URL no corresponde al tipo: " + tipo);
+
+    String nombreArchivo = urlRelativa.substring(config.getUrlBase().length() + 1);
+
+    Path rutaBase = Paths.get(config.getRutaBase()).toAbsolutePath().normalize();
+    Path archivo = rutaBase.resolve(nombreArchivo).normalize();
+
+    // Seguridad: evitar path traversal
+    if (!archivo.startsWith(rutaBase))
+      throw new RuntimeException("Acceso no permitido a la ruta solicitada");
+
+    try {
+      return Files.readAllBytes(archivo);
+    } catch (IOException e) {
+      throw new RuntimeException("No se pudo leer el archivo: " + urlRelativa, e);
+    }
+  }
+
+  public Resource cargarComoResource(String urlRelativa, TipoArchivo tipo) {
+    StorageProperties.TipoStorage config = obtenerConfig(tipo);
+
+    if (urlRelativa == null || urlRelativa.isBlank()) {
+      throw new RuntimeException("La URL del archivo está vacía");
+    }
+
+    String urlBase = config.getUrlBase();
+
+    if (!urlRelativa.startsWith(urlBase + "/")) {
+      throw new RuntimeException(
+          "URL no corresponde al tipo de archivo: " + tipo);
+    }
+
+    String nombreArchivo = urlRelativa.substring((urlBase + "/").length());
+
+    Path rutaBase = Paths.get(config.getRutaBase())
+        .toAbsolutePath()
+        .normalize();
+
+    Path archivo = rutaBase
+        .resolve(nombreArchivo)
+        .normalize();
+
+    // Seguridad contra path traversal
+    if (!archivo.startsWith(rutaBase)) {
+      throw new RuntimeException(
+          "Acceso no permitido a la ruta solicitada");
+    }
+
+    if (!Files.exists(archivo) || !Files.isReadable(archivo)) {
+      throw new ResourceNotFoundException(
+          "Archivo no encontrado: " + urlRelativa);
+    }
+
+    try {
+      return new UrlResource(archivo.toUri());
+    } catch (MalformedURLException e) {
+      throw new RuntimeException(
+          "No se pudo crear el recurso: " + urlRelativa,
+          e);
+    }
   }
 }

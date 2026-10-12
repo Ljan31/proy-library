@@ -6,7 +6,10 @@ public class FormatoCertificadoResponse {
   private Long idFormato;
   private Long bibliotecaId;
   private String nombreBiblioteca;
+  private String url;
   private String nombreArchivo;
+  private String firmaUrl;
+  private String selloUrl;
   private Integer version;
   private Boolean activo;
   private String subidoPor;
@@ -83,5 +86,29 @@ public class FormatoCertificadoResponse {
 
   public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
     this.fechaActualizacion = fechaActualizacion;
+  }
+
+  public String getUrl() {
+    return url;
+  }
+
+  public void setUrl(String url) {
+    this.url = url;
+  }
+
+  public String getFirmaUrl() {
+    return firmaUrl;
+  }
+
+  public void setFirmaUrl(String firmaUrl) {
+    this.firmaUrl = firmaUrl;
+  }
+
+  public String getSelloUrl() {
+    return selloUrl;
+  }
+
+  public void setSelloUrl(String selloUrl) {
+    this.selloUrl = selloUrl;
   }
 }
