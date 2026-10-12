@@ -288,6 +288,18 @@ public class SolicitudCertificadoService {
 
     // Obtener todos los encargados de la biblioteca
     for (BibliotecaEncargado encargado : biblioteca.getEncargados()) {
+      // Ignorar asignaciones inactivas o con contrato finalizado
+      if (!Boolean.TRUE.equals(encargado.getActivo())
+          || encargado.getFechaFin() != null) {
+        continue;
+      }
+
+      // Filtrar los roles permitidos
+      if (encargado.getRolEncargado() != RolEncargado.PRINCIPAL
+          && encargado.getRolEncargado() != RolEncargado.AUXILIAR) {
+        continue;
+      }
+
       Usuario usuarioEncargado = encargado.getUsuario();
 
       // Filtrar solo quienes tengan ROLE_BIBLIOTECARIO o ROLE_AUXILIAR
