@@ -39,6 +39,7 @@ import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.FormatoCertificadoRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.DocxToPdfConverter;
 
 @Service
 @Transactional
@@ -59,7 +60,8 @@ public class FormatoCertificadoService {
   private UserRepository usuarioRepo;
   @Autowired
   private StorageService storageService;
-
+  @Autowired
+  private DocxToPdfConverter pdfConverter;
   // ── Consulta ─────────────────────────────────────────────────────────────
 
   @Transactional(readOnly = true)
@@ -131,17 +133,19 @@ public class FormatoCertificadoService {
   }
 
   // ── Carga en memoria (para generación) ───────────────────────────────────
-
-  public byte[] cargarPlantillaEnMemoria(Long bibliotecaId) throws IOException {
+  @Transactional(readOnly = true)
+  public byte[] cargarPlantillaEnMemoria(Long bibliotecaId) throws Exception, IOException {
     FormatoCertificado formato = formatoRepo
         .findByBiblioteca_IdBibliotecaAndActivoTrue(bibliotecaId)
         .orElseThrow(() -> new ResourceNotFoundException(
             "No hay plantilla activa para la biblioteca: " + bibliotecaId));
 
     // Delegar lectura en StorageService — él conoce la ruta base real
-    return storageService.cargarEnMemoria(
+    byte[] docx = storageService.cargarEnMemoria(
         formato.getRutaArchivo(),
         TipoArchivo.PLANTILLAS_CERTIFICADO);
+    byte[] pdf = pdfConverter.convertir(docx);
+    return pdf;
   }
 
   // ── Validaciones ─────────────────────────────────────────────────────────
@@ -231,7 +235,7 @@ public class FormatoCertificadoService {
   public FormatoCertificado obtenerPorId(Long id) {
 
     return formatoRepo
-        .findById(id)
+        .buscarPorIdConBiblioteca(id)
         .orElseThrow(() -> new ResourceNotFoundException(
             "Formato de certificado no encontrado: " + id));
   }

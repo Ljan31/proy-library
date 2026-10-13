@@ -15,6 +15,15 @@ import org.springframework.data.repository.query.Param;
 @Repository
 public interface FormatoCertificadoRepository extends JpaRepository<FormatoCertificado, Long> {
 
+  @Query("""
+          SELECT f
+          FROM FormatoCertificado f
+          JOIN FETCH f.biblioteca
+          WHERE f.idFormato = :id
+      """)
+  Optional<FormatoCertificado> buscarPorIdConBiblioteca(
+      @Param("id") Long id);
+
   // Plantilla activa de una biblioteca
   Optional<FormatoCertificado> findByBiblioteca_IdBibliotecaAndActivoTrue(Long bibliotecaId);
 

@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,9 +20,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.proyecto.fhce.library.dto.request.library.CertificadoGenerarRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.library.FormatoCertificadoResponse;
+import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.FormatoCertificado;
+import com.proyecto.fhce.library.exception.BusinessException;
+import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.security.UserDetailsImpl;
 import com.proyecto.fhce.library.services.library.FormatoCertificadoService;
 
@@ -83,25 +88,27 @@ public class PlantillasController {
 
   @GetMapping("/biblioteca/{id}/download")
   @PreAuthorize("isAuthenticated()")
-  public ResponseEntity<Resource> download(
+  public ResponseEntity<byte[]> download(
       @PathVariable Long id,
-      Authentication authentication) {
+      Authentication authentication) throws Exception, IOException {
 
     FormatoCertificado formato = formatoService.obtenerPorId(id);
+    // Resource resource = formatoService.obtenerArchivo(id);
 
-    Resource resource = formatoService.obtenerArchivo(id);
+    // String contentType = determinarContentType(
+    // formato.getNombreArchivo());
 
-    String contentType = determinarContentType(
-        formato.getNombreArchivo());
-
+    byte[] archivo = formatoService.cargarPlantillaEnMemoria(formato.getBiblioteca().getId_biblioteca());
+    // System.out.println("contenType " + contentType);
     return ResponseEntity.ok()
-        .contentType(MediaType.parseMediaType(contentType))
+        // .contentType(MediaType.parseMediaType(contentType))
+        .contentType(MediaType.APPLICATION_PDF)
         .header(
             HttpHeaders.CONTENT_DISPOSITION,
             "attachment; filename=\"" +
                 formato.getNombreArchivo() +
                 "\"")
-        .body(resource);
+        .body(archivo);
   }
 
   private String determinarContentType(String nombreArchivo) {
