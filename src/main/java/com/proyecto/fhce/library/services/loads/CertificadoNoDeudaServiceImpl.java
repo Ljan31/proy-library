@@ -1,46 +1,35 @@
 package com.proyecto.fhce.library.services.loads;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.apache.commons.lang3.StringUtils;
 
-import com.proyecto.fhce.library.dto.request.CrearNotificacionRequest;
-import com.proyecto.fhce.library.dto.request.library.SolicitudCertificadoEstudianteRequest;
-import com.proyecto.fhce.library.dto.request.library.SolicitudCertificadoRequest;
 import com.proyecto.fhce.library.dto.request.loads.CertificadoRequest;
-import com.proyecto.fhce.library.dto.response.library.SolicitudCertificadoResponse;
+import com.proyecto.fhce.library.dto.response.library.UserCertificadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.CertificadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.ValidacionCertificadoResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
-import com.proyecto.fhce.library.entities.BibliotecaEncargado;
 import com.proyecto.fhce.library.entities.CertificadoNoDeuda;
-import com.proyecto.fhce.library.entities.RazonCertificado;
-import com.proyecto.fhce.library.entities.SolicitudCertificado;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoCertificado;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
-import com.proyecto.fhce.library.enums.EstadoSolicitud;
-import com.proyecto.fhce.library.enums.RolEncargado;
-import com.proyecto.fhce.library.enums.notificaciones.TipoNotificacion;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.CertificadoNoDeudaRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
-import com.proyecto.fhce.library.repositories.RazonCertificadoRepository;
-import com.proyecto.fhce.library.repositories.SolicitudCertificadoRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.DocxToPdfConverter;
+import com.proyecto.fhce.library.services.library.CertificadoDocxService;
 import com.proyecto.fhce.library.services.notificaciones.NotificacionService;
 
 import org.slf4j.Logger;
@@ -49,27 +38,36 @@ import org.slf4j.LoggerFactory;
 @Service
 @Transactional
 public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService {
-  @Autowired
-  private CertificadoNoDeudaRepository certificadoRepository;
-  @Autowired
-  private UserRepository usuarioRepository;
-  // @Autowired
-  // private SancionRepository sancionRepository;
-  @Autowired
-  private PrestamoRepository prestamoRepository;
 
-  @Autowired
-  private BibliotecaRepository bibliotecaRepository;
-
-  @Autowired
-  private PdfCertificadoGenerator pdfGenerator;
-  private static final Logger log = LoggerFactory.getLogger(CertificadoNoDeudaServiceImpl.class);
-
-  @Autowired
-  private NotificacionService notificacionService;
-
+  private final CertificadoNoDeudaRepository certificadoRepository;
+  private final UserRepository usuarioRepository;
+  // // final private SancionRepository sancionRepository;
+  private final PrestamoRepository prestamoRepository;
+  private final BibliotecaRepository bibliotecaRepository;
+  private final PdfCertificadoGenerator pdfGenerator;
+  private final NotificacionService notificacionService;
+  private final CertificadoDocxService certificadoDocxService;
+  private final DocxToPdfConverter pdfConverter;
   // @Autowired
   // private AuditoriaService auditoriaService;
+
+  private static final Logger log = LoggerFactory.getLogger(CertificadoNoDeudaServiceImpl.class);
+
+  public CertificadoNoDeudaServiceImpl(CertificadoNoDeudaRepository certificadoRepository,
+      UserRepository usuarioRepository, PrestamoRepository prestamoRepository,
+      BibliotecaRepository bibliotecaRepository, PdfCertificadoGenerator pdfGenerator,
+      NotificacionService notificacionService, CertificadoDocxService certificadoDocxService,
+      DocxToPdfConverter pdfConverter) {
+    this.certificadoRepository = certificadoRepository;
+    this.usuarioRepository = usuarioRepository;
+    this.prestamoRepository = prestamoRepository;
+    this.bibliotecaRepository = bibliotecaRepository;
+    this.pdfGenerator = pdfGenerator;
+    this.notificacionService = notificacionService;
+    this.certificadoDocxService = certificadoDocxService;
+    this.pdfConverter = pdfConverter;
+  }
+
   public CertificadoResponse generar(CertificadoRequest request, Long solicitanteId,
       Collection<? extends GrantedAuthority> authorities) {
 
@@ -285,6 +283,25 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
         .findByBibliotecaConFiltroEstado(bibliotecaId, estado);
 
     return certificados.stream().map(this::mapToResponse).toList();
+  }
+
+  @Transactional(readOnly = true)
+  public byte[] generarCertificadoPDF(
+      Long id,
+      Long solicitanteId,
+      Collection<? extends GrantedAuthority> authorities) throws Exception, IOException {
+
+    CertificadoResponse certificado = findByIdConAutorizacion(id, solicitanteId, authorities);
+    UserCertificadoResponse userData = new UserCertificadoResponse();
+    userData.setUsuarioId(certificado.getUsuario().getId_usuario());
+    userData.setBibliotecaId(certificado.getBibliotecaId());
+    userData.setCi(certificado.getUsuario().getCi());
+    userData.setNombreCompleto(certificado.getUsuario().getNombreCompleto());
+    userData.setNombreBiblioteca(certificado.getBibliotecaNombre());
+    userData.setCodigoVerificacion(certificado.getCodigo_verificacion());
+    byte[] docx = certificadoDocxService.generar(userData);
+    byte[] pdf = pdfConverter.convertir(docx);
+    return pdf;
   }
 
   @Transactional(readOnly = true)
