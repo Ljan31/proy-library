@@ -1,31 +1,18 @@
 package com.proyecto.fhce.library.services.library;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
-// import java.time.LocalDate;
-// import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-// import java.util.Optional;
-// import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.security.core.GrantedAuthority;
-// import org.springframework.scheduling.annotation.Scheduled;
-// import org.springframework.security.core.GrantedAuthority;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-// import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.proyecto.fhce.library.dto.response.library.FormatoCertificadoResponse;
@@ -49,19 +36,20 @@ public class FormatoCertificadoService {
   private static final List<String> EXTENSIONES_PERMITIDAS = List.of(".docx");
   private static final long TAMANIO_MAXIMO = 10 * 1024 * 1024; // 10 MB
 
-  @Value("${app.uploads.bibliotecas:/uploads/bibliotecas}")
-  private String rutaBase;
+  private final FormatoCertificadoRepository formatoRepo;
+  private final BibliotecaRepository bibliotecaRepo;
+  private final UserRepository usuarioRepo;
+  private final StorageService storageService;
+  private final DocxToPdfConverter pdfConverter;
 
-  @Autowired
-  private FormatoCertificadoRepository formatoRepo;
-  @Autowired
-  private BibliotecaRepository bibliotecaRepo;
-  @Autowired
-  private UserRepository usuarioRepo;
-  @Autowired
-  private StorageService storageService;
-  @Autowired
-  private DocxToPdfConverter pdfConverter;
+  public FormatoCertificadoService(FormatoCertificadoRepository formatoRepo, BibliotecaRepository bibliotecaRepo,
+      UserRepository usuarioRepo, StorageService storageService, DocxToPdfConverter pdfConverter) {
+    this.formatoRepo = formatoRepo;
+    this.bibliotecaRepo = bibliotecaRepo;
+    this.usuarioRepo = usuarioRepo;
+    this.storageService = storageService;
+    this.pdfConverter = pdfConverter;
+  }
   // ── Consulta ─────────────────────────────────────────────────────────────
 
   @Transactional(readOnly = true)
@@ -135,19 +123,25 @@ public class FormatoCertificadoService {
   // ── Carga en memoria (para generación) ───────────────────────────────────
   @Transactional(readOnly = true)
   public byte[] cargarPlantillaEnMemoria(Long bibliotecaId) throws Exception, IOException {
+    byte[] docx = cargarPlantillaDOCX(bibliotecaId);
+    return pdfConverter.convertir(docx);
+  }
+
+  @Transactional(readOnly = true)
+  public byte[] cargarPlantillaEnMemoriaDOCX(Long bibliotecaId) throws Exception, IOException {
+    return cargarPlantillaDOCX(bibliotecaId);
+  }
+
+  private byte[] cargarPlantillaDOCX(Long bibliotecaId) {
     FormatoCertificado formato = formatoRepo
         .findByBiblioteca_IdBibliotecaAndActivoTrue(bibliotecaId)
         .orElseThrow(() -> new ResourceNotFoundException(
             "No hay plantilla activa para la biblioteca: " + bibliotecaId));
 
-    // Delegar lectura en StorageService — él conoce la ruta base real
-    byte[] docx = storageService.cargarEnMemoria(
+    return storageService.cargarEnMemoria(
         formato.getRutaArchivo(),
         TipoArchivo.PLANTILLAS_CERTIFICADO);
-    byte[] pdf = pdfConverter.convertir(docx);
-    return pdf;
   }
-
   // ── Validaciones ─────────────────────────────────────────────────────────
 
   public Resource obtenerArchivo(Long id) {
