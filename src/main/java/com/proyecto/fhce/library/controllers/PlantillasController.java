@@ -4,14 +4,12 @@ import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,21 +18,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.proyecto.fhce.library.dto.request.library.CertificadoGenerarRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.library.FormatoCertificadoResponse;
-import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.FormatoCertificado;
-import com.proyecto.fhce.library.exception.BusinessException;
-import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.security.UserDetailsImpl;
 import com.proyecto.fhce.library.services.library.FormatoCertificadoService;
 
 @RestController
 @RequestMapping("/api/plantillas")
 public class PlantillasController {
-  @Autowired
-  private FormatoCertificadoService formatoService;
+
+  private final FormatoCertificadoService formatoService;
+
+  public PlantillasController(FormatoCertificadoService formatoService) {
+    this.formatoService = formatoService;
+  }
 
   @GetMapping("/biblioteca/{bibliotecaId}")
   @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
@@ -71,7 +69,7 @@ public class PlantillasController {
 
   // ── POST /certificados/plantilla/imagen ───────────────────────────────
   // Sube firma o sello — el frontend manda tipo = "firma" | "sello"
-  @PostMapping("/api/certificados/plantilla/imagen")
+  @PostMapping("/imagen")
   @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
   public ResponseEntity<FormatoCertificadoResponse> subirImagen(
       @RequestParam("file") MultipartFile file,
