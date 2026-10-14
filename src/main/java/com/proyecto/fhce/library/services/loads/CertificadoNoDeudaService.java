@@ -1,5 +1,6 @@
 package com.proyecto.fhce.library.services.loads;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -19,6 +20,11 @@ public interface CertificadoNoDeudaService {
         public List<CertificadoResponse> findByCiAndBiblioteca(
                         String ci,
                         Long bibliotecaId);
+
+        public byte[] generarCertificadoPDF(
+                        Long id,
+                        Long solicitanteId,
+                        Collection<? extends GrantedAuthority> authorities) throws Exception, IOException;
 
         public CertificadoResponse findByIdConAutorizacion(
                         Long id,
