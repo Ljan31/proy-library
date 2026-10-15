@@ -2,6 +2,9 @@ package com.proyecto.fhce.library.exception;
 
 import java.util.Arrays;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +15,7 @@ import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
@@ -20,6 +24,7 @@ import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+  private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   @ExceptionHandler(BadRequestException.class)
   public ResponseEntity<ApiResponse<Void>> handleBadRequest(BadRequestException ex) {
@@ -58,9 +63,20 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
+    log.error("Error al procesar la petición", ex);
+
     return ResponseEntity
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .contentType(MediaType.APPLICATION_JSON)
         .body(ApiResponse.error("Error interno del servidor"));
+  }
+
+  @ExceptionHandler(AsyncRequestNotUsableException.class)
+  public ResponseEntity<Void> handleClientDisconnect(
+      AsyncRequestNotUsableException ex) {
+
+    log.debug("El cliente cerró la conexión durante la respuesta HTTP.");
+    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
   @ExceptionHandler(AccessDeniedException.class)
