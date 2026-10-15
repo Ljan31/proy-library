@@ -3,6 +3,8 @@ package com.proyecto.fhce.library.controllers;
 import java.io.IOException;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +27,7 @@ import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.loads.CertificadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.ValidacionCertificadoResponse;
 import com.proyecto.fhce.library.enums.EstadoCertificado;
+import com.proyecto.fhce.library.exception.GlobalExceptionHandler;
 import com.proyecto.fhce.library.security.UserDetailsImpl;
 import com.proyecto.fhce.library.services.loads.CertificadoNoDeudaService;
 
@@ -33,6 +36,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/certificados")
 public class CertificadoController {
+  private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   @Autowired
   private CertificadoNoDeudaService certificadoService;
@@ -139,16 +143,26 @@ public class CertificadoController {
   public ResponseEntity<byte[]> download(
       @PathVariable Long id,
       Authentication authentication) throws Exception, IOException {
-
+    long inicio = System.currentTimeMillis();
     Long solicitanteId = obtenerUsuarioId(authentication);
     byte[] archivo = certificadoService
         .generarCertificadoPDF(id, solicitanteId, authentication.getAuthorities());
+    long finGeneracion = System.currentTimeMillis();
 
-    return ResponseEntity.ok()
+    log.info("PDF generado en {} ms. Tamaño: {} bytes",
+        finGeneracion - inicio,
+        archivo.length);
+    ResponseEntity<byte[]> respuesta = ResponseEntity.ok()
         .contentType(MediaType.APPLICATION_PDF)
-        .header(HttpHeaders.CONTENT_DISPOSITION,
+        .header(
+            HttpHeaders.CONTENT_DISPOSITION,
             "attachment; filename=\"certificado-" + id + ".pdf\"")
         .body(archivo);
+
+    log.info("Tiempo de preparación de respuesta: {} ms",
+        System.currentTimeMillis() - inicio);
+
+    return respuesta;
   }
 
   /**
