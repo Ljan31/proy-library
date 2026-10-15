@@ -44,7 +44,6 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
   // // final private SancionRepository sancionRepository;
   private final PrestamoRepository prestamoRepository;
   private final BibliotecaRepository bibliotecaRepository;
-  private final PdfCertificadoGenerator pdfGenerator;
   private final NotificacionService notificacionService;
   private final CertificadoDocxService certificadoDocxService;
   private final DocxToPdfConverter pdfConverter;
@@ -55,14 +54,13 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
 
   public CertificadoNoDeudaServiceImpl(CertificadoNoDeudaRepository certificadoRepository,
       UserRepository usuarioRepository, PrestamoRepository prestamoRepository,
-      BibliotecaRepository bibliotecaRepository, PdfCertificadoGenerator pdfGenerator,
+      BibliotecaRepository bibliotecaRepository,
       NotificacionService notificacionService, CertificadoDocxService certificadoDocxService,
       DocxToPdfConverter pdfConverter) {
     this.certificadoRepository = certificadoRepository;
     this.usuarioRepository = usuarioRepository;
     this.prestamoRepository = prestamoRepository;
     this.bibliotecaRepository = bibliotecaRepository;
-    this.pdfGenerator = pdfGenerator;
     this.notificacionService = notificacionService;
     this.certificadoDocxService = certificadoDocxService;
     this.pdfConverter = pdfConverter;
@@ -147,8 +145,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     CertificadoNoDeuda saved = certificadoRepository.save(certificado);
 
     // Generar PDF (implementación simplificada)
-    String pdfPath = generarPDF(saved);
-    saved.setPdf_generado(pdfPath);
+    saved.setPdf_generado("pdfPath");
     certificadoRepository.save(saved);
 
     // auditoriaService.registrar("GENERATE_CERTIFICATE", "no_debt_certificates",
@@ -209,17 +206,6 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
   // // Por ahora retornamos una ruta simulada
   // return "/certificados/" + certificado.getIdCertificado() + ".pdf";
   // }
-
-  private String generarPDF(CertificadoNoDeuda certificado) {
-    try {
-      return pdfGenerator.generar(certificado);
-    } catch (IOException e) {
-      // El certificado ya fue guardado — loguear y continuar, el PDF puede
-      // regenerarse
-      log.error("Error generando PDF para certificado {}: {}", certificado.getIdCertificado(), e.getMessage());
-      return null; // o lanzar excepción según política del equipo
-    }
-  }
 
   @Transactional(readOnly = true)
   public List<CertificadoResponse> findByUsuario(Long usuarioId, Long solicitanteId,
