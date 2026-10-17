@@ -60,9 +60,9 @@ public class ReporteCertificadoService {
     CertificadoReporteItemDTO dto = new CertificadoReporteItemDTO();
     dto.setIdCertificado(c.getIdCertificado());
     dto.setCodigoVerificacion(c.getCodigoVerificacion());
-    dto.setUsuario(c.getUsuario().getPersona().getNombre() + " "
-        + c.getUsuario().getPersona().getApellido_pat());
-    dto.setCi(c.getUsuario().getPersona().getCi());
+    dto.setUsuario(c.getSolicitud().getUsuario().getPersona().getNombre() + " "
+        + c.getSolicitud().getUsuario().getPersona().getApellido_pat());
+    dto.setCi(c.getSolicitud().getUsuario().getPersona().getCi());
     dto.setBiblioteca(c.getBiblioteca().getNombre());
     if (c.getBibliotecario() != null) {
       dto.setBibliotecario(c.getBibliotecario().getPersona().getNombre() + " "
