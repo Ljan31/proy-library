@@ -15,6 +15,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
@@ -26,9 +27,9 @@ public class CertificadoNoDeuda {
   @Column(name = "id_certificado")
   private Long idCertificado;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private Usuario usuario;
+  @OneToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "solicitud_id", nullable = false, unique = true)
+  private SolicitudCertificado solicitud;
 
   @Column(name = "fecha_emision", nullable = false)
   private LocalDateTime fechaEmision;
@@ -66,14 +67,6 @@ public class CertificadoNoDeuda {
     if (codigoVerificacion == null) {
       codigoVerificacion = UUID.randomUUID().toString();
     }
-  }
-
-  public Usuario getUsuario() {
-    return usuario;
-  }
-
-  public void setUsuario(Usuario usuario) {
-    this.usuario = usuario;
   }
 
   public LocalDateTime getFechaEmision() {
@@ -162,6 +155,14 @@ public class CertificadoNoDeuda {
 
   public void setRazonCertificado(RazonCertificado razonCertificado) {
     this.razonCertificado = razonCertificado;
+  }
+
+  public SolicitudCertificado getSolicitud() {
+    return solicitud;
+  }
+
+  public void setSolicitud(SolicitudCertificado solicitud) {
+    this.solicitud = solicitud;
   }
 
 }
