@@ -10,6 +10,16 @@ public class CertificadoRequest {
   private String nombres;
   private String apellidos;
   private String ci;
+  private Long SolicitudId;
+  private Long RazonCertificadoId;
+
+  public Long getRazonCertificadoId() {
+    return RazonCertificadoId;
+  }
+
+  public void setRazonCertificadoId(Long razonCertificadoId) {
+    RazonCertificadoId = razonCertificadoId;
+  }
 
   public Long getUsuarioId() {
     return usuarioId;
@@ -57,6 +67,14 @@ public class CertificadoRequest {
 
   public void setCi(String ci) {
     this.ci = ci;
+  }
+
+  public Long getSolicitudId() {
+    return SolicitudId;
+  }
+
+  public void setSolicitudId(Long solicitudId) {
+    SolicitudId = solicitudId;
   }
 
 }
