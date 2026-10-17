@@ -19,14 +19,19 @@ import com.proyecto.fhce.library.dto.response.loads.ValidacionCertificadoRespons
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.CertificadoNoDeuda;
+import com.proyecto.fhce.library.entities.RazonCertificado;
+import com.proyecto.fhce.library.entities.SolicitudCertificado;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoCertificado;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
+import com.proyecto.fhce.library.enums.EstadoSolicitud;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.CertificadoNoDeudaRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
+import com.proyecto.fhce.library.repositories.RazonCertificadoRepository;
+import com.proyecto.fhce.library.repositories.SolicitudCertificadoRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 import com.proyecto.fhce.library.services.DocxToPdfConverter;
 import com.proyecto.fhce.library.services.library.CertificadoDocxService;
@@ -47,6 +52,8 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
   private final NotificacionService notificacionService;
   private final CertificadoDocxService certificadoDocxService;
   private final DocxToPdfConverter pdfConverter;
+  private final SolicitudCertificadoRepository solicitudCertificadoRepository;
+  private final RazonCertificadoRepository razonCertificadoRepository;
   // @Autowired
   // private AuditoriaService auditoriaService;
 
@@ -56,7 +63,8 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
       UserRepository usuarioRepository, PrestamoRepository prestamoRepository,
       BibliotecaRepository bibliotecaRepository,
       NotificacionService notificacionService, CertificadoDocxService certificadoDocxService,
-      DocxToPdfConverter pdfConverter) {
+      DocxToPdfConverter pdfConverter, SolicitudCertificadoRepository solicitudCertificadoRepository,
+      RazonCertificadoRepository razonCertificadoRepository) {
     this.certificadoRepository = certificadoRepository;
     this.usuarioRepository = usuarioRepository;
     this.prestamoRepository = prestamoRepository;
@@ -64,11 +72,12 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     this.notificacionService = notificacionService;
     this.certificadoDocxService = certificadoDocxService;
     this.pdfConverter = pdfConverter;
+    this.solicitudCertificadoRepository = solicitudCertificadoRepository;
+    this.razonCertificadoRepository = razonCertificadoRepository;
   }
 
   public CertificadoResponse generar(CertificadoRequest request, Long solicitanteId,
       Collection<? extends GrantedAuthority> authorities) {
-
     boolean esAdmin = tieneRol(authorities, "ROLE_ADMIN");
     boolean esBibliotecario = tieneRol(authorities, "ROLE_BIBLIOTECARIO");
     boolean esEstudiante = tieneRol(authorities, "ROLE_ESTUDIANTE");
@@ -85,40 +94,83 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
         throw new BusinessException("Solo puede generar certificados de la biblioteca a su cargo");
       }
     }
-    Usuario usuario = null;
-    String nombresFinal = request.getNombres();
-    String apellidosFinal = request.getApellidos();
-    String ciFinal = request.getCi();
-
-    // Caso 1: Tiene usuarioId → buscar usuario registrado
-    if (request.getUsuarioId() != null) {
-      usuario = usuarioRepository.findById(request.getUsuarioId())
-          .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
-
-      // Sobrescribir con datos del usuario registrado (más confiable)
-      nombresFinal = usuario.getPersona().getNombreCompleto() != null
-          ? usuario.getPersona().getNombreCompleto().split(" ")[0]
-          : nombresFinal;
-      apellidosFinal = usuario.getPersona().getNombreCompleto() != null
-          ? usuario.getPersona().getNombreCompleto().replaceFirst("^\\S+\\s+", "")
-          : apellidosFinal;
-      ciFinal = usuario.getPersona().getCi();
-    }
-    // Caso 2: No tiene usuarioId → validar que lleguen datos básicos
-    else {
-      if (StringUtils.isBlank(nombresFinal) || StringUtils.isBlank(apellidosFinal) || StringUtils.isBlank(ciFinal)) {
-        throw new BusinessException("Debe proporcionar nombres, apellidos y CI cuando no se usa usuarioId");
-      }
-    }
     Usuario solicitante = usuarioRepository.findById(solicitanteId)
         .orElseThrow(() -> new ResourceNotFoundException("Solicitante no encontrado"));
 
-    // validarDeudas(usuario.getId_usuario(), biblioteca.getIdBiblioteca());
+    // 5. Obtener solicitud existente o crear una nueva
+    SolicitudCertificado solicitud;
+
+    if (request.getSolicitudId() != null) {
+
+      // CASO A: Generación a partir de una solicitud existente
+      solicitud = solicitudCertificadoRepository.findById(request.getSolicitudId())
+          .orElseThrow(() -> new ResourceNotFoundException("Solicitud no encontrada"));
+
+      // La solicitud debe corresponder a la biblioteca seleccionada
+      if (!solicitud.getBiblioteca().getIdBiblioteca()
+          .equals(biblioteca.getIdBiblioteca())) {
+        throw new BusinessException(
+            "La solicitud no pertenece a esta biblioteca");
+      }
+
+      // Adaptar este estado al flujo real de tu aplicación
+      if (solicitud.getEstado() != EstadoSolicitud.APROBADA) {
+        throw new BusinessException(
+            "La solicitud debe estar aprobada para generar el certificado");
+      }
+
+      // Evitar duplicados
+      if (certificadoRepository.existsBySolicitud_Id(solicitud.getId())) {
+        throw new BusinessException(
+            "Esta solicitud ya tiene un certificado generado");
+      }
+
+    } else {
+
+      // CASO B: Generación directa por admin o bibliotecario
+      if (!esAdmin && !esBibliotecario) {
+        throw new BusinessException(
+            "No tiene permisos para generar sin una solicitud previa");
+      }
+
+      solicitud = crearSolicitudDesdeRequest(
+          request, biblioteca, solicitante);
+    }
+
+    // 6. Obtener titular y datos personales desde la solicitud
+    Usuario usuario = solicitud.getUsuario();
+
+    String ci = solicitud.getCi();
+
+    // 7. Validar obligaciones del titular
     validarDeudas(
         usuario != null ? usuario.getId_usuario() : null,
         biblioteca.getIdBiblioteca(),
-        ciFinal// pasar ci si existe
-    );
+        ci);
+
+    // 8. Crear certificado asociado obligatoriamente a la solicitud
+    CertificadoNoDeuda certificado = new CertificadoNoDeuda();
+
+    certificado.setSolicitud(solicitud);
+    certificado.setBibliotecario(solicitante);
+    certificado.setBiblioteca(biblioteca);
+    certificado.setFechaEmision(LocalDateTime.now());
+    certificado.setEstadoCertificado(EstadoCertificado.VIGENTE);
+
+    if (request.getDiasValidez() != null) {
+      certificado.setFechaVencimiento(
+          LocalDateTime.now().plusDays(request.getDiasValidez()));
+    }
+
+    // 9. Guardar certificado
+    CertificadoNoDeuda saved = certificadoRepository.save(certificado);
+
+    // 10. Generar PDF
+    // saved.setPdf_generado("pdfPath"); // Reemplazar por la ruta real
+    saved = certificadoRepository.save(saved);
+
+    // 11. Retornar respuesta
+    return mapToResponse(saved);
     // ** Validar que no tenga sanciones activas
     // if (sancionRepository.hasUsuarioSancionesActivas(usuario.getId_usuario())) {
     // BigDecimal montoDeuda =
@@ -127,33 +179,11 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     // de Bs. " + montoDeuda);
     // }
 
-    // Generar certificado
-    CertificadoNoDeuda certificado = new CertificadoNoDeuda();
-    certificado.setUsuario(usuario);
-    certificado.setBibliotecario(solicitante);
-    certificado.setBiblioteca(biblioteca);
-    certificado.setFechaEmision(LocalDateTime.now());
-
-    if (request.getDiasValidez() != null) {
-      certificado.setFechaVencimiento(
-          LocalDateTime.now().plusDays(request.getDiasValidez()));
-    }
-
-    certificado.setEstadoCertificado(EstadoCertificado.VIGENTE);
-    // El código de verificación se genera automáticamente en @PrePersist
-
-    CertificadoNoDeuda saved = certificadoRepository.save(certificado);
-
-    // Generar PDF (implementación simplificada)
-    saved.setPdf_generado("pdfPath");
-    certificadoRepository.save(saved);
-
     // auditoriaService.registrar("GENERATE_CERTIFICATE", "no_debt_certificates",
     // saved.getId_certificado(), null, "Certificado generado");
 
     // notificacionService.enviarNotificacionCertificado(saved);
 
-    return mapToResponse(saved);
   }
 
   @Transactional(readOnly = true)
@@ -220,8 +250,8 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     }
 
     List<CertificadoNoDeuda> certificados = (bibliotecaId != null)
-        ? certificadoRepository.findByUsuario_IdUsuarioAndBiblioteca_IdBiblioteca(usuarioId, bibliotecaId)
-        : certificadoRepository.findByUsuario_IdUsuario(usuarioId);
+        ? certificadoRepository.findBySolicitud_Usuario_IdUsuarioAndBiblioteca_IdBiblioteca(usuarioId, bibliotecaId)
+        : certificadoRepository.findBySolicitud_Usuario_IdUsuario(usuarioId);
 
     return certificados.stream().map(this::mapToResponse).toList();
   }
@@ -230,10 +260,9 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
   public List<CertificadoResponse> findByCiAndBiblioteca(
       String ci,
       Long bibliotecaId) {
-
-    List<CertificadoNoDeuda> certificados = certificadoRepository.findByBiblioteca_IdBibliotecaAndUsuario_Persona_Ci(
-        bibliotecaId, ci);
-
+    List<CertificadoNoDeuda> certificados = certificadoRepository
+        .findByBiblioteca_IdBibliotecaAndSolicitud_Ci(
+            bibliotecaId, ci);
     return certificados.stream()
         .map(this::mapToResponse)
         .toList();
@@ -278,13 +307,24 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
       Collection<? extends GrantedAuthority> authorities) throws Exception, IOException {
 
     CertificadoResponse certificado = findByIdConAutorizacion(id, solicitanteId, authorities);
+    // Obtener la solicitud asociada al certificado
+    CertificadoNoDeuda entidad = certificadoRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "Certificado no encontrado con id: " + id));
+    SolicitudCertificado solicitud = entidad.getSolicitud();
     UserCertificadoResponse userData = new UserCertificadoResponse();
-    userData.setUsuarioId(certificado.getUsuario().getId_usuario());
+
+    // Puede ser null si el titular no está registrado
+    Usuario usuario = solicitud.getUsuario();
+
+    userData.setUsuarioId(
+        usuario != null ? usuario.getId_usuario() : null);
     userData.setBibliotecaId(certificado.getBibliotecaId());
-    userData.setCi(certificado.getUsuario().getCi());
-    userData.setNombreCompleto(certificado.getUsuario().getNombreCompleto());
+    userData.setCi(solicitud.getCi());
+    userData.setNombreCompleto(solicitud.getNombres() + " " + solicitud.getApellidos());
     userData.setNombreBiblioteca(certificado.getBibliotecaNombre());
     userData.setCodigoVerificacion(certificado.getCodigo_verificacion());
+    userData.setFechaEmision(certificado.getFechaEmision());
     byte[] docx = certificadoDocxService.generar(userData);
     byte[] pdf = pdfConverter.convertir(docx);
     return pdf;
@@ -302,11 +342,12 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     CertificadoNoDeuda certificado = certificadoRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException(
             "Certificado no encontrado con id: " + id));
-
-    Long usuarioId = certificado.getUsuario().getId_usuario();
+    SolicitudCertificado solicitud = certificado.getSolicitud();
+    Usuario usuario = solicitud.getUsuario();
+    // Long usuarioId = certificado.getSolicitud().getUsuario().getId_usuario();
 
     // 🔒 Reglas de acceso
-    if (!esAdmin && !esBibliotecario && !usuarioId.equals(solicitanteId)) {
+    if (!esAdmin && !esBibliotecario && !usuario.getId_usuario().equals(solicitanteId)) {
       throw new BusinessException("No autorizado para descargar este certificado");
     }
 
@@ -421,10 +462,63 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     return authorities.stream().anyMatch(a -> a.getAuthority().equals(rol));
   }
 
+  private SolicitudCertificado crearSolicitudDesdeRequest(
+      CertificadoRequest request,
+      Biblioteca biblioteca,
+      Usuario solicitante) {
+
+    Usuario usuario = null;
+
+    String nombres = request.getNombres();
+    String apellidos = request.getApellidos();
+    String ci = request.getCi();
+
+    // Si la persona está registrada, utilizar sus datos
+    if (request.getUsuarioId() != null) {
+      usuario = usuarioRepository.findById(request.getUsuarioId())
+          .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+      // Preferible utilizar campos separados de Persona,
+      // si están disponibles, en lugar de dividir nombreCompleto.
+      ci = usuario.getPersona().getCi();
+
+      // Adaptar estas asignaciones a los campos reales de Persona.
+      nombres = usuario.getPersona().getNombre();
+      apellidos = usuario.getPersona().getApellido_pat() + " " + usuario.getPersona().getApellido_mat();
+
+    } else {
+      if (StringUtils.isBlank(nombres)
+          || StringUtils.isBlank(apellidos)
+          || StringUtils.isBlank(ci)) {
+        throw new BusinessException(
+            "Debe proporcionar nombres, apellidos y CI");
+      }
+    }
+
+    RazonCertificado razon = razonCertificadoRepository
+        .findById(request.getRazonCertificadoId())
+        .orElseThrow(() -> new ResourceNotFoundException("Razón de certificado no encontrada"));
+
+    SolicitudCertificado solicitud = new SolicitudCertificado();
+
+    solicitud.setUsuario(usuario);
+    solicitud.setBiblioteca(biblioteca);
+    solicitud.setNombres(nombres);
+    solicitud.setApellidos(apellidos);
+    solicitud.setCi(ci);
+    solicitud.setRazonCertificado(razon);
+    solicitud.setFechaSolicitud(LocalDateTime.now());
+    solicitud.setFechaRespuesta(LocalDateTime.now());
+    solicitud.setAtendidoPor(solicitante);
+    solicitud.setEstado(EstadoSolicitud.APROBADA);
+
+    return solicitudCertificadoRepository.save(solicitud);
+  }
+
   private CertificadoResponse mapToResponse(CertificadoNoDeuda certificado) {
     CertificadoResponse response = new CertificadoResponse();
     response.setId_certificado(certificado.getIdCertificado());
-    response.setUsuario(mapToUsuarioSimple(certificado.getUsuario()));
+    response.setUsuario(mapToUsuarioSimple(certificado.getSolicitud().getUsuario()));
     if (certificado.getBibliotecario() != null) {
       response.setBibliotecario(mapToUsuarioSimple(certificado.getBibliotecario()));
     }
@@ -435,6 +529,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     response.setPdf_generado(certificado.getPdf_generado());
     response.setBibliotecaId(certificado.getBiblioteca().getIdBiblioteca());
     response.setBibliotecaNombre(certificado.getBiblioteca().getNombre());
+    response.setSolicitudId(certificado.getSolicitud().getId());
     response.setUrlDescarga("/api/certificados/" + certificado.getIdCertificado() + "/download");
     return response;
   }
