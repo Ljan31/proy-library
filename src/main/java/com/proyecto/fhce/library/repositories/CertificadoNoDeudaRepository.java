@@ -17,14 +17,16 @@ public interface CertificadoNoDeudaRepository extends JpaRepository<CertificadoN
 
   Optional<CertificadoNoDeuda> findByCodigoVerificacion(String codigoVerificacion);
 
-  List<CertificadoNoDeuda> findByUsuario_IdUsuario(Long usuarioId);
+  List<CertificadoNoDeuda> findBySolicitud_Usuario_IdUsuario(Long usuarioId);
 
-  List<CertificadoNoDeuda> findByUsuario_IdUsuarioAndBiblioteca_IdBiblioteca(
+  boolean existsBySolicitud_Id(Long solicitudId);
+
+  List<CertificadoNoDeuda> findBySolicitud_Usuario_IdUsuarioAndBiblioteca_IdBiblioteca(
       Long usuarioId, Long bibliotecaId);
 
   List<CertificadoNoDeuda> findByEstadoCertificado(EstadoCertificado estadoCertificado);
 
-  @Query("SELECT c FROM CertificadoNoDeuda c WHERE c.usuario.idUsuario = :usuarioId " +
+  @Query("SELECT c FROM CertificadoNoDeuda c WHERE c.solicitud.usuario.idUsuario = :usuarioId " +
       "AND c.estadoCertificado = 'VIGENTE' " +
       "ORDER BY c.fechaEmision DESC")
   List<CertificadoNoDeuda> findCertificadosVigentesByUsuario(@Param("usuarioId") Long usuarioId);
@@ -52,13 +54,18 @@ public interface CertificadoNoDeudaRepository extends JpaRepository<CertificadoN
       @Param("bibliotecaId") Long bibliotecaId,
       @Param("estado") EstadoCertificado estado);
 
-  List<CertificadoNoDeuda> findByBiblioteca_IdBibliotecaAndUsuario_Persona_Ci(
+  List<CertificadoNoDeuda> findByBiblioteca_IdBibliotecaAndSolicitud_Usuario_Persona_Ci(
+      Long bibliotecaId,
+      String ci);
+
+  List<CertificadoNoDeuda> findByBiblioteca_IdBibliotecaAndSolicitud_Ci(
       Long bibliotecaId,
       String ci);
 
   @Query("""
       SELECT c FROM CertificadoNoDeuda c
-      JOIN FETCH c.usuario u
+      JOIN FETCH c.solicitud s
+      LEFT JOIN FETCH s.usuario u
       JOIN FETCH u.persona
       JOIN FETCH c.biblioteca b
       LEFT JOIN FETCH c.bibliotecario bib
