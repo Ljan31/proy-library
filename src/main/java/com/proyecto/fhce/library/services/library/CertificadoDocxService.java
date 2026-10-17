@@ -60,33 +60,49 @@ public class CertificadoDocxService {
   }
 
   private Map<String, String> construirVariables(UserCertificadoResponse userData) {
-    Usuario usuario = usuarioRepo.findById(userData.getUsuarioId())
-        .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     Map<String, String> vars = new LinkedHashMap<>();
     vars.put("nombre", userData.getNombreCompleto());
     vars.put("ci", userData.getCi());
     vars.put("biblioteca", userData.getNombreBiblioteca());
     vars.put("ciudad", "La Paz");
-    vars.put("fecha", LocalDate.now().format(FORMATO_FECHA));
+    vars.put("fecha", userData.getFechaEmision().format(FORMATO_FECHA));
     vars.put("responsable", "Franz Canaza Aduviri");
 
-    // Campo código/matrícula — buscar en UsuarioCarrera si existe
-    String codigo = usuario.getCarreras() != null &&
-        !usuario.getCarreras().isEmpty()
-            ? usuario.getCarreras().iterator().next().getMatricula()
-            : "N/D";
-    vars.put("codigo", codigo);
+    // Valores por defecto para personas no registradas
+    vars.put("codigo", "N/D");
+    vars.put("email", "");
+    vars.put("celular", "");
 
-    // Variables opcionales adicionales
-    if (usuario.getPersona() != null) {
-      vars.put("email", usuario.getPersona().getEmail() != null
-          ? usuario.getPersona().getEmail()
-          : "");
-      vars.put("celular", usuario.getPersona().getCelular() != null
-          ? usuario.getPersona().getCelular()
-          : "");
+    // Consultar Usuario solamente si existe un usuarioId
+    if (userData.getUsuarioId() != null) {
+
+      Usuario usuario = usuarioRepo.findById(userData.getUsuarioId())
+          .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+      // Obtener matrícula
+      if (usuario.getCarreras() != null
+          && !usuario.getCarreras().isEmpty()) {
+
+        String matricula = usuario.getCarreras()
+            .iterator()
+            .next()
+            .getMatricula();
+
+        if (matricula != null && !matricula.isBlank()) {
+          vars.put("codigo", matricula);
+        }
+      }
+
+      // Obtener email y celular
+      if (usuario.getPersona() != null) {
+
+        String email = usuario.getPersona().getEmail();
+        String celular = usuario.getPersona().getCelular();
+
+        vars.put("email", email != null ? email : "");
+        vars.put("celular", celular != null ? celular : "");
+      }
     }
-
     return vars;
   }
 

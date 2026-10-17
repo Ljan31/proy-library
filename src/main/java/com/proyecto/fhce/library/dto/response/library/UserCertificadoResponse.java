@@ -1,5 +1,6 @@
 package com.proyecto.fhce.library.dto.response.library;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class UserCertificadoResponse {
@@ -12,6 +13,7 @@ public class UserCertificadoResponse {
   private String grado;
   private String responsable;
   private String codigoVerificacion;
+  private LocalDateTime fechaEmision;
   private List<MaterialPendienteDTO> materialesPendientes;
 
   public Long getUsuarioId() {
@@ -92,6 +94,14 @@ public class UserCertificadoResponse {
 
   public void setCodigoVerificacion(String codigoVerificacion) {
     this.codigoVerificacion = codigoVerificacion;
+  }
+
+  public LocalDateTime getFechaEmision() {
+    return fechaEmision;
+  }
+
+  public void setFechaEmision(LocalDateTime fechaEmision) {
+    this.fechaEmision = fechaEmision;
   }
 
 }
