@@ -14,6 +14,8 @@ public class UserCertificadoResponse {
   private String responsable;
   private String codigoVerificacion;
   private LocalDateTime fechaEmision;
+  private String cargo;
+  private String nombreResponsable;
   private List<MaterialPendienteDTO> materialesPendientes;
 
   public Long getUsuarioId() {
@@ -102,6 +104,22 @@ public class UserCertificadoResponse {
 
   public void setFechaEmision(LocalDateTime fechaEmision) {
     this.fechaEmision = fechaEmision;
+  }
+
+  public String getCargo() {
+    return cargo;
+  }
+
+  public void setCargo(String cargo) {
+    this.cargo = cargo;
+  }
+
+  public String getNombreResponsable() {
+    return nombreResponsable;
+  }
+
+  public void setNombreResponsable(String nombreResponsable) {
+    this.nombreResponsable = nombreResponsable;
   }
 
 }

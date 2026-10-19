@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.apache.commons.lang3.StringUtils;
 
 import com.proyecto.fhce.library.dto.request.loads.CertificadoRequest;
+import com.proyecto.fhce.library.dto.response.library.FormatoCertificadoResponse;
 import com.proyecto.fhce.library.dto.response.library.UserCertificadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.CertificadoResponse;
 import com.proyecto.fhce.library.dto.response.loads.ValidacionCertificadoResponse;
@@ -35,6 +36,7 @@ import com.proyecto.fhce.library.repositories.SolicitudCertificadoRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 import com.proyecto.fhce.library.services.DocxToPdfConverter;
 import com.proyecto.fhce.library.services.library.CertificadoDocxService;
+import com.proyecto.fhce.library.services.library.FormatoCertificadoService;
 import com.proyecto.fhce.library.services.notificaciones.NotificacionService;
 
 import org.slf4j.Logger;
@@ -54,6 +56,8 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
   private final DocxToPdfConverter pdfConverter;
   private final SolicitudCertificadoRepository solicitudCertificadoRepository;
   private final RazonCertificadoRepository razonCertificadoRepository;
+  private final FormatoCertificadoService formatoService;
+
   // @Autowired
   // private AuditoriaService auditoriaService;
 
@@ -64,7 +68,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
       BibliotecaRepository bibliotecaRepository,
       NotificacionService notificacionService, CertificadoDocxService certificadoDocxService,
       DocxToPdfConverter pdfConverter, SolicitudCertificadoRepository solicitudCertificadoRepository,
-      RazonCertificadoRepository razonCertificadoRepository) {
+      RazonCertificadoRepository razonCertificadoRepository, FormatoCertificadoService formatoService) {
     this.certificadoRepository = certificadoRepository;
     this.usuarioRepository = usuarioRepository;
     this.prestamoRepository = prestamoRepository;
@@ -74,6 +78,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     this.pdfConverter = pdfConverter;
     this.solicitudCertificadoRepository = solicitudCertificadoRepository;
     this.razonCertificadoRepository = razonCertificadoRepository;
+    this.formatoService = formatoService;
   }
 
   public CertificadoResponse generar(CertificadoRequest request, Long solicitanteId,
@@ -316,6 +321,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
 
     // Puede ser null si el titular no está registrado
     Usuario usuario = solicitud.getUsuario();
+    FormatoCertificadoResponse formato = formatoService.obtenerActivo(certificado.getBibliotecaId());
 
     userData.setUsuarioId(
         usuario != null ? usuario.getId_usuario() : null);
@@ -323,8 +329,11 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     userData.setCi(solicitud.getCi());
     userData.setNombreCompleto(solicitud.getNombres() + " " + solicitud.getApellidos());
     userData.setNombreBiblioteca(certificado.getBibliotecaNombre());
+    userData.setCargo(formato.getCargoResponsable());
+    userData.setNombreResponsable(formato.getNombreResponsable());
     userData.setCodigoVerificacion(certificado.getCodigo_verificacion());
     userData.setFechaEmision(certificado.getFechaEmision());
+
     byte[] docx = certificadoDocxService.generar(userData);
     byte[] pdf = pdfConverter.convertir(docx);
     return pdf;

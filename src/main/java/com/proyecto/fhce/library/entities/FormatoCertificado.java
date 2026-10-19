@@ -48,6 +48,12 @@ public class FormatoCertificado {
   @JoinColumn(name = "subido_por")
   private Usuario subidoPor;
 
+  @Column(name = "cargo_responsable", length = 20)
+  private String cargoResponsable;
+
+  @Column(name = "nombre_responsable", length = 150)
+  private String nombreResponsable;
+
   @Column(name = "fecha_creacion", nullable = false)
   private LocalDateTime fechaCreacion;
 
@@ -149,6 +155,22 @@ public class FormatoCertificado {
 
   public void setSelloUrl(String selloUrl) {
     this.selloUrl = selloUrl;
+  }
+
+  public String getCargoResponsable() {
+    return cargoResponsable;
+  }
+
+  public void setCargoResponsable(String cargoResponsable) {
+    this.cargoResponsable = cargoResponsable;
+  }
+
+  public String getNombreResponsable() {
+    return nombreResponsable;
+  }
+
+  public void setNombreResponsable(String nombreResponsable) {
+    this.nombreResponsable = nombreResponsable;
   }
 
 }

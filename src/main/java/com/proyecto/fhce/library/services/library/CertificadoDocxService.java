@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.proyecto.fhce.library.dto.response.library.FormatoCertificadoResponse;
 import com.proyecto.fhce.library.dto.response.library.UserCertificadoResponse;
 import com.proyecto.fhce.library.entities.FormatoCertificado;
 import com.proyecto.fhce.library.entities.Usuario;
@@ -66,7 +67,8 @@ public class CertificadoDocxService {
     vars.put("biblioteca", userData.getNombreBiblioteca());
     vars.put("ciudad", "La Paz");
     vars.put("fecha", userData.getFechaEmision().format(FORMATO_FECHA));
-    vars.put("responsable", "Franz Canaza Aduviri");
+    vars.put("cargo", userData.getCargo());
+    vars.put("responsable", userData.getNombreResponsable());
 
     // Valores por defecto para personas no registradas
     vars.put("codigo", "N/D");

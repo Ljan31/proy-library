@@ -15,6 +15,8 @@ public class FormatoCertificadoResponse {
   private String subidoPor;
   private LocalDateTime fechaCreacion;
   private LocalDateTime fechaActualizacion;
+  private String cargoResponsable;
+  private String nombreResponsable;
 
   public Long getIdFormato() {
     return idFormato;
@@ -110,5 +112,21 @@ public class FormatoCertificadoResponse {
 
   public void setSelloUrl(String selloUrl) {
     this.selloUrl = selloUrl;
+  }
+
+  public String getCargoResponsable() {
+    return cargoResponsable;
+  }
+
+  public void setCargoResponsable(String cargoResponsable) {
+    this.cargoResponsable = cargoResponsable;
+  }
+
+  public String getNombreResponsable() {
+    return nombreResponsable;
+  }
+
+  public void setNombreResponsable(String nombreResponsable) {
+    this.nombreResponsable = nombreResponsable;
   }
 }

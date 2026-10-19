@@ -13,11 +13,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.proyecto.fhce.library.dto.request.library.ActualizarResponsableRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.library.FormatoCertificadoResponse;
 import com.proyecto.fhce.library.entities.FormatoCertificado;
@@ -82,6 +85,27 @@ public class PlantillasController {
         .subirImagen(bibliotecaId, tipo, file, usuarioId, authentication.getAuthorities());
 
     return ResponseEntity.ok(resultado);
+  }
+
+  @PutMapping("/biblioteca/{bibliotecaId}/responsable")
+  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
+  public ResponseEntity<ApiResponse<FormatoCertificadoResponse>> actualizarResponsable(
+      @PathVariable Long bibliotecaId,
+      @RequestBody ActualizarResponsableRequest request,
+      Authentication authentication) {
+
+    Long usuarioId = obtenerUsuarioId(authentication);
+
+    FormatoCertificadoResponse resultado = formatoService.actualizarResponsable(
+        bibliotecaId,
+        request,
+        usuarioId,
+        authentication.getAuthorities());
+
+    return ResponseEntity.ok(
+        ApiResponse.success(
+            "Responsable actualizado correctamente",
+            resultado));
   }
 
   @GetMapping("/biblioteca/{id}/download")

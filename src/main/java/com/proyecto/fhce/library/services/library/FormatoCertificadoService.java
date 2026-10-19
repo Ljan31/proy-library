@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.proyecto.fhce.library.dto.request.library.ActualizarResponsableRequest;
 import com.proyecto.fhce.library.dto.response.library.FormatoCertificadoResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.FormatoCertificado;
@@ -228,6 +229,68 @@ public class FormatoCertificadoService {
     return mapToResponse(formatoRepo.save(formato));
   }
 
+  public FormatoCertificadoResponse actualizarResponsable(
+      Long bibliotecaId,
+      ActualizarResponsableRequest responsable,
+      Long usuarioId,
+      Collection<? extends GrantedAuthority> authorities) {
+
+    Biblioteca biblioteca = bibliotecaRepo.findById(bibliotecaId)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "Biblioteca no encontrada: " + bibliotecaId));
+
+    boolean esAdmin = tieneRol(authorities, "ROLE_ADMIN");
+
+    boolean esEncargado = biblioteca.getEncargados().stream().anyMatch(
+        enc -> enc.getUsuario().getId_usuario().equals(usuarioId));
+
+    if (!esAdmin && !esEncargado) {
+      throw new BusinessException(
+          "No autorizado para esta biblioteca");
+    }
+
+    if (responsable.getCargoResponsable() == null ||
+        (!responsable.getCargoResponsable().equals("COORDINADOR") &&
+            !responsable.getCargoResponsable().equals("DIRECTOR"))) {
+      throw new BusinessException(
+          "El cargo debe ser COORDINADOR o DIRECTOR");
+    }
+
+    if (responsable.getNombreResponsable() == null ||
+        responsable.getNombreResponsable().isBlank()) {
+      throw new BusinessException(
+          "El nombre del responsable es obligatorio");
+    }
+
+    String nombre = responsable.getNombreResponsable().trim();
+
+    if (nombre.length() > 70) {
+      throw new BusinessException(
+          "El nombre del responsable no puede superar 150 caracteres");
+    }
+
+    FormatoCertificado formato = formatoRepo
+        .findByBiblioteca_IdBibliotecaAndActivoTrue(bibliotecaId)
+        .orElseGet(() -> {
+          FormatoCertificado nuevo = new FormatoCertificado();
+          nuevo.setBiblioteca(biblioteca);
+          nuevo.setNombreArchivo("sin-plantilla");
+          nuevo.setRutaArchivo("");
+          nuevo.setVersion(1);
+          nuevo.setActivo(true);
+          nuevo.setFechaCreacion(LocalDateTime.now());
+          return nuevo;
+        });
+
+    formato.setCargoResponsable(responsable.getCargoResponsable());
+    formato.setNombreResponsable(nombre);
+    formato.setFechaActualizacion(LocalDateTime.now());
+
+    FormatoCertificado guardado = formatoRepo.save(formato);
+
+    return mapToResponse(guardado);
+  }
+
   private TipoArchivo resolverTipoImagen(String tipo) {
     return switch (tipo.toLowerCase()) {
       case "firma" -> TipoArchivo.FIRMAS_CERTIFICADO;
@@ -277,6 +340,8 @@ public class FormatoCertificadoService {
     r.setSelloUrl(f.getSelloUrl());
     r.setVersion(f.getVersion());
     r.setActivo(f.getActivo());
+    r.setCargoResponsable(f.getCargoResponsable());
+    r.setNombreResponsable(f.getNombreResponsable());
     r.setFechaCreacion(f.getFechaCreacion());
     r.setFechaActualizacion(f.getFechaActualizacion());
     if (f.getSubidoPor() != null && f.getSubidoPor().getPersona() != null) {
