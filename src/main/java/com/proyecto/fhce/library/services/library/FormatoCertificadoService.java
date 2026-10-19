@@ -79,6 +79,8 @@ public class FormatoCertificadoService {
     Biblioteca biblioteca = bibliotecaRepo.findById(bibliotecaId)
         .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada: " + bibliotecaId));
 
+    Usuario subidoPor = usuarioRepo.findById(usuarioId)
+        .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     // BIBLIOTECARIO solo puede subir para su propia biblioteca
     boolean esAdmin = tieneRol(authorities, "ROLE_ADMIN");
     if (!esAdmin) {
@@ -90,34 +92,42 @@ public class FormatoCertificadoService {
         throw new BusinessException("No puede modificar plantillas de otra biblioteca");
     }
 
-    // Calcular siguiente versión
-    int siguienteVersion = formatoRepo
-        .findByBiblioteca_IdBibliotecaOrderByVersionDesc(bibliotecaId)
-        .stream()
-        .findFirst()
-        .map(f -> f.getVersion() + 1)
-        .orElse(1);
+    List<FormatoCertificado> formatos = formatoRepo.findByBiblioteca_IdBibliotecaOrderByVersionDesc(bibliotecaId);
 
+    FormatoCertificado formato;
+    String rutaAnterior = null;
+
+    if (!formatos.isEmpty()) {
+      formato = formatos.get(0);
+      rutaAnterior = formato.getRutaArchivo();
+      formato.setVersion(formato.getVersion() + 1);
+    } else {
+      formato = new FormatoCertificado();
+      formato.setBiblioteca(biblioteca);
+      formato.setVersion(1);
+      formato.setFechaCreacion(LocalDateTime.now());
+    }
     // StorageService guarda el archivo y devuelve la URL relativa
-    // La validación de .docx la hace StorageService internamente
     String urlArchivo = storageService.guardar(TipoArchivo.PLANTILLAS_CERTIFICADO, archivo);
 
     // Desactivar versión anterior y guardar el archivo
     formatoRepo.desactivarTodas(bibliotecaId);
 
-    Usuario subidoPor = usuarioRepo.findById(usuarioId)
-        .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
-
-    FormatoCertificado formato = new FormatoCertificado();
-    formato.setBiblioteca(biblioteca);
     formato.setNombreArchivo(archivo.getOriginalFilename());
     formato.setRutaArchivo(urlArchivo);
-    formato.setVersion(siguienteVersion);
     formato.setActivo(true);
     formato.setSubidoPor(subidoPor);
     formato.setFechaActualizacion(LocalDateTime.now());
+    FormatoCertificado guardado = formatoRepo.save(formato);
 
-    return mapToResponse(formatoRepo.save(formato));
+    // Eliminar el archivo anterior solo después de guardar el nuevo registro
+    if (rutaAnterior != null && !rutaAnterior.equals(urlArchivo)) {
+      storageService.eliminar(
+          rutaAnterior,
+          TipoArchivo.PLANTILLAS_CERTIFICADO);
+    }
+
+    return mapToResponse(guardado);
   }
 
   // ── Carga en memoria (para generación) ───────────────────────────────────
