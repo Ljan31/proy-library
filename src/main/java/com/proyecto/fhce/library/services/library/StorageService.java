@@ -126,7 +126,7 @@ public class StorageService {
   }
 
   public void eliminar(String urlRelativa, TipoArchivo tipo) {
-    if (urlRelativa == null)
+    if (urlRelativa == null || urlRelativa.isBlank())
       return;
 
     StorageProperties.TipoStorage config = obtenerConfig(tipo);
@@ -137,11 +137,15 @@ public class StorageService {
     String nombreArchivo = urlRelativa.substring(config.getUrlBase().length() + 1);
     Path rutaBase = Paths.get(config.getRutaBase()).toAbsolutePath().normalize();
     Path archivo = rutaBase.resolve(nombreArchivo);
-
+    // Evitar rutas fuera del directorio permitido
+    if (!archivo.startsWith(rutaBase)) {
+      throw new IllegalArgumentException("Ruta de archivo no válida");
+    }
     try {
       Files.deleteIfExists(archivo);
     } catch (IOException e) {
-      // log opcional
+      throw new RuntimeException(
+          "No se pudo eliminar el archivo anterior", e);
     }
   }
 
