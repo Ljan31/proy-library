@@ -311,31 +311,64 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
       Long solicitanteId,
       Collection<? extends GrantedAuthority> authorities) throws Exception, IOException {
 
+    long inicioTotal = System.nanoTime();
+
+    long inicio = System.nanoTime();
     CertificadoResponse certificado = findByIdConAutorizacion(id, solicitanteId, authorities);
-    // Obtener la solicitud asociada al certificado
+    log.info("[TIMING] findByIdConAutorizacion: {} ms",
+        (System.nanoTime() - inicio) / 1_000_000.0);
+
+    inicio = System.nanoTime();
     CertificadoNoDeuda entidad = certificadoRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException(
             "Certificado no encontrado con id: " + id));
-    SolicitudCertificado solicitud = entidad.getSolicitud();
-    UserCertificadoResponse userData = new UserCertificadoResponse();
+    log.info("[TIMING] Consulta certificadoRepository: {} ms",
+        (System.nanoTime() - inicio) / 1_000_000.0);
 
-    // Puede ser null si el titular no está registrado
+    inicio = System.nanoTime();
+    SolicitudCertificado solicitud = entidad.getSolicitud();
     Usuario usuario = solicitud.getUsuario();
+    log.info("[TIMING] Acceso a solicitud y usuario: {} ms",
+        (System.nanoTime() - inicio) / 1_000_000.0);
+
+    inicio = System.nanoTime();
     FormatoCertificadoResponse formato = formatoService.obtenerActivo(certificado.getBibliotecaId());
+    log.info("[TIMING] Obtener formato activo: {} ms",
+        (System.nanoTime() - inicio) / 1_000_000.0);
+
+    inicio = System.nanoTime();
+    UserCertificadoResponse userData = new UserCertificadoResponse();
 
     userData.setUsuarioId(
         usuario != null ? usuario.getId_usuario() : null);
     userData.setBibliotecaId(certificado.getBibliotecaId());
     userData.setCi(solicitud.getCi());
-    userData.setNombreCompleto(solicitud.getNombres() + " " + solicitud.getApellidos());
+    userData.setNombreCompleto(
+        solicitud.getNombres() + " " + solicitud.getApellidos());
     userData.setNombreBiblioteca(certificado.getBibliotecaNombre());
     userData.setCargo(formato.getCargoResponsable());
     userData.setNombreResponsable(formato.getNombreResponsable());
     userData.setCodigoVerificacion(certificado.getCodigo_verificacion());
     userData.setFechaEmision(certificado.getFechaEmision());
 
+    log.info("[TIMING] Construcción de userData: {} ms",
+        (System.nanoTime() - inicio) / 1_000_000.0);
+
+    inicio = System.nanoTime();
     byte[] docx = certificadoDocxService.generar(userData);
+    log.info("[TIMING] Generación DOCX: {} ms ({} bytes)",
+        (System.nanoTime() - inicio) / 1_000_000.0,
+        docx.length);
+
+    inicio = System.nanoTime();
     byte[] pdf = pdfConverter.convertir(docx);
+    log.info("[TIMING] Conversión PDF: {} ms ({} bytes)",
+        (System.nanoTime() - inicio) / 1_000_000.0,
+        pdf.length);
+
+    log.info("[TIMING] TOTAL generarCertificadoPDF: {} ms",
+        (System.nanoTime() - inicioTotal) / 1_000_000.0);
+
     return pdf;
   }
 
