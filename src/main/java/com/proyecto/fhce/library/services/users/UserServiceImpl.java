@@ -200,6 +200,10 @@ public class UserServiceImpl implements UserService {
       usuario.setEnabled(request.getEnabled());
     if (request.getCi() != null)
       persona.setCi(request.getCi());
+    if (request.getUsername() != null) {
+
+      usuario.setUsername(request.getUsername());
+    }
     Usuario updated = usuarioRepository.save(usuario);
     // auditoriaService.registrar("UPDATE_USER", "users", updated.getId_usuario(),
     // null, updated.getUsername());

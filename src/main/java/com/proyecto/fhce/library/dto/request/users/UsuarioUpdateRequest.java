@@ -1,6 +1,7 @@
 package com.proyecto.fhce.library.dto.request.users;
 
 public class UsuarioUpdateRequest {
+  private String username;
   private String nombre;
   private String apellido_pat;
   private String apellido_mat;
@@ -72,6 +73,14 @@ public class UsuarioUpdateRequest {
 
   public void setCi(String ci) {
     this.ci = ci;
+  }
+
+  public String getUsername() {
+    return username;
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
   }
 
 }
