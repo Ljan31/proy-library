@@ -198,7 +198,15 @@ public class GlobalExceptionHandler {
     if (root != null && root.getMessage() != null) {
 
       String rootMessage = root.getMessage();
+      if (rootMessage.contains("username")
+          && (rootMessage.contains("duplicate key")
+              || rootMessage.contains("llave duplicada")
+              || rootMessage.contains("unique constraint")
+              || rootMessage.contains("restricción de unicidad"))) {
 
+        message = "El nombre de usuario ya está registrado";
+
+      }
       // Certificado sin usuario
       if (rootMessage.contains("no_debt_certificates")
           && rootMessage.contains("user_id")) {
