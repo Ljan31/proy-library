@@ -108,17 +108,17 @@ public class DataSeedService {
     createUserIfNotExists("admin", "Admin", "System", "n/n", "11111",
         "admin@localhost", "11111", "Admin123!", RoleName.ROLE_ADMIN);
 
-    createUserIfNotExists("crali", "crali", "", "", "10011",
-        "crali@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
-    createUserIfNotExists("maria", "Maria", "Lopez", "Diaz", "7654321",
-        "estudiante@localhost", "33333", "123456", RoleName.ROLE_ESTUDIANTE);
+    // createUserIfNotExists("crali", "crali", "", "", "10011",
+    // "crali@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
+    // createUserIfNotExists("maria", "Maria", "Lopez", "Diaz", "7654321",
+    // "estudiante@localhost", "33333", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    // Bibliotecarios
-    createUserIfNotExists("historia", "historia", "", "", "10021",
-        "historia@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
+    // // Bibliotecarios
+    // createUserIfNotExists("historia", "historia", "", "", "10021",
+    // "historia@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
 
-    createUserIfNotExists("bibliotecario3", "bibliotecario3", "", "", "10031",
-        "bibliotecario3@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
+    // createUserIfNotExists("bibliotecario3", "bibliotecario3", "", "", "10031",
+    // "bibliotecario3@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
     // Estudiantes (10)
     // createUserIfNotExists("carlos", "Carlos", "Perez", "Lopez", "12",
     // "est2@localhost", "710002", "123456", RoleName.ROLE_ESTUDIANTE);
