@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.services.DataSeedService;
 
-@Profile({ "dev", "test", "docker" })
+@Profile({ "dev", "test", "docker", "prod" })
 @RestController
 @RequestMapping("/api/seed")
 public class DataSeedController {
