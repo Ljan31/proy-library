@@ -107,19 +107,19 @@ public class DataSeedService {
       System.out.println("Permisos por defecto creados");
     }
     // ==================== 3️⃣ CREAR USUARIOS ====================
-    createUserIfNotExists("admin", "Admin", "System", "n/n", "11111",
+    createUserIfNotExists("admin", "Admin", "System", "n/n", "111110",
         "admin@localhost", "11111", "Admin123!", RoleName.ROLE_ADMIN);
 
-    createUserIfNotExists("crali", "crali", "", "", "10011",
+    createUserIfNotExists("crali", "crali", "n/n", "n/n", "10011",
         "crali@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
     createUserIfNotExists("maria", "Maria", "Lopez", "Diaz", "7654321",
         "estudiante@localhost", "33333", "123456", RoleName.ROLE_ESTUDIANTE);
 
     // Bibliotecarios
-    createUserIfNotExists("historia", "historia", "", "", "10021",
+    createUserIfNotExists("historia", "historia", "n/n", "n/n", "10021",
         "historia@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
 
-    createUserIfNotExists("bibliotecario3", "bibliotecario3", "", "", "10031",
+    createUserIfNotExists("bibliotecario3", "bibliotecario3", "n/n", "n/n", "10031",
         "bibliotecario3@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
     // Estudiantes (10)
     createUserIfNotExists("carlos", "Carlos", "Perez", "Lopez", "12000",
