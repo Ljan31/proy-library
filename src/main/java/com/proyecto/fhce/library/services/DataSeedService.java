@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.Carrera;
@@ -77,6 +78,7 @@ public class DataSeedService {
     this.passwordEncoder = passwordEncoder;
   }
 
+  @Transactional
   public String seed() {
     // 1️⃣ Crear roles
     for (RoleName roleName : RoleName.values()) {
@@ -108,47 +110,47 @@ public class DataSeedService {
     createUserIfNotExists("admin", "Admin", "System", "n/n", "11111",
         "admin@localhost", "11111", "Admin123!", RoleName.ROLE_ADMIN);
 
-    // createUserIfNotExists("crali", "crali", "", "", "10011",
-    // "crali@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
-    // createUserIfNotExists("maria", "Maria", "Lopez", "Diaz", "7654321",
-    // "estudiante@localhost", "33333", "123456", RoleName.ROLE_ESTUDIANTE);
+    createUserIfNotExists("crali", "crali", "", "", "10011",
+        "crali@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
+    createUserIfNotExists("maria", "Maria", "Lopez", "Diaz", "7654321",
+        "estudiante@localhost", "33333", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    // // Bibliotecarios
-    // createUserIfNotExists("historia", "historia", "", "", "10021",
-    // "historia@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
+    // Bibliotecarios
+    createUserIfNotExists("historia", "historia", "", "", "10021",
+        "historia@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
 
-    // createUserIfNotExists("bibliotecario3", "bibliotecario3", "", "", "10031",
-    // "bibliotecario3@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
+    createUserIfNotExists("bibliotecario3", "bibliotecario3", "", "", "10031",
+        "bibliotecario3@localhost", "", "123456", RoleName.ROLE_BIBLIOTECARIO);
     // Estudiantes (10)
-    // createUserIfNotExists("carlos", "Carlos", "Perez", "Lopez", "12",
-    // "est2@localhost", "710002", "123456", RoleName.ROLE_ESTUDIANTE);
+    createUserIfNotExists("carlos", "Carlos", "Perez", "Lopez", "12000",
+        "est2@localhost", "710002", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    // createUserIfNotExists("lucia", "Lucia", "Gomez", "Ramos", "13",
-    // "est3@localhost", "710003", "123456", RoleName.ROLE_ESTUDIANTE);
+    createUserIfNotExists("lucia", "Lucia", "Gomez", "Ramos", "13000",
+        "est3@localhost", "710003", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    // createUserIfNotExists("diego", "Diego", "Fernandez", "Torrez", "14",
-    // "est4@localhost", "710004", "123456", RoleName.ROLE_ESTUDIANTE);
+    createUserIfNotExists("diego", "Diego", "Fernandez", "Torrez", "14000",
+        "est4@localhost", "710004", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    // createUserIfNotExists("sofia", "Sofia", "Vargas", "Mendoza", "15",
-    // "est5@localhost", "710005", "123456", RoleName.ROLE_ESTUDIANTE);
+    createUserIfNotExists("sofia", "Sofia", "Vargas", "Mendoza", "15000",
+        "est5@localhost", "710005", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    // createUserIfNotExists("jorge", "Jorge", "Castro", "Quisbert", "16",
-    // "est6@localhost", "710006", "123456", RoleName.ROLE_ESTUDIANTE);
+    createUserIfNotExists("jorge", "Jorge", "Castro", "Quisbert", "16000",
+        "est6@localhost", "710006", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    // createUserIfNotExists("elena", "Elena", "Flores", "Condori", "17",
-    // "est7@localhost", "710007", "123456", RoleName.ROLE_ESTUDIANTE);
+    createUserIfNotExists("elena", "Elena", "Flores", "Condori", "17000",
+        "est7@localhost", "710007", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    // createUserIfNotExists("miguel", "Miguel", "Huanca", "Perez", "18",
-    // "est8@localhost", "710008", "123456", RoleName.ROLE_ESTUDIANTE);
+    createUserIfNotExists("miguel", "Miguel", "Huanca", "Perez", "18000",
+        "est8@localhost", "710008", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    // createUserIfNotExists("alejandra", "alejandra", "Rojas", "Loza", "19",
-    // "est9@localhost", "710009", "123456", RoleName.ROLE_ESTUDIANTE);
+    createUserIfNotExists("alejandra", "alejandra", "Rojas", "Loza", "19000",
+        "est9@localhost", "710009", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    // createUserIfNotExists("andres", "Andres", "Gutierrez", "Silva", "21",
-    // "est10@localhost", "710010", "123456", RoleName.ROLE_ESTUDIANTE);
+    createUserIfNotExists("andres", "Andres", "Gutierrez", "Silva", "21000",
+        "est10@localhost", "710010", "123456", RoleName.ROLE_ESTUDIANTE);
 
-    // createUserIfNotExists("paola", "Paola", "Navarro", "Ortiz", "22",
-    // "est11@localhost", "710011", "123456", RoleName.ROLE_ESTUDIANTE);
+    createUserIfNotExists("paola", "Paola", "Navarro", "Ortiz", "22000",
+        "est11@localhost", "710011", "123456", RoleName.ROLE_ESTUDIANTE);
     // ==================== 4️⃣ ASIGNAR PERMISOS A ROLES ====================
     assignPermisos();
     seedCarrerasYBibliotecas();
@@ -175,7 +177,7 @@ public class DataSeedService {
       persona.setCi(ci);
       persona.setEmail(email);
       persona.setCelular(celular);
-      persona = personaRepository.save(persona);
+      // persona = personaRepository.save(persona);
 
       Usuario usuario = new Usuario();
       usuario.setUsername(username);
