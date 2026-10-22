@@ -8,27 +8,19 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.proyecto.fhce.library.config.PrestamoProperties;
 import com.proyecto.fhce.library.dto.ReglasPrestamoDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.EstadoSancionUsuarioDTO;
 import com.proyecto.fhce.library.dto.request.loads.DevolucionRequest;
 import com.proyecto.fhce.library.dto.request.loads.FiltroPrestamoRequest;
 import com.proyecto.fhce.library.dto.request.loads.PrestamoRequest;
 import com.proyecto.fhce.library.dto.request.loads.RenovacionRequest;
-import com.proyecto.fhce.library.dto.response.library.BibliotecaSimpleResponse;
-import com.proyecto.fhce.library.dto.response.library.EdicionSimpleResponse;
-import com.proyecto.fhce.library.dto.response.library.EjemplarResponse;
-import com.proyecto.fhce.library.dto.response.library.LibroSimpleResponse;
-import com.proyecto.fhce.library.dto.response.loads.ConfiguracionResueltaDTO;
 import com.proyecto.fhce.library.dto.response.loads.EstadoPrestamoUsuarioDTO;
 import com.proyecto.fhce.library.dto.response.loads.PrestamoResponse;
-import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.HistorialEstadoEjemplar;
@@ -37,7 +29,6 @@ import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
 import com.proyecto.fhce.library.enums.EstadoReserva;
-import com.proyecto.fhce.library.enums.TipoPrestamo;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.mapper.PrestamoMapper;
@@ -48,8 +39,6 @@ import com.proyecto.fhce.library.repositories.HistorialEstadoEjemplarRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.ReservaRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
-import com.proyecto.fhce.library.services.library.ReservaService;
-import com.proyecto.fhce.library.services.library.ReservaServiceImpl;
 
 @Service
 @Transactional(readOnly = true)
@@ -57,44 +46,52 @@ public class PrestamoServiceImpl implements PrestamoService {
 
   private static final Logger log = LoggerFactory.getLogger(PrestamoServiceImpl.class);
 
-  @Autowired
-  private PrestamoRepository prestamoRepository;
+  private final PrestamoRepository prestamoRepository;
 
-  @Autowired
-  private EjemplarRepository ejemplarRepository;
+  private final EjemplarRepository ejemplarRepository;
 
-  @Autowired
-  private UserRepository usuarioRepository;
+  private final UserRepository usuarioRepository;
 
-  @Autowired
-  private BibliotecaRepository bibliotecaRepository;
+  private final BibliotecaRepository bibliotecaRepository;
 
-  @Autowired
-  private HistorialEstadoEjemplarRepository historialRepository;
+  private final HistorialEstadoEjemplarRepository historialRepository;
 
-  @Autowired
-  private BibliotecaEncargadoRepository bibliotecaEncargadoRepository;
+  private final BibliotecaEncargadoRepository bibliotecaEncargadoRepository;
 
-  @Autowired
-  private PrestamoMapper prestamoMapper;
+  private final PrestamoMapper prestamoMapper;
 
   // Integraciones con otros módulos
-  @Autowired
-  private ConfiguracionPrestamoService configuracionService;
+  private final ConfiguracionPrestamoService configuracionService;
 
-  @Autowired
-  private ReservaRepository reservaRepository;
+  private final ReservaRepository reservaRepository;
 
-  @Autowired
-  private AsignacionReservaService asignacionReservaService;
+  private final AsignacionReservaService asignacionReservaService;
 
-  @Autowired
-  private SancionService sancionService;
+  private final SancionService sancionService;
   // @Autowired
   // private NotificacionService notificacionService;
 
   // @Autowired
   // private AuditoriaService auditoriaService;
+
+  public PrestamoServiceImpl(PrestamoRepository prestamoRepository, EjemplarRepository ejemplarRepository,
+      UserRepository usuarioRepository, BibliotecaRepository bibliotecaRepository,
+      HistorialEstadoEjemplarRepository historialRepository,
+      BibliotecaEncargadoRepository bibliotecaEncargadoRepository, PrestamoMapper prestamoMapper,
+      ConfiguracionPrestamoService configuracionService, ReservaRepository reservaRepository,
+      AsignacionReservaService asignacionReservaService, SancionService sancionService) {
+    this.prestamoRepository = prestamoRepository;
+    this.ejemplarRepository = ejemplarRepository;
+    this.usuarioRepository = usuarioRepository;
+    this.bibliotecaRepository = bibliotecaRepository;
+    this.historialRepository = historialRepository;
+    this.bibliotecaEncargadoRepository = bibliotecaEncargadoRepository;
+    this.prestamoMapper = prestamoMapper;
+    this.configuracionService = configuracionService;
+    this.reservaRepository = reservaRepository;
+    this.asignacionReservaService = asignacionReservaService;
+    this.sancionService = sancionService;
+  }
 
   // ==================== QUERIES ====================
 
@@ -584,50 +581,6 @@ public class PrestamoServiceImpl implements PrestamoService {
     // notificacionService.enviarNotificacionProximoVencimiento(prestamo);
     // }
   }
-
-  // ==================== PRIVATE HELPERS ====================
-
-  // private ConfiguracionPrestamo obtenerConfiguracion(Usuario usuario,
-  // Biblioteca biblioteca) {
-  // // Try user-specific config first, then library-level, then global default
-  // return configuracionRepository
-  // .findByUsuarioTipoAndBiblioteca(usuario.getTipoUsuario(),
-  // biblioteca.getIdBiblioteca())
-  // .orElseGet(() -> configuracionRepository
-  // .findDefaultByBiblioteca(biblioteca.getIdBiblioteca())
-  // .orElseGet(() -> configuracionRepository
-  // .findGlobalDefault()
-  // .orElseThrow(() -> new BusinessException(
-  // "No se encontró configuración de préstamo para esta biblioteca"))));
-  // }
-
-  // private void crearSancionPorRetraso(Prestamo prestamo) {
-  // long diasRetraso = java.time.temporal.ChronoUnit.DAYS.between(
-  // prestamo.getFechaDevolucionEstimada(),
-  // LocalDate.now());
-
-  // if (diasRetraso <= 0)
-  // return;
-
-  // Sancion sancion = new Sancion();
-  // sancion.setUsuario(prestamo.getUsuario());
-  // sancion.setPrestamo(prestamo);
-  // sancion.setTipoSancion(TipoSancion.RETRASO_DEVOLUCION);
-  // sancion.setDiasRetraso((int) diasRetraso);
-  // sancion.setFechaInicio(LocalDate.now());
-  // sancion.setFechaFin(LocalDate.now().plusDays(diasRetraso));
-  // sancion.setDescripcion("Sanción automática por retraso de " + diasRetraso + "
-  // día(s)");
-  // sancion.setActiva(true);
-
-  // sancionRepository.save(sancion);
-  // notificacionService.enviarNotificacionSancion(sancion);
-
-  // auditoriaService.registrar("CREATE_SANCTION", "sanciones", sancion.getId(),
-  // null, "Sanción creada por retraso de " + diasRetraso + " día(s) en préstamo
-  // #"
-  // + prestamo.getId_prestamo());
-  // }
 
   private Usuario validarEncargadoBiblioteca(Long bibliotecarioId, Biblioteca biblioteca) {
     Usuario bibliotecario = usuarioRepository.findById(bibliotecarioId)
