@@ -16,6 +16,7 @@ import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.mapper.ConfiguracionPrestamoMapper;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.ConfiguracionPrestamoRepository;
+import com.proyecto.fhce.library.services.AuditoriaService;
 
 @Service
 @Transactional(readOnly = true)
@@ -24,19 +25,17 @@ public class ConfiguracionPrestamoService {
   private final ConfiguracionPrestamoRepository configuracionRepository;
   private final BibliotecaRepository bibliotecaRepository;
   private final ConfiguracionPrestamoMapper mapper;
+  private final AuditoriaService auditoriaService;
 
   public ConfiguracionPrestamoService(
       ConfiguracionPrestamoRepository configuracionRepository,
       BibliotecaRepository bibliotecaRepository,
-      ConfiguracionPrestamoMapper mapper) {
+      ConfiguracionPrestamoMapper mapper, AuditoriaService auditoriaService) {
     this.configuracionRepository = configuracionRepository;
     this.bibliotecaRepository = bibliotecaRepository;
     this.mapper = mapper;
+    this.auditoriaService = auditoriaService;
   }
-
-  // ─────────────────────────────────────────────
-  // CRUD
-  // ─────────────────────────────────────────────
 
   @Transactional
   public ConfiguracionPrestamoResponseDTO crear(ConfiguracionPrestamoRequestDTO request) {
@@ -44,6 +43,15 @@ public class ConfiguracionPrestamoService {
 
     Biblioteca biblioteca = buscarBibliotecaOLanzarError(request.getBibliotecaId());
     ConfiguracionPrestamo nueva = mapper.toEntity(request, biblioteca);
+
+    ConfiguracionPrestamo guardada = configuracionRepository.save(nueva);
+
+    auditoriaService.registrar(
+        "CREAR",
+        "configuracion_prestamo",
+        guardada.getIdConfig(),
+        null,
+        null);
 
     return mapper.toResponseDTO(configuracionRepository.save(nueva));
   }
@@ -56,13 +64,25 @@ public class ConfiguracionPrestamoService {
 
     Biblioteca biblioteca = buscarBibliotecaOLanzarError(request.getBibliotecaId());
     mapper.actualizarEntidad(existente, request, biblioteca);
-
+    auditoriaService.registrar(
+        "ACTUALIZAR",
+        "configuracion_prestamo",
+        id,
+        null,
+        null);
     return mapper.toResponseDTO(existente);
   }
 
   @Transactional
   public void eliminar(Long id) {
+    ConfiguracionPrestamo existente = buscarConfiguracionOLanzarError(id);
     configuracionRepository.delete(buscarConfiguracionOLanzarError(id));
+    auditoriaService.registrar(
+        "ELIMINAR",
+        "configuracion_prestamo",
+        id,
+        existente.toString(),
+        null);
   }
 
   public ConfiguracionPrestamoResponseDTO buscarPorId(Long id) {

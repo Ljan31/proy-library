@@ -13,15 +13,23 @@ import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.PersonaRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.AuditoriaService;
 
 @Service
+@Transactional(readOnly = true)
 public class PersonaServiceImpl implements PersonaService {
-  @Autowired
-  private PersonaRepository personaRepository;
+  private final PersonaRepository personaRepository;
+  private final UserRepository userRepository;
+  private final AuditoriaService auditoriaService;
 
-  @Autowired
-  private UserRepository userRepository;
+  public PersonaServiceImpl(PersonaRepository personaRepository, UserRepository userRepository,
+      AuditoriaService auditoriaService) {
+    this.personaRepository = personaRepository;
+    this.userRepository = userRepository;
+    this.auditoriaService = auditoriaService;
+  }
 
+  @Transactional
   public PersonaResponse create(PersonaRequest request) {
     if (personaRepository.existsByCi(request.getCi())) {
       throw new DuplicateResourceException("Ya existe una persona con CI: " + request.getCi());
@@ -44,13 +52,22 @@ public class PersonaServiceImpl implements PersonaService {
     persona.setEmail(request.getEmail());
 
     Persona saved = personaRepository.save(persona);
+    PersonaResponse response = mapToResponse(saved);
+    auditoriaService.registrar(
+        "CREAR",
+        "Personas",
+        saved.getId_persona(),
+        null,
+        response);
     return mapToResponse(saved);
   }
 
+  @Transactional
   public PersonaResponse update(Long id, PersonaRequest request) {
     Persona persona = personaRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Persona no encontrada con id: " + id));
-
+    // Capturar el estado anterior antes de modificar
+    PersonaResponse valoresAnteriores = mapToResponse(persona);
     // Validar CI único si cambió
     if (persona.getCi() != request.getCi() &&
         personaRepository.existsByCi(request.getCi())) {
@@ -77,10 +94,35 @@ public class PersonaServiceImpl implements PersonaService {
     persona.setEmail(request.getEmail());
 
     Persona updated = personaRepository.save(persona);
+    PersonaResponse valoresNuevos = mapToResponse(updated);
+
+    auditoriaService.registrar(
+        "ACTUALIZAR",
+        "personas",
+        updated.getId_persona(),
+        valoresAnteriores,
+        valoresNuevos);
     return mapToResponse(updated);
   }
 
-  @Transactional(readOnly = true)
+  @Transactional
+  public void delete(Long id) {
+    Persona persona = personaRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "Persona no encontrada con id: " + id));
+
+    PersonaResponse valoresAnteriores = mapToResponse(persona);
+
+    personaRepository.delete(persona);
+
+    auditoriaService.registrar(
+        "ELIMINAR",
+        "personas",
+        persona.getId_persona(),
+        valoresAnteriores,
+        null);
+  }
+
   public PersonaResponse findById(Long id) {
     Persona persona = personaRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Persona no encontrada con id: " + id));

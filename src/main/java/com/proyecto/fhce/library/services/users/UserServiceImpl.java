@@ -43,33 +43,36 @@ import com.proyecto.fhce.library.repositories.PersonaRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.RoleRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.AuditoriaService;
 
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
 
-  @Autowired
-  private UserRepository usuarioRepository;
+  private final UserRepository usuarioRepository;
+  private final PersonaService personaService;
+  private final PersonaRepository personaRepository;
+  private final RoleRepository roleRepository;
+  private final BibliotecaEncargadoRepository bibliotecaEncargadoRepository;
+  private final CarreraRepository carreraRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final PrestamoRepository prestamoRepository;
+  private final AuditoriaService auditoriaService;
 
-  @Autowired
-  private PersonaService personaService;
-
-  @Autowired
-  private PersonaRepository personaRepository;
-
-  @Autowired
-  private RoleRepository roleRepository;
-
-  @Autowired
-  BibliotecaEncargadoRepository bibliotecaEncargadoRepository;
-
-  @Autowired
-  private CarreraRepository carreraRepository;
-
-  @Autowired
-  private PasswordEncoder passwordEncoder;
-  @Autowired
-  private PrestamoRepository prestamoRepository;
+  public UserServiceImpl(UserRepository usuarioRepository, PersonaService personaService,
+      PersonaRepository personaRepository, RoleRepository roleRepository,
+      BibliotecaEncargadoRepository bibliotecaEncargadoRepository, CarreraRepository carreraRepository,
+      PasswordEncoder passwordEncoder, PrestamoRepository prestamoRepository, AuditoriaService auditoriaService) {
+    this.usuarioRepository = usuarioRepository;
+    this.personaService = personaService;
+    this.personaRepository = personaRepository;
+    this.roleRepository = roleRepository;
+    this.bibliotecaEncargadoRepository = bibliotecaEncargadoRepository;
+    this.carreraRepository = carreraRepository;
+    this.passwordEncoder = passwordEncoder;
+    this.prestamoRepository = prestamoRepository;
+    this.auditoriaService = auditoriaService;
+  }
 
   public UsuarioResponse create(RegisterRequest request) {
     if (usuarioRepository.existsByUsername(request.getUsername())) {
@@ -106,8 +109,13 @@ public class UserServiceImpl implements UserService {
     usuario.setRoles(roles);
 
     Usuario saved = usuarioRepository.save(usuario);
-    // auditoriaService.registrar("CREATE_USER", "users", saved.getId_usuario(),
-    // null, saved.getUsername());
+    UsuarioResponse response = mapToResponse(saved);
+    auditoriaService.registrar(
+        "CREAR_USUARIO",
+        "usuarios",
+        saved.getId_usuario(),
+        null,
+        response);
 
     return mapToResponse(saved);
   }
@@ -139,8 +147,6 @@ public class UserServiceImpl implements UserService {
     usuario.setRoles(roles);
 
     Usuario saved = usuarioRepository.save(usuario);
-    // auditoriaService.registrar("CREATE_USER", "users", saved.getId_usuario(),
-    // null, saved.getUsername());
     // if (request.getUserCarreras() != null &&
     // !request.getUserCarreras().isEmpty()) {
 
@@ -177,12 +183,22 @@ public class UserServiceImpl implements UserService {
     }
 
     usuarioRepository.save(saved);
+
+    UsuarioResponse response = mapToResponse(saved);
+
+    auditoriaService.registrar(
+        "CREAR_EST",
+        "usuarios",
+        saved.getId_usuario(),
+        null,
+        response);
     return mapToResponse(saved);
   }
 
   public UsuarioResponse update(Long id, UsuarioUpdateRequest request) {
     Usuario usuario = usuarioRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
+    UsuarioResponse valoresAnteriores = mapToResponse(usuario);
 
     Persona persona = usuario.getPersona();
 
@@ -205,8 +221,14 @@ public class UserServiceImpl implements UserService {
       usuario.setUsername(request.getUsername());
     }
     Usuario updated = usuarioRepository.save(usuario);
-    // auditoriaService.registrar("UPDATE_USER", "users", updated.getId_usuario(),
-    // null, updated.getUsername());
+    UsuarioResponse valoresNuevos = mapToResponse(updated);
+
+    auditoriaService.registrar(
+        "ACTUALIZAR_USUARIO",
+        "usuarios",
+        updated.getId_usuario(),
+        valoresAnteriores,
+        valoresNuevos);
 
     return mapToResponse(updated);
   }
@@ -226,8 +248,12 @@ public class UserServiceImpl implements UserService {
     usuario.setPassword(passwordEncoder.encode(request.getNewPassword()));
     usuarioRepository.save(usuario);
 
-    // auditoriaService.registrar("CHANGE_PASSWORD", "users",
-    // usuario.getId_usuario(), null, usuario.getUsername());
+    auditoriaService.registrar(
+        "CAMBIAR_PASSWORD",
+        "usuarios",
+        usuario.getId_usuario(),
+        null,
+        "El usuario cambió su contraseña");
   }
 
   @Override
@@ -260,24 +286,29 @@ public class UserServiceImpl implements UserService {
     // usuario.setMustChangePassword(true);
 
     usuarioRepository.save(usuario);
-
-    return new AdminResetPasswordResponse(
-        temporaryPassword);
+    auditoriaService.registrar(
+        "RESTABLECER_PASSWORD_ADMIN",
+        "usuarios",
+        usuario.getId_usuario(),
+        null,
+        "Un administrador restableció la contraseña del usuario");
+    return new AdminResetPasswordResponse(temporaryPassword);
   }
 
   public void toggleEnabled(Long id) {
     Usuario usuario = usuarioRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
+    boolean estadoAnterior = usuario.isEnabled();
 
     usuario.setEnabled(!usuario.isEnabled());
-    usuarioRepository.save(usuario);
+    Usuario actualizado = usuarioRepository.save(usuario);
 
-    // auditoriaService.registrar(
-    // usuario.getEnabled() ? "ENABLE_USER" : "DISABLE_USER",
-    // "users",
-    // usuario.getId_usuario(),
-    // null,
-    // usuario.getUsername());
+    auditoriaService.registrar(
+        actualizado.isEnabled() ? "ACTIVAR_USUARIO" : "DESACTIVAR_USUARIO",
+        "usuarios",
+        actualizado.getId_usuario(),
+        estadoAnterior ? "enabled=true" : "enabled=false",
+        actualizado.isEnabled() ? "enabled=true" : "enabled=false");
   }
 
   public void delete(Long id) {
@@ -293,8 +324,15 @@ public class UserServiceImpl implements UserService {
           "No se puede eliminar el usuario porque tiene historial como encargado de biblioteca");
     }
     usuario.getRoles().clear();
+    UsuarioResponse valoresAnteriores = mapToResponse(usuario);
 
     usuarioRepository.delete(usuario);
+    auditoriaService.registrar(
+        "ELIMINAR_USUARIO",
+        "usuarios",
+        id,
+        valoresAnteriores,
+        null);
   }
 
   @Transactional(readOnly = true)
@@ -420,48 +458,5 @@ public class UserServiceImpl implements UserService {
 
     return response;
   }
-  // @Override
-  // @Transactional
-  // public Optional<Usuario> update(Usuario user, Long id) {
 
-  // Optional<Usuario> userOptional = this.findById(id);
-  // return userOptional.map(existing -> {
-  // existing.setUsername(user.getUsername());
-  // // existing.setPassword(user.getPassword());
-
-  // if (user.isEnabled() != null)
-  // existing.setEnabled(user.isEnabled());
-  // // existing.setEmail(user.getEmail());
-
-  // // existing.setRoles(user.getRoles());
-  // // existing.setRoles(getRoleOptional(user));
-
-  // return Optional.of(userRepository.save(existing));
-  // }).orElseGet(() -> Optional.empty());
-
-  // }
-
-  // @Override
-  // @Transactional
-  // public void delete(Long id) {
-  // userRepository.deleteById(id);
-  // }
-
-  // private List<Role> getRoleOptional(Usuario user) {
-  // List<Role> roles = new ArrayList<>();
-  // Optional<Role> roleOptional = roleRepository.findByName("ROLE_USER");
-  // roleOptional.ifPresent(roles::add);
-
-  // if (user.isAdmin()) {
-  // Optional<Role> adminRoleOptional = roleRepository.findByName("ROLE_ADMIN");
-  // adminRoleOptional.ifPresent(roles::add);
-  // }
-
-  // return roles;
-  // }
-
-  // @Override
-  // public boolean existsByUsername(String username) {
-  // return userRepository.existsByUsername(username);
-  // }
 }

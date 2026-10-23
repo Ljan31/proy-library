@@ -39,6 +39,7 @@ import com.proyecto.fhce.library.repositories.HistorialEstadoEjemplarRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.ReservaRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.AuditoriaService;
 
 @Service
 @Transactional(readOnly = true)
@@ -72,14 +73,15 @@ public class PrestamoServiceImpl implements PrestamoService {
   // private NotificacionService notificacionService;
 
   // @Autowired
-  // private AuditoriaService auditoriaService;
+  private final AuditoriaService auditoriaService;
 
   public PrestamoServiceImpl(PrestamoRepository prestamoRepository, EjemplarRepository ejemplarRepository,
       UserRepository usuarioRepository, BibliotecaRepository bibliotecaRepository,
       HistorialEstadoEjemplarRepository historialRepository,
       BibliotecaEncargadoRepository bibliotecaEncargadoRepository, PrestamoMapper prestamoMapper,
       ConfiguracionPrestamoService configuracionService, ReservaRepository reservaRepository,
-      AsignacionReservaService asignacionReservaService, SancionService sancionService) {
+      AsignacionReservaService asignacionReservaService, SancionService sancionService,
+      AuditoriaService auditoriaService) {
     this.prestamoRepository = prestamoRepository;
     this.ejemplarRepository = ejemplarRepository;
     this.usuarioRepository = usuarioRepository;
@@ -91,6 +93,7 @@ public class PrestamoServiceImpl implements PrestamoService {
     this.reservaRepository = reservaRepository;
     this.asignacionReservaService = asignacionReservaService;
     this.sancionService = sancionService;
+    this.auditoriaService = auditoriaService;
   }
 
   // ==================== QUERIES ====================
@@ -355,8 +358,8 @@ public class PrestamoServiceImpl implements PrestamoService {
         saved.getIdPrestamo(), usuario.getId_usuario(), ejemplar.getIdEjemplar());
 
     // // Audit
-    // auditoriaService.registrar("CREATE_LOAN", "loans", saved.getId_prestamo(),
-    // null, "Préstamo creado para usuario: " + usuario.getUsername());
+    auditoriaService.registrar("CREAR_PRESTAMO", "Prestamos", saved.getIdPrestamo(),
+        null, "Préstamo creado para usuario: " + usuario.getUsername());
 
     // // Notification
     // notificacionService.enviarNotificacionPrestamo(saved);
@@ -443,9 +446,9 @@ public class PrestamoServiceImpl implements PrestamoService {
     // }
 
     // // Audit
-    // auditoriaService.registrar("RETURN_LOAN", "loans", updated.getId_prestamo(),
-    // null, "Devolución registrada por bibliotecario: " +
-    // bibliotecario.getUsername());
+    auditoriaService.registrar("DEVOLUCION_PRESTAMO", "Prestamos", updated.getIdPrestamo(),
+        null, "Devolución registrada por bibliotecario: " +
+            bibliotecario.getUsername());
 
     // // Notification
     // notificacionService.enviarNotificacionDevolucion(updated);
@@ -535,9 +538,9 @@ public class PrestamoServiceImpl implements PrestamoService {
     log.info("Préstamo renovado: id={} renovación #{}", renewed.getIdPrestamo(), renewed.getRenovaciones());
 
     // // Audit
-    // auditoriaService.registrar("RENEW_LOAN", "loans", renewed.getId_prestamo(),
-    // null, "Renovación #" + renewed.getRenovaciones() + ": " +
-    // request.getMotivo());
+    auditoriaService.registrar("RENOVAR_PRESTAMO", "Prestamos", renewed.getIdPrestamo(),
+        null, "Renovación #" + renewed.getRenovaciones() + ": " +
+            request.getMotivo());
 
     // // Notification
     // notificacionService.enviarNotificacionRenovacion(renewed);

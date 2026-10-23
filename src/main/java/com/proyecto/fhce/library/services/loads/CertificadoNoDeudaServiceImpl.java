@@ -34,6 +34,7 @@ import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.RazonCertificadoRepository;
 import com.proyecto.fhce.library.repositories.SolicitudCertificadoRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.AuditoriaService;
 import com.proyecto.fhce.library.services.DocxToPdfConverter;
 import com.proyecto.fhce.library.services.library.CertificadoDocxService;
 import com.proyecto.fhce.library.services.library.FormatoCertificadoService;
@@ -57,9 +58,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
   private final SolicitudCertificadoRepository solicitudCertificadoRepository;
   private final RazonCertificadoRepository razonCertificadoRepository;
   private final FormatoCertificadoService formatoService;
-
-  // @Autowired
-  // private AuditoriaService auditoriaService;
+  private final AuditoriaService auditoriaService;
 
   private static final Logger log = LoggerFactory.getLogger(CertificadoNoDeudaServiceImpl.class);
 
@@ -68,7 +67,8 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
       BibliotecaRepository bibliotecaRepository,
       NotificacionService notificacionService, CertificadoDocxService certificadoDocxService,
       DocxToPdfConverter pdfConverter, SolicitudCertificadoRepository solicitudCertificadoRepository,
-      RazonCertificadoRepository razonCertificadoRepository, FormatoCertificadoService formatoService) {
+      RazonCertificadoRepository razonCertificadoRepository, FormatoCertificadoService formatoService,
+      AuditoriaService auditoriaService) {
     this.certificadoRepository = certificadoRepository;
     this.usuarioRepository = usuarioRepository;
     this.prestamoRepository = prestamoRepository;
@@ -79,6 +79,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     this.solicitudCertificadoRepository = solicitudCertificadoRepository;
     this.razonCertificadoRepository = razonCertificadoRepository;
     this.formatoService = formatoService;
+    this.auditoriaService = auditoriaService;
   }
 
   public CertificadoResponse generar(CertificadoRequest request, Long solicitanteId,
@@ -174,6 +175,8 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     // saved.setPdf_generado("pdfPath"); // Reemplazar por la ruta real
     saved = certificadoRepository.save(saved);
 
+    auditoriaService.registrar("GENERAR_CERTIFICADO", "certificados_sin_deuda",
+        saved.getIdCertificado(), null, "Certificado generado");
     // 11. Retornar respuesta
     return mapToResponse(saved);
     // ** Validar que no tenga sanciones activas
@@ -183,10 +186,6 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     // throw new BusinessException("El usuario tiene sanciones activas por un monto
     // de Bs. " + montoDeuda);
     // }
-
-    // auditoriaService.registrar("GENERATE_CERTIFICATE", "no_debt_certificates",
-    // saved.getId_certificado(), null, "Certificado generado");
-
     // notificacionService.enviarNotificacionCertificado(saved);
 
   }
@@ -432,6 +431,14 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     }
 
     certificado.setEstadoCertificado(EstadoCertificado.ANULADO);
+
+    CertificadoNoDeuda actualizado = certificadoRepository.save(certificado);
+    auditoriaService.registrar(
+        "ANULAR_CERTIFICADO",
+        "certificados_sin_deuda",
+        actualizado.getIdCertificado(),
+        "Estado: " + EstadoCertificado.VENCIDO,
+        "Estado: " + EstadoCertificado.ANULADO);
     return mapToResponse(certificadoRepository.save(certificado));
   }
 
