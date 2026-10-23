@@ -22,22 +22,26 @@ import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.EdicionRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.LibroRepository;
+import com.proyecto.fhce.library.services.AuditoriaService;
 
 @Service
 @Transactional
 public class EdicionServiceImpl implements EdicionService {
 
-  @Autowired
-  private EdicionRepository edicionRepository;
+  private final EdicionRepository edicionRepository;
+  private final LibroRepository libroRepository;
+  private final EjemplarRepository ejemplarRepository;
+  private final StorageService storageService;
+  private final AuditoriaService auditoriaService;
 
-  @Autowired
-  private LibroRepository libroRepository;
-
-  @Autowired
-  private EjemplarRepository ejemplarRepository;
-
-  @Autowired
-  private StorageService storageService;
+  public EdicionServiceImpl(EdicionRepository edicionRepository, LibroRepository libroRepository,
+      EjemplarRepository ejemplarRepository, StorageService storageService, AuditoriaService auditoriaService) {
+    this.edicionRepository = edicionRepository;
+    this.libroRepository = libroRepository;
+    this.ejemplarRepository = ejemplarRepository;
+    this.storageService = storageService;
+    this.auditoriaService = auditoriaService;
+  }
 
   public EdicionResponse create(EdicionRequest request, MultipartFile portadaFile, MultipartFile pdfFile) {
     // if (edicionRepository.existsByIsbn(request.getIsbn())) {
@@ -63,12 +67,24 @@ public class EdicionServiceImpl implements EdicionService {
     } else if (request.getPdfUrl() != null) {
       edicion.setPdfUrl(request.getPdfUrl());
     }
-    return mapToResponse(edicionRepository.save(edicion));
+    Edicion guardada = edicionRepository.save(edicion);
+    EdicionResponse valoresNuevos = mapToResponse(guardada);
+
+    auditoriaService.registrar(
+        "CREAR_EDICION",
+        "Ediciones",
+        guardada.getIdEdicion(),
+        null,
+        valoresNuevos);
+
+    return valoresNuevos;
   }
 
   public EdicionResponse update(Long id, EdicionRequest request, MultipartFile portadaFile, MultipartFile pdfFile) {
     Edicion edicion = edicionRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Edición no encontrada con id: " + id));
+
+    EdicionResponse valoresAnteriores = mapToResponse(edicion);
 
     edicion.setEditorial(request.getEditorial());
     edicion.setAnoPublicacion(request.getAnoPublicacion());
@@ -91,8 +107,18 @@ public class EdicionServiceImpl implements EdicionService {
       storageService.eliminar(edicion.getPdfUrl(), TipoArchivo.PDFS);
       edicion.setPdfUrl(request.getPdfUrl());
     }
+    Edicion actualizada = edicionRepository.save(edicion);
 
-    return mapToResponse(edicionRepository.save(edicion));
+    EdicionResponse valoresNuevos = mapToResponse(actualizada);
+
+    auditoriaService.registrar(
+        "ACTUALIZAR_EDICION",
+        "Ediciones",
+        actualizada.getIdEdicion(),
+        valoresAnteriores,
+        valoresNuevos);
+
+    return valoresNuevos;
   }
 
   @Transactional(readOnly = true)
@@ -119,6 +145,7 @@ public class EdicionServiceImpl implements EdicionService {
       throw new BusinessException("No se puede eliminar una edición que tiene ejemplares registrados");
     }
 
+    EdicionResponse valoresAnteriores = mapToResponse(edicion);
     // Eliminar portada
     if (edicion.getImagenPortada() != null &&
         !edicion.getImagenPortada().isBlank()) {
@@ -138,6 +165,12 @@ public class EdicionServiceImpl implements EdicionService {
     }
 
     edicionRepository.delete(edicion);
+    auditoriaService.registrar(
+        "ELIMINAR_EDICION",
+        "Ediciones",
+        edicion.getIdEdicion(),
+        valoresAnteriores,
+        null);
   }
 
   private EdicionResponse mapToResponse(Edicion edicion) {

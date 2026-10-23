@@ -27,14 +27,21 @@ import com.proyecto.fhce.library.repositories.UserRepository;
 @Service
 public class BibliotecaEncargadoService {
 
-  @Autowired
-  private BibliotecaEncargadoRepository encargadoRepository;
-  @Autowired
-  private BibliotecaRepository bibliotecaRepository;
-  @Autowired
-  private UserRepository usuarioRepository;
-  @Autowired
-  private RoleRepository roleRepository;
+  private final BibliotecaEncargadoRepository encargadoRepository;
+  private final BibliotecaRepository bibliotecaRepository;
+  private final UserRepository usuarioRepository;
+  private final RoleRepository roleRepository;
+  private final AuditoriaService auditoriaService;
+
+  public BibliotecaEncargadoService(BibliotecaEncargadoRepository encargadoRepository,
+      BibliotecaRepository bibliotecaRepository, UserRepository usuarioRepository, RoleRepository roleRepository,
+      AuditoriaService auditoriaService) {
+    this.encargadoRepository = encargadoRepository;
+    this.bibliotecaRepository = bibliotecaRepository;
+    this.usuarioRepository = usuarioRepository;
+    this.roleRepository = roleRepository;
+    this.auditoriaService = auditoriaService;
+  }
 
   @Transactional
   public BibliotecaEncargadoResponse asignarEncargado(Long bibliotecaId, AsignarEncargadoRequest request) {
@@ -73,7 +80,22 @@ public class BibliotecaEncargadoService {
     encargado.setFechaAsignacion(LocalDateTime.now());
     encargado.setActivo(true);
 
-    return mapToResponse(encargadoRepository.save(encargado));
+    BibliotecaEncargado guardado = encargadoRepository.save(encargado);
+
+    auditoriaService.registrar(
+        "ASIGNAR_ENCARGADO",
+        "biblioteca_encargados",
+        guardado.getId(),
+        null,
+        String.format(
+            "Encargado asignado. Biblioteca: %s (ID: %d), usuario: %s (ID: %d), rol: %s",
+            biblioteca.getNombre(),
+            bibliotecaId,
+            usuario.getUsername(),
+            usuario.getId_usuario(),
+            guardado.getRolEncargado()));
+
+    return mapToResponse(guardado);
   }
 
   @Transactional
@@ -108,6 +130,17 @@ public class BibliotecaEncargadoService {
         usuarioRepository.save(usuario);
       }
     }
+    auditoriaService.registrar(
+        "REMOVER_ENCARGADO",
+        "biblioteca_encargados",
+        encargado.getId(),
+        "Encargado activo",
+        String.format(
+            "Encargado desactivado. Biblioteca ID: %d, usuario: %s (ID: %d), rol: %s",
+            bibliotecaId,
+            usuario.getUsername(),
+            usuarioId,
+            encargado.getRolEncargado()));
   }
 
   @Transactional(readOnly = true)

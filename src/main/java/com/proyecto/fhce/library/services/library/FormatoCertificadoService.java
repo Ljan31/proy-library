@@ -27,6 +27,7 @@ import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.FormatoCertificadoRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.AuditoriaService;
 import com.proyecto.fhce.library.services.DocxToPdfConverter;
 
 @Service
@@ -42,14 +43,17 @@ public class FormatoCertificadoService {
   private final UserRepository usuarioRepo;
   private final StorageService storageService;
   private final DocxToPdfConverter pdfConverter;
+  private final AuditoriaService auditoriaService;
 
   public FormatoCertificadoService(FormatoCertificadoRepository formatoRepo, BibliotecaRepository bibliotecaRepo,
-      UserRepository usuarioRepo, StorageService storageService, DocxToPdfConverter pdfConverter) {
+      UserRepository usuarioRepo, StorageService storageService, DocxToPdfConverter pdfConverter,
+      AuditoriaService auditoriaService) {
     this.formatoRepo = formatoRepo;
     this.bibliotecaRepo = bibliotecaRepo;
     this.usuarioRepo = usuarioRepo;
     this.storageService = storageService;
     this.pdfConverter = pdfConverter;
+    this.auditoriaService = auditoriaService;
   }
   // ── Consulta ─────────────────────────────────────────────────────────────
 
@@ -97,11 +101,12 @@ public class FormatoCertificadoService {
 
     FormatoCertificado formato;
     String rutaAnterior = null;
-
+    FormatoCertificadoResponse valoresAnteriores = new FormatoCertificadoResponse();
     if (!formatos.isEmpty()) {
       formato = formatos.get(0);
       rutaAnterior = formato.getRutaArchivo();
       formato.setVersion(formato.getVersion() + 1);
+      valoresAnteriores = mapToResponse(formatos.get(0));
     } else {
       formato = new FormatoCertificado();
       formato.setBiblioteca(biblioteca);
@@ -127,7 +132,12 @@ public class FormatoCertificadoService {
           rutaAnterior,
           TipoArchivo.PLANTILLAS_CERTIFICADO);
     }
-
+    auditoriaService.registrar(
+        "SUBIR_PLANTILLA_CERTIFICADO",
+        "Formatos_certificado",
+        guardado.getIdFormato(),
+        valoresAnteriores,
+        mapToResponse(guardado));
     return mapToResponse(guardado);
   }
 
@@ -208,7 +218,7 @@ public class FormatoCertificadoService {
           nuevo.setActivo(true);
           return nuevo;
         });
-
+    FormatoCertificadoResponse valoresAnteriores = mapToResponse(formato);
     // Determinar tipo de archivo y actualizar campo correspondiente
     TipoArchivo tipoArchivo = resolverTipoImagen(tipo);
     String urlNueva = storageService.guardar(tipoArchivo, archivo);
@@ -226,7 +236,15 @@ public class FormatoCertificadoService {
     }
 
     formato.setFechaActualizacion(LocalDateTime.now());
-    return mapToResponse(formatoRepo.save(formato));
+    FormatoCertificado guardado = formatoRepo.save(formato);
+    FormatoCertificadoResponse valoresNuevos = mapToResponse(guardado);
+    auditoriaService.registrar(
+        "ACTUALIZAR_IMAGEN_CERTIFICADO",
+        "Formatos_certificado",
+        guardado.getIdFormato(),
+        valoresAnteriores.getFirmaUrl() + " - " + valoresAnteriores.getSelloUrl(),
+        valoresNuevos.getFirmaUrl() + " - " + valoresNuevos.getSelloUrl());
+    return valoresNuevos;
   }
 
   public FormatoCertificadoResponse actualizarResponsable(
@@ -287,7 +305,12 @@ public class FormatoCertificadoService {
     formato.setFechaActualizacion(LocalDateTime.now());
 
     FormatoCertificado guardado = formatoRepo.save(formato);
-
+    auditoriaService.registrar(
+        "ACTUALIZAR_RESPONSABLE_CERTIFICADO",
+        "Formatos_certificado",
+        guardado.getIdFormato(),
+        responsable.getCargoResponsable() + " - " + responsable.getNombreResponsable(),
+        formato.getCargoResponsable() + " - " + formato.getNombreResponsable());
     return mapToResponse(guardado);
   }
 

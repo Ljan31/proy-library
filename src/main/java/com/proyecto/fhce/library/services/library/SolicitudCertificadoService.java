@@ -2,7 +2,9 @@ package com.proyecto.fhce.library.services.library;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -30,6 +32,7 @@ import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.RazonCertificadoRepository;
 import com.proyecto.fhce.library.repositories.SolicitudCertificadoRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.AuditoriaService;
 import com.proyecto.fhce.library.services.loads.CertificadoNoDeudaServiceImpl;
 import com.proyecto.fhce.library.services.notificaciones.NotificacionService;
 import org.slf4j.Logger;
@@ -43,6 +46,7 @@ public class SolicitudCertificadoService {
   private final UserRepository usuarioRepository;
   private final RazonCertificadoRepository razonCertificadoRepository;
   private final NotificacionService notificacionService;
+  private final AuditoriaService auditoriaService;
   private static final Logger log = LoggerFactory.getLogger(CertificadoNoDeudaServiceImpl.class);
 
   public SolicitudCertificadoService(
@@ -50,12 +54,13 @@ public class SolicitudCertificadoService {
       BibliotecaRepository bibliotecaRepository,
       UserRepository usuarioRepository,
       RazonCertificadoRepository razonCertificadoRepository,
-      NotificacionService notificacionService) {
+      NotificacionService notificacionService, AuditoriaService auditoriaService) {
     this.solicitudRepository = solicitudRepository;
     this.bibliotecaRepository = bibliotecaRepository;
     this.usuarioRepository = usuarioRepository;
     this.razonCertificadoRepository = razonCertificadoRepository;
     this.notificacionService = notificacionService;
+    this.auditoriaService = auditoriaService;
   }
 
   // =====================================================
@@ -119,6 +124,12 @@ public class SolicitudCertificadoService {
     solicitud.setFechaSolicitud(LocalDateTime.now());
     solicitud.setAtendidoPor(null);
     SolicitudCertificado saved = solicitudRepository.save(solicitud);
+    auditoriaService.registrar(
+        "CREAR_SOLICITUD_CERTIFICADO",
+        "SolicitudesCertificado",
+        saved.getId(),
+        null,
+        mapAuditoria(saved));
     enviarNotificacionesEncargados(saved, biblioteca);
     return mapToResponse(saved);
   }
@@ -182,13 +193,21 @@ public class SolicitudCertificadoService {
     // Cargar el usuario que está atendiendo
     Usuario bibliotecario = usuarioRepository.findById(solicitanteId)
         .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+    Map<String, Object> valoresAnteriores = mapAuditoria(solicitud);
     solicitud.setEstado(EstadoSolicitud.APROBADA);
     solicitud.setFechaRespuesta(LocalDateTime.now());
     solicitud.setObservacionRespuesta(observacion);
     solicitud.setAtendidoPor(bibliotecario);
+    SolicitudCertificado actualizada = solicitudRepository.save(solicitud);
 
-    return mapToResponse(
-        solicitudRepository.save(solicitud));
+    auditoriaService.registrar(
+        "APROBAR_SOLICITUD_CERTIFICADO",
+        "SolicitudesCertificado",
+        actualizada.getId(),
+        valoresAnteriores,
+        mapAuditoria(actualizada));
+
+    return mapToResponse(actualizada);
   }
 
   // =====================================================
@@ -206,13 +225,23 @@ public class SolicitudCertificadoService {
             "Solicitud no encontrada"));
     Usuario bibliotecario = usuarioRepository.findById(solicitanteId)
         .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+    Map<String, Object> valoresAnteriores = mapAuditoria(solicitud);
+
     solicitud.setEstado(EstadoSolicitud.RECHAZADA);
     solicitud.setFechaRespuesta(LocalDateTime.now());
     solicitud.setObservacionRespuesta(observacion);
     solicitud.setAtendidoPor(bibliotecario);
 
-    return mapToResponse(
-        solicitudRepository.save(solicitud));
+    SolicitudCertificado actualizada = solicitudRepository.save(solicitud);
+
+    auditoriaService.registrar(
+        "RECHAZAR_SOLICITUD_CERTIFICADO",
+        "SolicitudesCertificado",
+        actualizada.getId(),
+        valoresAnteriores,
+        mapAuditoria(actualizada));
+
+    return mapToResponse(actualizada);
   }
 
   // =====================================================
@@ -374,5 +403,31 @@ public class SolicitudCertificadoService {
                                                                   // nombre
     }
     return response;
+  }
+
+  private Map<String, Object> mapAuditoria(SolicitudCertificado solicitud) {
+    Map<String, Object> datos = new LinkedHashMap<>();
+
+    datos.put("id", solicitud.getId());
+    datos.put("estado", solicitud.getEstado() != null
+        ? solicitud.getEstado().name()
+        : null);
+    datos.put("bibliotecaId", solicitud.getBiblioteca() != null
+        ? solicitud.getBiblioteca().getIdBiblioteca()
+        : null);
+    datos.put("razonCertificadoId", solicitud.getRazonCertificado() != null
+        ? solicitud.getRazonCertificado().getIdRazon()
+        : null);
+    datos.put("usuarioId", solicitud.getUsuario() != null
+        ? solicitud.getUsuario().getId_usuario()
+        : null);
+    datos.put("fechaSolicitud", solicitud.getFechaSolicitud());
+    datos.put("fechaRespuesta", solicitud.getFechaRespuesta());
+    datos.put("atendidoPorId", solicitud.getAtendidoPor() != null
+        ? solicitud.getAtendidoPor().getId_usuario()
+        : null);
+    datos.put("observacionRespuesta", solicitud.getObservacionRespuesta());
+
+    return datos;
   }
 }

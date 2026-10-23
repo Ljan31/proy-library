@@ -22,14 +22,17 @@ import com.proyecto.fhce.library.repositories.CarreraRepository;
 
 @Service
 public class CarreraServiceImpl implements CarreraService {
-  @Autowired
-  private CarreraRepository carreraRepository;
+  private final CarreraRepository carreraRepository;
+  private final BibliotecaRepository bibliotecaRepository;
+  private final AuditoriaService auditoriaService;
 
-  @Autowired
-  private BibliotecaRepository bibliotecaRepository;
+  public CarreraServiceImpl(CarreraRepository carreraRepository, BibliotecaRepository bibliotecaRepository,
+      AuditoriaService auditoriaService) {
+    this.carreraRepository = carreraRepository;
+    this.bibliotecaRepository = bibliotecaRepository;
+    this.auditoriaService = auditoriaService;
+  }
 
-  // @Autowired
-  // private AuditoriaService auditoriaService;
   @Transactional
   public CarreraResponse create(CarreraRequest request) {
     // Validar código único
@@ -44,8 +47,8 @@ public class CarreraServiceImpl implements CarreraService {
 
     Carrera saved = carreraRepository.save(carrera);
 
-    // auditoriaService.registrar("CREATE_CAREER", "careers",
-    // saved.getId_carrera(), null, saved.getNombre_carrera());
+    auditoriaService.registrar("CREAR_CARRERA", "Carreras",
+        saved.getId_carrera(), null, saved.getNombre_carrera());
 
     return mapToResponse(saved);
   }
@@ -62,15 +65,15 @@ public class CarreraServiceImpl implements CarreraService {
           request.getCodigo_carrera());
     }
 
-    // String nombreAnterior = carrera.getNombre_carrera();
+    String nombreAnterior = carrera.getNombre_carrera();
 
     carrera.setNombre_carrera(request.getNombre_carrera());
     carrera.setCodigo_carrera(request.getCodigo_carrera());
 
     Carrera updated = carreraRepository.save(carrera);
 
-    // auditoriaService.registrar("UPDATE_CAREER", "careers",
-    // updated.getId_carrera(), nombreAnterior, updated.getNombre_carrera());
+    auditoriaService.registrar("ACTUALIZAR_CARRERA", "Carreras",
+        updated.getId_carrera(), nombreAnterior, updated.getNombre_carrera());
 
     return mapToResponse(updated);
   }
@@ -97,8 +100,8 @@ public class CarreraServiceImpl implements CarreraService {
 
     carreraRepository.delete(carrera);
 
-    // auditoriaService.registrar("DELETE_CAREER", "careers",
-    // carrera.getId_carrera(), carrera.getNombre_carrera(), null);
+    auditoriaService.registrar("ELIMINAR_CARRERA", "Carreras",
+        carrera.getId_carrera(), carrera.getNombre_carrera(), null);
   }
 
   @Transactional(readOnly = true)

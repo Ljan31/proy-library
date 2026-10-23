@@ -3,6 +3,7 @@ package com.proyecto.fhce.library.services.library;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,7 @@ import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.LibroRepository;
 import com.proyecto.fhce.library.repositories.ReservaRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.AuditoriaService;
 import com.proyecto.fhce.library.services.loads.AsignacionReservaService;
 import com.proyecto.fhce.library.services.loads.ConfiguracionPrestamoService;
 import com.proyecto.fhce.library.services.loads.PrestamoService;
@@ -50,31 +52,38 @@ public class ReservaServiceImpl implements ReservaService {
 
   private static final Logger log = LoggerFactory.getLogger(ReservaServiceImpl.class);
 
-  @Autowired
-  private ReservaRepository reservaRepository;
-  @Autowired
-  private UserRepository usuarioRepository;
-  @Autowired
-  private LibroRepository libroRepository;
-  @Autowired
-  private BibliotecaRepository bibliotecaRepository;
-  @Autowired
-  private EjemplarRepository ejemplarRepository;
-  @Autowired
-  private BibliotecaEncargadoRepository bibliotecaEncargadoRepository;
-  @Autowired
-  private ReservaMapper reservaMapper;
-
-  @Autowired
-  private ConfiguracionPrestamoService configuracionService;
-  @Autowired
-  private SancionService sancionService;
-  @Autowired
-  private PrestamoService prestamoService;
-
-  @Autowired
-  private AsignacionReservaService asignacionReservaService;
+  private final ReservaRepository reservaRepository;
+  private final UserRepository usuarioRepository;
+  private final LibroRepository libroRepository;
+  private final BibliotecaRepository bibliotecaRepository;
+  private final EjemplarRepository ejemplarRepository;
+  private final BibliotecaEncargadoRepository bibliotecaEncargadoRepository;
+  private final ReservaMapper reservaMapper;
+  private final ConfiguracionPrestamoService configuracionService;
+  private final SancionService sancionService;
+  private final PrestamoService prestamoService;
+  private final AsignacionReservaService asignacionReservaService;
+  private final AuditoriaService auditoriaService;
   // @Autowired private NotificacionService notificacionService;
+
+  public ReservaServiceImpl(ReservaRepository reservaRepository, UserRepository usuarioRepository,
+      LibroRepository libroRepository, BibliotecaRepository bibliotecaRepository, EjemplarRepository ejemplarRepository,
+      BibliotecaEncargadoRepository bibliotecaEncargadoRepository, ReservaMapper reservaMapper,
+      ConfiguracionPrestamoService configuracionService, SancionService sancionService, PrestamoService prestamoService,
+      AsignacionReservaService asignacionReservaService, AuditoriaService auditoriaService) {
+    this.reservaRepository = reservaRepository;
+    this.usuarioRepository = usuarioRepository;
+    this.libroRepository = libroRepository;
+    this.bibliotecaRepository = bibliotecaRepository;
+    this.ejemplarRepository = ejemplarRepository;
+    this.bibliotecaEncargadoRepository = bibliotecaEncargadoRepository;
+    this.reservaMapper = reservaMapper;
+    this.configuracionService = configuracionService;
+    this.sancionService = sancionService;
+    this.prestamoService = prestamoService;
+    this.asignacionReservaService = asignacionReservaService;
+    this.auditoriaService = auditoriaService;
+  }
 
   // ==================== QUERIES ====================
 
@@ -279,6 +288,7 @@ public class ReservaServiceImpl implements ReservaService {
     if (reserva.getEjemplar() == null) {
       throw new BusinessException("La reserva no tiene un ejemplar asignado. No puede convertirse en préstamo.");
     }
+    EstadoReserva estadoAnterior = reserva.getEstadoReserva();
 
     validarEncargadoBiblioteca(bibliotecarioId, reserva.getBiblioteca());
 
@@ -318,7 +328,14 @@ public class ReservaServiceImpl implements ReservaService {
 
     Reserva updated = reservaRepository.save(reserva);
     log.info("Reserva id={} convertida en préstamo id={}", reserva.getIdReserva(), prestamoResponse.getId_prestamo());
-
+    auditoriaService.registrar(
+        "CONVERTIR_RESERVA_PRESTAMO",
+        "Reservas",
+        updated.getIdReserva(),
+        Map.of("estado", estadoAnterior.name()),
+        Map.of(
+            "estado", updated.getEstadoReserva().name(),
+            "prestamoId", prestamoResponse.getId_prestamo()));
     return reservaMapper.toResponse(updated);
   }
 

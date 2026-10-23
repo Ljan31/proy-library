@@ -26,12 +26,14 @@ public class AuditoriaService {
   private final AuditoriaRepository auditoriaRepository;
   private final UserRepository usuarioRepository;
   private final HttpServletRequest request;
+  private final ObjectMapper mapper;
 
   public AuditoriaService(AuditoriaRepository auditoriaRepository, UserRepository usuarioRepository,
-      HttpServletRequest request) {
+      HttpServletRequest request, ObjectMapper mapper) {
     this.auditoriaRepository = auditoriaRepository;
     this.usuarioRepository = usuarioRepository;
     this.request = request;
+    this.mapper = mapper;
   }
 
   public void registrar(String accion, String tabla, Long idRegistro,
@@ -43,7 +45,7 @@ public class AuditoriaService {
       auditoria.setId_registro(idRegistro);
 
       // Convertir objetos a JSON
-      ObjectMapper mapper = new ObjectMapper();
+      // ObjectMapper mapper = new ObjectMapper();
       if (valoresAnteriores != null) {
         auditoria.setValoresAnteriores(mapper.writeValueAsString(valoresAnteriores));
       }

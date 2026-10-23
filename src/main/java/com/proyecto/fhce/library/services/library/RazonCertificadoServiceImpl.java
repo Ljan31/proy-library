@@ -7,9 +7,13 @@ import com.proyecto.fhce.library.entities.RazonCertificado;
 import com.proyecto.fhce.library.mapper.RazonCertificadoMapper;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.RazonCertificadoRepository;
+import com.proyecto.fhce.library.services.AuditoriaService;
+
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,12 +21,14 @@ public class RazonCertificadoServiceImpl implements RazonCertificadoService {
 
   private final RazonCertificadoRepository razonRepository;
   private final BibliotecaRepository bibliotecaRepository;
+  private final AuditoriaService auditoriaService;
 
   public RazonCertificadoServiceImpl(
       RazonCertificadoRepository razonRepository,
-      BibliotecaRepository bibliotecaRepository) {
+      BibliotecaRepository bibliotecaRepository, AuditoriaService auditoriaService) {
     this.razonRepository = razonRepository;
     this.bibliotecaRepository = bibliotecaRepository;
+    this.auditoriaService = auditoriaService;
   }
 
   @Override
@@ -34,6 +40,13 @@ public class RazonCertificadoServiceImpl implements RazonCertificadoService {
     RazonCertificado entity = RazonCertificadoMapper.toEntity(dto, biblioteca);
 
     RazonCertificado saved = razonRepository.save(entity);
+
+    auditoriaService.registrar(
+        "CREAR_RAZON_CERTIFICADO",
+        "RazonCertificado",
+        saved.getIdRazon(),
+        null,
+        mapToAuditoria(saved));
 
     return RazonCertificadoMapper.toDTO(saved);
   }
@@ -67,6 +80,7 @@ public class RazonCertificadoServiceImpl implements RazonCertificadoService {
 
     RazonCertificado entity = razonRepository.findById(id)
         .orElseThrow(() -> new RuntimeException("Razón no encontrada"));
+    Map<String, Object> anterior = mapToAuditoria(entity);
 
     entity.setNombre(dto.getNombre());
     entity.setDescripcion(dto.getDescripcion());
@@ -78,14 +92,45 @@ public class RazonCertificadoServiceImpl implements RazonCertificadoService {
 
     RazonCertificado updated = razonRepository.save(entity);
 
+    auditoriaService.registrar(
+        "ACTUALIZAR_RAZON_CERTIFICADO",
+        "RazonCertificado",
+        updated.getIdRazon(),
+        anterior,
+        mapToAuditoria(updated));
+
     return RazonCertificadoMapper.toDTO(updated);
   }
 
   @Override
   public void eliminar(Long id) {
-    if (!razonRepository.existsById(id)) {
-      throw new RuntimeException("Razón no encontrada");
-    }
-    razonRepository.deleteById(id);
+    RazonCertificado entity = razonRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Razón no encontrada"));
+    Map<String, Object> anterior = mapToAuditoria(entity);
+
+    razonRepository.delete(entity);
+
+    auditoriaService.registrar(
+        "ELIMINAR_RAZON_CERTIFICADO",
+        "RazonCertificado",
+        id,
+        anterior,
+        null);
+  }
+
+  private Map<String, Object> mapToAuditoria(RazonCertificado razon) {
+    Map<String, Object> datos = new LinkedHashMap<>();
+
+    datos.put("idRazon", razon.getIdRazon());
+    datos.put("nombre", razon.getNombre());
+    datos.put("descripcion", razon.getDescripcion());
+    datos.put("activo", razon.getActivo());
+    datos.put("requisitos", razon.getRequisitos());
+
+    datos.put("bibliotecaId", razon.getBiblioteca() != null
+        ? razon.getBiblioteca().getIdBiblioteca()
+        : null);
+
+    return datos;
   }
 }

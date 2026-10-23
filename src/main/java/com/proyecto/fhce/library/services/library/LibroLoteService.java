@@ -12,12 +12,15 @@ import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.*;
 import com.proyecto.fhce.library.security.SecurityService;
+import com.proyecto.fhce.library.services.AuditoriaService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,26 +29,35 @@ import java.util.stream.Collectors;
 @Transactional
 public class LibroLoteService {
 
-  @Autowired
-  private LibroRepository libroRepository;
-  @Autowired
-  private EdicionRepository edicionRepository;
-  @Autowired
-  private EjemplarRepository ejemplarRepository;
-  @Autowired
-  private BibliotecaRepository bibliotecaRepository;
-  @Autowired
-  private CategoriaLibroRepository categoriaRepository;
-  @Autowired
-  private AutorRepository autorRepository;
-  @Autowired
-  private HistorialEstadoEjemplarRepository historialRepository;
-  @Autowired
-  private StorageService storageService;
-  @Autowired
-  private SecurityService securityService;
-  @Autowired
-  private ObjectMapper objectMapper;
+  private final LibroRepository libroRepository;
+  private final EdicionRepository edicionRepository;
+  private final EjemplarRepository ejemplarRepository;
+  private final BibliotecaRepository bibliotecaRepository;
+  private final CategoriaLibroRepository categoriaRepository;
+  private final AutorRepository autorRepository;
+  private final HistorialEstadoEjemplarRepository historialRepository;
+  private final StorageService storageService;
+  private final SecurityService securityService;
+  private final ObjectMapper objectMapper;
+  private final AuditoriaService auditoriaService;
+
+  public LibroLoteService(LibroRepository libroRepository, EdicionRepository edicionRepository,
+      EjemplarRepository ejemplarRepository, BibliotecaRepository bibliotecaRepository,
+      CategoriaLibroRepository categoriaRepository, AutorRepository autorRepository,
+      HistorialEstadoEjemplarRepository historialRepository, StorageService storageService,
+      SecurityService securityService, ObjectMapper objectMapper, AuditoriaService auditoriaService) {
+    this.libroRepository = libroRepository;
+    this.edicionRepository = edicionRepository;
+    this.ejemplarRepository = ejemplarRepository;
+    this.bibliotecaRepository = bibliotecaRepository;
+    this.categoriaRepository = categoriaRepository;
+    this.autorRepository = autorRepository;
+    this.historialRepository = historialRepository;
+    this.storageService = storageService;
+    this.securityService = securityService;
+    this.objectMapper = objectMapper;
+    this.auditoriaService = auditoriaService;
+  }
 
   /**
    * Crea un libro completo en una sola transacción:
@@ -222,7 +234,17 @@ public class LibroLoteService {
       }
       throw ex;
     }
+    Map<String, Object> valoresNuevos = mapToAuditoriaLote(
+        libro,
+        edicionResults.size(),
+        totalEjemplares);
 
+    auditoriaService.registrar(
+        "CREAR_LIBRO_LOTE",
+        "Libros",
+        libro.getIdLibro(),
+        null,
+        valoresNuevos);
     // ── 3. Construir respuesta ────────────────────────────────────────────
     return buildResponse(libro, edicionResults, totalEjemplares);
   }
@@ -284,5 +306,32 @@ public class LibroLoteService {
       ar.setNombre(a.getNombre());
       return ar;
     }).collect(Collectors.toList());
+  }
+
+  private Map<String, Object> mapToAuditoriaLote(
+      Libro libro,
+      int totalEdiciones,
+      int totalEjemplares) {
+
+    Map<String, Object> datos = new LinkedHashMap<>();
+
+    datos.put("idLibro", libro.getIdLibro());
+    datos.put("titulo", libro.getTitulo());
+    datos.put("idioma", libro.getIdioma());
+
+    datos.put("categoria", libro.getCategoria() != null
+        ? libro.getCategoria().getNombre_categoria()
+        : null);
+
+    datos.put("autores", libro.getAutores() == null
+        ? List.of()
+        : libro.getAutores().stream()
+            .map(Autor::getNombre)
+            .collect(Collectors.toList()));
+
+    datos.put("totalEdicionesCreadas", totalEdiciones);
+    datos.put("totalEjemplaresCreados", totalEjemplares);
+
+    return datos;
   }
 }

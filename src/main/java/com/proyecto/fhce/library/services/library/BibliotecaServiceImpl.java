@@ -43,29 +43,18 @@ import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.RoleRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 import com.proyecto.fhce.library.security.UserDetailsImpl;
+import com.proyecto.fhce.library.services.AuditoriaService;
 
 @Service
 public class BibliotecaServiceImpl implements BibliotecaService {
-  @Autowired
-  private BibliotecaRepository bibliotecaRepository;
-
-  @Autowired
-  private CarreraRepository carreraRepository;
-
-  @Autowired
-  private UserRepository usuarioRepository;
-
-  @Autowired
-  private EjemplarRepository ejemplarRepository;
-
-  @Autowired
-  private BibliotecaEncargadoRepository encargadoRepository;
-
-  @Autowired
-  private RoleRepository roleRepository;
-
-  @Autowired
-  private StorageService storageService;
+  private final BibliotecaRepository bibliotecaRepository;
+  private final CarreraRepository carreraRepository;
+  private final UserRepository usuarioRepository;
+  private final EjemplarRepository ejemplarRepository;
+  private final BibliotecaEncargadoRepository encargadoRepository;
+  private final RoleRepository roleRepository;
+  private final StorageService storageService;
+  private final AuditoriaService auditoriaService;
 
   // @Autowired
   // private PrestamoRepository prestamoRepository;
@@ -73,8 +62,19 @@ public class BibliotecaServiceImpl implements BibliotecaService {
   // @Autowired
   // private ReservaRepository reservaRepository;
 
-  // @Autowired
-  // private AuditoriaService auditoriaService;
+  public BibliotecaServiceImpl(BibliotecaRepository bibliotecaRepository, CarreraRepository carreraRepository,
+      UserRepository usuarioRepository, EjemplarRepository ejemplarRepository,
+      BibliotecaEncargadoRepository encargadoRepository, RoleRepository roleRepository, StorageService storageService,
+      AuditoriaService auditoriaService) {
+    this.bibliotecaRepository = bibliotecaRepository;
+    this.carreraRepository = carreraRepository;
+    this.usuarioRepository = usuarioRepository;
+    this.ejemplarRepository = ejemplarRepository;
+    this.encargadoRepository = encargadoRepository;
+    this.roleRepository = roleRepository;
+    this.storageService = storageService;
+    this.auditoriaService = auditoriaService;
+  }
 
   @Transactional
   public BibliotecaResponse create(BibliotecaRequest request, MultipartFile logoFile) {
@@ -127,8 +127,8 @@ public class BibliotecaServiceImpl implements BibliotecaService {
 
     Biblioteca saved = bibliotecaRepository.save(biblioteca);
 
-    // auditoriaService.registrar("CREATE_LIBRARY", "libraries",
-    // saved.getId_biblioteca(), null, saved.getNombre());
+    auditoriaService.registrar("CREAR_BIBLIOTECA", "Bibliotecas",
+        saved.getId_biblioteca(), null, saved.getNombre());
 
     return mapToResponse(saved);
   }
@@ -137,7 +137,7 @@ public class BibliotecaServiceImpl implements BibliotecaService {
   public BibliotecaResponse update(Long id, BibliotecaRequest request, MultipartFile logoFile) {
     Biblioteca biblioteca = bibliotecaRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada con id: " + id));
-
+    BibliotecaResponse valoresAnteriores = mapToResponse(biblioteca);
     // Validar nombre único si cambió
     if (!biblioteca.getNombre().equals(request.getNombre()) &&
         bibliotecaRepository.existsByNombre(request.getNombre())) {
@@ -161,7 +161,6 @@ public class BibliotecaServiceImpl implements BibliotecaService {
     } else {
       biblioteca.setCarrera(null); // opcional, si puede eliminar la relación
     }
-    String nombreAnterior = biblioteca.getNombre();
 
     biblioteca.setNombre(request.getNombre());
     biblioteca.setTipoBiblioteca(request.getTipoBiblioteca());
@@ -192,11 +191,11 @@ public class BibliotecaServiceImpl implements BibliotecaService {
     asignarEncargados(biblioteca, request.getEncargadosIds());
 
     Biblioteca updated = bibliotecaRepository.save(biblioteca);
+    BibliotecaResponse valoresNuevos = mapToResponse(biblioteca);
+    auditoriaService.registrar("ACTUALIZAR_BIBLIOTECA", "Bibliotecas",
+        updated.getId_biblioteca(), valoresAnteriores, valoresNuevos);
 
-    // auditoriaService.registrar("UPDATE_LIBRARY", "libraries",
-    // updated.getId_biblioteca(), nombreAnterior, updated.getNombre());
-
-    return mapToResponse(updated);
+    return valoresNuevos;
   }
 
   private void asignarEncargados(Biblioteca biblioteca, List<Long> encargadosIds) {
@@ -278,8 +277,8 @@ public class BibliotecaServiceImpl implements BibliotecaService {
     if (logoUrl != null && !logoUrl.isBlank()) {
       storageService.eliminar(logoUrl, TipoArchivo.LOGOS);
     }
-    // auditoriaService.registrar("DELETE_LIBRARY", "libraries",
-    // biblioteca.getId_biblioteca(), biblioteca.getNombre(), null);
+    auditoriaService.registrar("ELIMINAR_BIBLIOTECA", "Bibliotecas",
+        biblioteca.getId_biblioteca(), biblioteca.getNombre(), null);
   }
 
   @Transactional
@@ -316,8 +315,8 @@ public class BibliotecaServiceImpl implements BibliotecaService {
 
     bibliotecaRepository.save(biblioteca);
 
-    // auditoriaService.registrar("CHANGE_LIBRARY_STATUS", "libraries",
-    // biblioteca.getId_biblioteca(), estadoAnterior, nuevoEstado);
+    auditoriaService.registrar("CAMBIAR_ESTADO_BIBLIOTECA", "Bibliotecas",
+        biblioteca.getId_biblioteca(), estadoAnterior, nuevoEstado);
   }
 
   @Transactional
@@ -404,12 +403,11 @@ public class BibliotecaServiceImpl implements BibliotecaService {
         be.setRespaldoUrl(respaldoUrl);
       }
       biblioteca.getEncargados().add(be);
+      auditoriaService.registrar("ASIGNAR_ENCARGADO_BIBLIOTECA", "Biblioteca_encargados",
+          biblioteca.getId_biblioteca(), null, "Encargado: " +
+              be.getUsuario().getUsername());
     }
     bibliotecaRepository.save(biblioteca);
-
-    // auditoriaService.registrar("ASSIGN_LIBRARY_MANAGER", "libraries",
-    // biblioteca.getId_biblioteca(), null, "Encargado: " +
-    // encargado.getUsername());
   }
 
   @Transactional
@@ -431,6 +429,7 @@ public class BibliotecaServiceImpl implements BibliotecaService {
     if (imagen == null || imagen.isEmpty()) {
       throw new BusinessException("La imagen es requerida");
     }
+    String respaldoAnterior = encargado.getRespaldoUrl();
 
     String imagenUrl = storageService.guardar(
         TipoArchivo.RESPALDOS_ENCARGADOS,
@@ -439,7 +438,12 @@ public class BibliotecaServiceImpl implements BibliotecaService {
     encargado.setRespaldoUrl(imagenUrl);
 
     encargadoRepository.save(encargado);
-
+    auditoriaService.registrar(
+        "ACTUALIZAR_RESPALDO_ENCARGADO",
+        "Biblioteca_encargados",
+        bibliotecaId,
+        respaldoAnterior,
+        imagenUrl);
     return imagenUrl;
   }
 

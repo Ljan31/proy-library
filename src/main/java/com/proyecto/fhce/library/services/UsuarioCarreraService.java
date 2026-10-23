@@ -25,17 +25,18 @@ import com.proyecto.fhce.library.repositories.UsuarioCarreraRepository;
 @Transactional
 public class UsuarioCarreraService {
 
-  @Autowired
-  private UsuarioCarreraRepository usuarioCarreraRepository;
+  private final UsuarioCarreraRepository usuarioCarreraRepository;
+  private final UserRepository usuarioRepository;
+  private final CarreraRepository carreraRepository;
+  private final AuditoriaService auditoriaService;
 
-  @Autowired
-  private UserRepository usuarioRepository;
-
-  @Autowired
-  private CarreraRepository carreraRepository;
-
-  // @Autowired
-  // private AuditoriaService auditoriaService;
+  public UsuarioCarreraService(UsuarioCarreraRepository usuarioCarreraRepository, UserRepository usuarioRepository,
+      CarreraRepository carreraRepository, AuditoriaService auditoriaService) {
+    this.usuarioCarreraRepository = usuarioCarreraRepository;
+    this.usuarioRepository = usuarioRepository;
+    this.carreraRepository = carreraRepository;
+    this.auditoriaService = auditoriaService;
+  }
 
   public UsuarioCarreraResponse asignarCarrera(UsuarioCarreraRequest request) {
     Usuario usuario = usuarioRepository.findById(request.getUsuarioId())
@@ -57,10 +58,10 @@ public class UsuarioCarreraService {
 
     UsuarioCarrera saved = usuarioCarreraRepository.save(usuarioCarrera);
 
-    // auditoriaService.registrar("ASSIGN_CAREER", "users_careers",
-    // saved.getId(), null,
-    // "Usuario: " + usuario.getUsername() + " - Carrera: " +
-    // carrera.getNombre_carrera());
+    auditoriaService.registrar("ASIGNAR_USER_CARRERA", "Usuarios_carreras",
+        saved.getId(), null,
+        "Usuario: " + usuario.getUsername() + " - Carrera: " +
+            carrera.getNombre_carrera());
 
     return mapToResponse(saved);
   }
@@ -77,8 +78,8 @@ public class UsuarioCarreraService {
       usuarioCarrera.setMatricula(request.getMatricula());
     }
 
-    // auditoriaService.registrar("UPDATE_ACADEMIC_STATUS", "users_careers",
-    // usuarioCarrera.getId(), estadoAnterior, request.getEstadoAcademico());
+    auditoriaService.registrar("ACTUALIZAR_MATRICULA", "Usuarios_carreras",
+        usuarioCarrera.getId(), usuarioCarrera.getMatricula(), request.getMatricula());
 
     UsuarioCarrera updated = usuarioCarreraRepository.save(usuarioCarrera);
 
@@ -92,11 +93,11 @@ public class UsuarioCarreraService {
 
     usuarioCarreraRepository.delete(usuarioCarrera);
 
-    // auditoriaService.registrar("REMOVE_CAREER", "users_careers",
-    // usuarioCarrera.getId(),
-    // "Usuario: " + usuarioCarrera.getUsuario().getUsername() +
-    // " - Carrera: " + usuarioCarrera.getCarrera().getNombre_carrera(),
-    // null);
+    auditoriaService.registrar("REMOVER_CARRERA", "Usuarios_carreras",
+        usuarioCarrera.getId(),
+        "Usuario: " + usuarioCarrera.getUsuario().getUsername() +
+            " - Carrera: " + usuarioCarrera.getCarrera().getNombre_carrera(),
+        null);
   }
 
   @Transactional(readOnly = true)

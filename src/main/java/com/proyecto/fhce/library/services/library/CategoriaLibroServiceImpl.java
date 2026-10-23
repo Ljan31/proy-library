@@ -22,18 +22,22 @@ import com.proyecto.fhce.library.exception.DuplicateResourceException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.CategoriaLibroRepository;
 import com.proyecto.fhce.library.repositories.LibroRepository;
+import com.proyecto.fhce.library.services.AuditoriaService;
 
 @Service
 public class CategoriaLibroServiceImpl implements CategoriaLibroService {
 
-  @Autowired
-  private CategoriaLibroRepository categoriaRepository;
+  private final CategoriaLibroRepository categoriaRepository;
+  private final LibroRepository libroRepository;
+  private final AuditoriaService auditoriaService;
 
-  @Autowired
-  private LibroRepository libroRepository;
+  public CategoriaLibroServiceImpl(CategoriaLibroRepository categoriaRepository, LibroRepository libroRepository,
+      AuditoriaService auditoriaService) {
+    this.categoriaRepository = categoriaRepository;
+    this.libroRepository = libroRepository;
+    this.auditoriaService = auditoriaService;
+  }
 
-  // @Autowired
-  // private AuditoriaService auditoriaService;
   @Transactional
   public CategoriaLibroResponse create(CategoriaLibroRequest request) {
     // Validar código Dewey único si se proporciona
@@ -50,8 +54,8 @@ public class CategoriaLibroServiceImpl implements CategoriaLibroService {
 
     CategoriaLibro saved = categoriaRepository.save(categoria);
 
-    // auditoriaService.registrar("CREATE_CATEGORY", "book_categories",
-    // saved.getId_categoria(), null, saved.getNombre_categoria());
+    auditoriaService.registrar("CREAR_CATEGORIA", "libros_categorias",
+        saved.getId_categoria(), null, saved.getNombre_categoria());
 
     return mapToResponse(saved);
   }
@@ -77,8 +81,8 @@ public class CategoriaLibroServiceImpl implements CategoriaLibroService {
 
     CategoriaLibro updated = categoriaRepository.save(categoria);
 
-    // auditoriaService.registrar("UPDATE_CATEGORY", "book_categories",
-    // updated.getId_categoria(), nombreAnterior, updated.getNombre_categoria());
+    auditoriaService.registrar("ACTUALIZAR_CATEGORIA", "libros_categorias",
+        updated.getId_categoria(), nombreAnterior, updated.getNombre_categoria());
 
     return mapToResponse(updated);
   }
@@ -98,8 +102,8 @@ public class CategoriaLibroServiceImpl implements CategoriaLibroService {
 
     categoriaRepository.delete(categoria);
 
-    // auditoriaService.registrar("DELETE_CATEGORY", "book_categories",
-    // categoria.getId_categoria(), categoria.getNombre_categoria(), null);
+    auditoriaService.registrar("ELIMINAR_CATEGORIA", "libros_categorias",
+        categoria.getId_categoria(), categoria.getNombre_categoria(), null);
   }
 
   @Transactional(readOnly = true)

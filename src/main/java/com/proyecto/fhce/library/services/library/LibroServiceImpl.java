@@ -1,7 +1,9 @@
 package com.proyecto.fhce.library.services.library;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,34 +36,36 @@ import com.proyecto.fhce.library.repositories.HistorialEstadoEjemplarRepository;
 import com.proyecto.fhce.library.repositories.LibroRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.ReservaRepository;
+import com.proyecto.fhce.library.services.AuditoriaService;
 
 import jakarta.persistence.criteria.Predicate;
 
 @Service
 public class LibroServiceImpl implements LibroService {
-  @Autowired
-  private LibroRepository libroRepository;
+  private final LibroRepository libroRepository;
+  private final CategoriaLibroRepository categoriaRepository;
+  private final EjemplarRepository ejemplarRepository;
+  private final EdicionRepository edicionRepository;
+  private final AutorRepository autorRepository;
+  private final PrestamoRepository prestamoRepository;
+  private final HistorialEstadoEjemplarRepository historialEstadoEjemplarRepository;
+  private final ReservaRepository reservaRepository;
+  private final AuditoriaService auditoriaService;
 
-  @Autowired
-  private CategoriaLibroRepository categoriaRepository;
-
-  @Autowired
-  private EjemplarRepository ejemplarRepository;
-
-  @Autowired
-  private EdicionRepository edicionRepository;
-
-  @Autowired
-  private AutorRepository autorRepository;
-
-  @Autowired
-  private PrestamoRepository prestamoRepository;
-
-  @Autowired
-  private HistorialEstadoEjemplarRepository historialEstadoEjemplarRepository;
-
-  @Autowired
-  private ReservaRepository reservaRepository;
+  public LibroServiceImpl(LibroRepository libroRepository, CategoriaLibroRepository categoriaRepository,
+      EjemplarRepository ejemplarRepository, EdicionRepository edicionRepository, AutorRepository autorRepository,
+      PrestamoRepository prestamoRepository, HistorialEstadoEjemplarRepository historialEstadoEjemplarRepository,
+      ReservaRepository reservaRepository, AuditoriaService auditoriaService) {
+    this.libroRepository = libroRepository;
+    this.categoriaRepository = categoriaRepository;
+    this.ejemplarRepository = ejemplarRepository;
+    this.edicionRepository = edicionRepository;
+    this.autorRepository = autorRepository;
+    this.prestamoRepository = prestamoRepository;
+    this.historialEstadoEjemplarRepository = historialEstadoEjemplarRepository;
+    this.reservaRepository = reservaRepository;
+    this.auditoriaService = auditoriaService;
+  }
 
   @Transactional
   public LibroResponse create(LibroRequest request) {
@@ -73,13 +77,23 @@ public class LibroServiceImpl implements LibroService {
     asignarCategoria(libro, request.getCategoriaId());
     asignarAutores(libro, request.getAutorIds());
 
-    return mapToResponse(libroRepository.save(libro));
+    Libro guardado = libroRepository.save(libro);
+
+    auditoriaService.registrar(
+        "CREAR_LIBRO",
+        "Libros",
+        guardado.getIdLibro(),
+        null,
+        mapToAuditoria(guardado));
+
+    return mapToResponse(guardado);
   }
 
   @Transactional
   public LibroResponse update(Long id, LibroRequest request) {
     Libro libro = libroRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Libro no encontrado con id: " + id));
+    Map<String, Object> anterior = mapToAuditoria(libro);
 
     libro.setTitulo(request.getTitulo());
     libro.setIdioma(request.getIdioma());
@@ -88,7 +102,16 @@ public class LibroServiceImpl implements LibroService {
     asignarCategoria(libro, request.getCategoriaId());
     asignarAutores(libro, request.getAutorIds());
 
-    return mapToResponse(libroRepository.save(libro));
+    Libro actualizado = libroRepository.save(libro);
+
+    auditoriaService.registrar(
+        "ACTUALIZAR_LIBRO",
+        "Libros",
+        actualizado.getIdLibro(),
+        anterior,
+        mapToAuditoria(actualizado));
+
+    return mapToResponse(actualizado);
   }
 
   @Transactional(readOnly = true)
@@ -213,7 +236,16 @@ public class LibroServiceImpl implements LibroService {
           "No se puede eliminar el libro porque tiene reservas asociadas.");
     }
 
+    Map<String, Object> anterior = mapToAuditoria(libro);
+
     libroRepository.delete(libro);
+
+    auditoriaService.registrar(
+        "ELIMINAR_LIBRO",
+        "Libros",
+        id,
+        anterior,
+        null);
 
   }
 
@@ -300,5 +332,26 @@ public class LibroServiceImpl implements LibroService {
     }
     List<Autor> autores = autorRepository.findAllById(autorIds);
     libro.setAutores(autores);
+  }
+
+  private Map<String, Object> mapToAuditoria(Libro libro) {
+    Map<String, Object> datos = new LinkedHashMap<>();
+
+    datos.put("idLibro", libro.getIdLibro());
+    datos.put("titulo", libro.getTitulo());
+    datos.put("idioma", libro.getIdioma());
+    datos.put("descripcion", libro.getDescripcion());
+
+    datos.put("categoria", libro.getCategoria() != null
+        ? libro.getCategoria().getNombre_categoria()
+        : null);
+
+    datos.put("autores", libro.getAutores() == null
+        ? List.of()
+        : libro.getAutores().stream()
+            .map(Autor::getNombre)
+            .collect(Collectors.toList()));
+
+    return datos;
   }
 }

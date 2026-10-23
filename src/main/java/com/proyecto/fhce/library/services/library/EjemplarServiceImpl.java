@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.proyecto.fhce.library.dto.request.library.EjemplarRequest;
 import com.proyecto.fhce.library.dto.request.library.EjemplarUpdateEstadoRequest;
+import com.proyecto.fhce.library.dto.response.EjemplarAuditoriaResponse;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaSimpleResponse;
 import com.proyecto.fhce.library.dto.response.library.DisponibilidadLibroResponse;
 import com.proyecto.fhce.library.dto.response.library.DisponibilidadPorBibliotecaResponse;
@@ -41,36 +42,34 @@ import com.proyecto.fhce.library.repositories.LibroRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.ReservaRepository;
 import com.proyecto.fhce.library.security.SecurityService;
+import com.proyecto.fhce.library.services.AuditoriaService;
 
 @Service
 @Transactional
 public class EjemplarServiceImpl implements EjemplarService {
-  @Autowired
-  private EjemplarRepository ejemplarRepository;
-
-  @Autowired
-  private EdicionRepository edicionRepository;
-  @Autowired
-  private LibroRepository libroRepository;
-
-  @Autowired
-  private BibliotecaRepository bibliotecaRepository;
-
-  @Autowired
-  private HistorialEstadoEjemplarRepository historialRepository;
-
-  @Autowired
-  private PrestamoRepository prestamoRepository;
-
-  @Autowired
-  private ReservaRepository reservaRepository;
-
+  private final EjemplarRepository ejemplarRepository;
+  private final EdicionRepository edicionRepository;
+  private final LibroRepository libroRepository;
+  private final BibliotecaRepository bibliotecaRepository;
+  private final HistorialEstadoEjemplarRepository historialRepository;
+  private final PrestamoRepository prestamoRepository;
+  private final ReservaRepository reservaRepository;
   private final SecurityService securityService;
+  private final AuditoriaService auditoriaService;
 
-  // @Autowired
-  // private AuditoriaService auditoriaService;
-  public EjemplarServiceImpl(SecurityService securityService) {
+  public EjemplarServiceImpl(EjemplarRepository ejemplarRepository, EdicionRepository edicionRepository,
+      LibroRepository libroRepository, BibliotecaRepository bibliotecaRepository,
+      HistorialEstadoEjemplarRepository historialRepository, PrestamoRepository prestamoRepository,
+      ReservaRepository reservaRepository, SecurityService securityService, AuditoriaService auditoriaService) {
+    this.ejemplarRepository = ejemplarRepository;
+    this.edicionRepository = edicionRepository;
+    this.libroRepository = libroRepository;
+    this.bibliotecaRepository = bibliotecaRepository;
+    this.historialRepository = historialRepository;
+    this.prestamoRepository = prestamoRepository;
+    this.reservaRepository = reservaRepository;
     this.securityService = securityService;
+    this.auditoriaService = auditoriaService;
   }
 
   public EjemplarResponse create(EjemplarRequest request) {
@@ -106,8 +105,9 @@ public class EjemplarServiceImpl implements EjemplarService {
     // Registrar en historial
     registrarCambioEstado(saved, null, saved.getEstadoEjemplar(), "Registro inicial");
 
-    // auditoriaService.registrar("CREATE_COPY", "copies",
-    // saved.getId_ejemplar(), null, saved.getCodigo_ejemplar());
+    EjemplarAuditoriaResponse valoresNuevos = mapToAuditoriaResponse(saved);
+    auditoriaService.registrar("CREATE_EJEMPLAR", "Ejemplares",
+        saved.getIdEjemplar(), null, valoresNuevos);
 
     return mapToResponse(saved);
   }
@@ -116,6 +116,7 @@ public class EjemplarServiceImpl implements EjemplarService {
     Ejemplar ejemplar = ejemplarRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Ejemplar no encontrado con id: " + id));
 
+    EjemplarAuditoriaResponse anterior = mapToAuditoriaResponse(ejemplar);
     // if (!ejemplar.getCodigoEjemplar().equals(request.getCodigoEjemplar()) &&
     // ejemplarRepository.existsByCodigoEjemplar(request.getCodigoEjemplar())) {
     // throw new DuplicateResourceException("Ya existe un ejemplar con código: " +
@@ -146,9 +147,9 @@ public class EjemplarServiceImpl implements EjemplarService {
     }
 
     Ejemplar updated = ejemplarRepository.save(ejemplar);
-
-    // auditoriaService.registrar("UPDATE_COPY", "copies",
-    // updated.getId_ejemplar(), null, updated.getCodigo_ejemplar());
+    EjemplarAuditoriaResponse nuevo = mapToAuditoriaResponse(updated);
+    auditoriaService.registrar("ACTUALIZAR_EJEMPLAR", "Ejemplares",
+        updated.getIdEjemplar(), anterior, nuevo);
 
     return mapToResponse(updated);
   }
@@ -168,8 +169,8 @@ public class EjemplarServiceImpl implements EjemplarService {
     // Registrar en historial
     registrarCambioEstado(updated, estadoAnterior, request.getNuevoEstado(), request.getMotivo());
 
-    // auditoriaService.registrar("UPDATE_COPY_STATUS", "copies",
-    // updated.getId_ejemplar(), estadoAnterior, request.getNuevoEstado());
+    auditoriaService.registrar("ACTUALIZAR_ESTADO_EJEMPLAR", "Ejemplares",
+        updated.getIdEjemplar(), estadoAnterior, request.getNuevoEstado());
 
     return mapToResponse(updated);
   }
@@ -181,6 +182,13 @@ public class EjemplarServiceImpl implements EjemplarService {
     ejemplar.setEstadoEjemplar(EstadoEjemplar.DAÑADO);
     ejemplarRepository.save(ejemplar);
     registrarCambioEstado(ejemplar, anterior, EstadoEjemplar.DAÑADO, motivo);
+
+    auditoriaService.registrar(
+        "REPORTAR_DANADO_EJEMPLAR",
+        "Ejemplares",
+        ejemplar.getIdEjemplar(),
+        anterior,
+        ejemplar.getEstadoEjemplar());
   }
 
   public void darDeBaja(Long id, String motivo) {
@@ -202,8 +210,8 @@ public class EjemplarServiceImpl implements EjemplarService {
 
     registrarCambioEstado(ejemplar, estadoAnterior, EstadoEjemplar.BAJA, motivo);
 
-    // auditoriaService.registrar("DEACTIVATE_COPY", "copies",
-    // ejemplar.getId_ejemplar(), null, "Motivo: " + motivo);
+    auditoriaService.registrar("DARBAJA_EJEMPLAR", "Ejemplares",
+        ejemplar.getIdEjemplar(), null, "Motivo: " + motivo);
   }
 
   public void reportarPerdido(Long id, String motivo) {
@@ -220,8 +228,8 @@ public class EjemplarServiceImpl implements EjemplarService {
 
     registrarCambioEstado(ejemplar, estadoAnterior, EstadoEjemplar.PERDIDO, motivo);
 
-    // auditoriaService.registrar("REPORT_COPY_LOST", "copies",
-    // ejemplar.getId_ejemplar(), null, "Motivo: " + motivo);
+    auditoriaService.registrar("REPORTAR_PERTIDO_EJEMPLAR", "Ejemplares",
+        ejemplar.getIdEjemplar(), null, "Motivo: " + motivo);
   }
 
   public void transferirBiblioteca(Long ejemplarId, Long nuevaBibliotecaId, String motivo) {
@@ -399,8 +407,14 @@ public class EjemplarServiceImpl implements EjemplarService {
       throw new BusinessException(
           "No se puede eliminar un ejemplar con reservas registradas");
     }
-
+    EjemplarAuditoriaResponse valoresAnteriores = mapToAuditoriaResponse(ejemplar);
     ejemplarRepository.delete(ejemplar);
+    auditoriaService.registrar(
+        "ELIMINAR_EJEMPLAR",
+        "Ejemplares",
+        id,
+        valoresAnteriores,
+        null);
   }
 
   private void validarCambioEstado(Ejemplar ejemplar, EstadoEjemplar nuevoEstado) {
@@ -553,6 +567,36 @@ public class EjemplarServiceImpl implements EjemplarService {
           historial.getUsuarioCambio().getPersona().getNombre() + " " +
               historial.getUsuarioCambio().getPersona().getApellido_pat());
       response.setUsuarioCambio(usuario);
+    }
+
+    return response;
+  }
+
+  private EjemplarAuditoriaResponse mapToAuditoriaResponse(
+      Ejemplar ejemplar) {
+
+    EjemplarAuditoriaResponse response = new EjemplarAuditoriaResponse();
+
+    response.setIdEjemplar(ejemplar.getIdEjemplar());
+    response.setCodigoEjemplar(ejemplar.getCodigoEjemplar());
+    response.setCodigoTopografico(ejemplar.getCodigoTopografico());
+    response.setClasificacionDecimal(
+        ejemplar.getClasificacionDecimal());
+    response.setCutterAutor(ejemplar.getCutterAutor());
+    response.setCutterTitulo(ejemplar.getCutterTitulo());
+    response.setUbicacionFisica(ejemplar.getUbicacionFisica());
+    response.setEstadoEjemplar(ejemplar.getEstadoEjemplar());
+    response.setFechaAdquisicion(ejemplar.getFechaAdquisicion());
+    response.setObservaciones(ejemplar.getObservaciones());
+
+    if (ejemplar.getEdicion() != null) {
+      response.setIdEdicion(
+          ejemplar.getEdicion().getIdEdicion());
+    }
+
+    if (ejemplar.getBiblioteca() != null) {
+      response.setIdBiblioteca(
+          ejemplar.getBiblioteca().getId_biblioteca());
     }
 
     return response;

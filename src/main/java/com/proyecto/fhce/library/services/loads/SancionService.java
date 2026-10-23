@@ -33,6 +33,7 @@ import com.proyecto.fhce.library.repositories.PersonaRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.SancionRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
+import com.proyecto.fhce.library.services.AuditoriaService;
 import com.proyecto.fhce.library.services.notificaciones.NotificacionService;
 
 import java.math.BigDecimal;
@@ -55,6 +56,7 @@ public class SancionService {
   private final ConfiguracionPrestamoService configuracionService;
   private final NotificacionService notificacionService;
   private final SancionMapper mapper;
+  private final AuditoriaService auditoriaService;
 
   public SancionService(
       SancionRepository sancionRepository,
@@ -63,7 +65,7 @@ public class SancionService {
       BibliotecaRepository bibliotecaRepository,
       ConfiguracionPrestamoService configuracionService,
       NotificacionService notificacionService,
-      SancionMapper mapper) {
+      SancionMapper mapper, AuditoriaService auditoriaService) {
     this.sancionRepository = sancionRepository;
     this.prestamoRepository = prestamoRepository;
     this.usuarioRepository = usuarioRepository;
@@ -71,6 +73,7 @@ public class SancionService {
     this.configuracionService = configuracionService;
     this.notificacionService = notificacionService;
     this.mapper = mapper;
+    this.auditoriaService = auditoriaService;
   }
 
   // ════════════════════════════════════════════════════════════════════════
@@ -203,8 +206,20 @@ public class SancionService {
     sancion.setTipoSancion(TipoSancion.MULTA);
     sancion.setMontoMulta(request.montoFijo() != null ? request.montoFijo() : BigDecimal.ZERO);
     sancion.setObservaciones(request.observaciones());
-
     Sancion guardada = sancionRepository.save(sancion);
+
+    auditoriaService.registrar(
+        "REGISTRAR_SANCION_MANUAL",
+        "sanciones",
+        guardada.getIdSancion(),
+        null,
+        String.format(
+            "Sanción manual creada. Usuario: %d, biblioteca: %d, motivo: %s, monto: %s",
+            guardada.getUsuario().getId_usuario() + " - " + guardada.getUsuario().getUsername(),
+            guardada.getBiblioteca().getIdBiblioteca() + " - " + guardada.getBiblioteca().getNombre(),
+            guardada.getMotivo(),
+            guardada.getMontoMulta()));
+
     log.info("Sanción manual creada [id={}] por bibliotecario [id={}]",
         guardada.getIdSancion(), bibliotecarioId);
 
@@ -345,7 +360,8 @@ public class SancionService {
   @Transactional
   public SancionResponseDTO registrarPago(Long idSancion, PagoMultaRequestDTO request) {
     Sancion sancion = obtenerSancionOException(idSancion);
-
+    EstadoSancion estadoAnterior = sancion.getEstado();
+    BigDecimal montoAnterior = sancion.getMontoMulta();
     if (!sancion.estaActiva()) {
       throw new SancionNoActivaException(idSancion, sancion.getEstado().name());
     }
@@ -368,7 +384,23 @@ public class SancionService {
     }
 
     log.info("Pago registrado para sanción [id={}], método: {}", idSancion, request.metodoPago());
-    return mapper.toResponseDTO(sancionRepository.save(sancion));
+
+    Sancion actualizada = sancionRepository.save(sancion);
+
+    auditoriaService.registrar(
+        "REGISTRAR_PAGO_SANCION",
+        "sanciones",
+        actualizada.getIdSancion(),
+        String.format(
+            "Estado: %s, monto: %s",
+            estadoAnterior,
+            montoAnterior),
+        String.format(
+            "Estado: %s, monto: %s, método de pago: %s",
+            actualizada.getEstado(),
+            actualizada.getMontoMulta(),
+            request.metodoPago()));
+    return mapper.toResponseDTO(actualizada);
   }
 
   @Transactional
@@ -378,13 +410,31 @@ public class SancionService {
     if (!sancion.estaActiva()) {
       throw new SancionNoActivaException(idSancion, sancion.getEstado().name());
     }
-
+    EstadoSancion estadoAnterior = sancion.getEstado();
+    BigDecimal montoAnterior = sancion.getMontoMulta();
     sancion.setEstado(EstadoSancion.CONDONADA);
     sancion.setFechaCondonacion(LocalDateTime.now());
     sancion.setObservaciones(request.observaciones());
+    Sancion actualizada = sancionRepository.save(sancion);
 
-    log.info("Sanción [id={}] condonada. Motivo: {}", idSancion, request.observaciones());
-    return mapper.toResponseDTO(sancionRepository.save(sancion));
+    auditoriaService.registrar(
+        "CONDONAR_SANCION",
+        "sanciones",
+        actualizada.getIdSancion(),
+        String.format(
+            "Estado: %s, monto: %s",
+            estadoAnterior,
+            montoAnterior),
+        String.format(
+            "Estado: %s, monto: %s, motivo: %s",
+            actualizada.getEstado(),
+            actualizada.getMontoMulta(),
+            request.observaciones()));
+
+    log.info("Sanción [id={}] condonada. Motivo: {}",
+        idSancion, request.observaciones());
+
+    return mapper.toResponseDTO(actualizada);
   }
 
   // ════════════════════════════════════════════════════════════════════════
