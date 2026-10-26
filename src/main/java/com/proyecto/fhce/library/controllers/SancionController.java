@@ -166,7 +166,7 @@ public class SancionController {
    * Condona una sanción. Solo ROLE_ADMIN puede condonar.
    */
   @PatchMapping("/{idSancion}/condonar")
-  @PreAuthorize("hasRole('ROLE_ADMIN')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
   public ResponseEntity<SancionResponseDTO> condonar(
       @PathVariable Long idSancion,
       @Valid @RequestBody CondonacionRequestDTO request) {
