@@ -492,7 +492,7 @@ public class SancionService {
    * Idempotente: la verificación de duplicados garantiza que ejecutarlo
    * dos veces produce el mismo resultado.
    */
-  @Scheduled(cron = "0 30 2 * * *")
+  @Scheduled(cron = "0 0 2 * * *")
   @Transactional
   public void procesarPrestamosVencidos() {
     log.info("==================================================");

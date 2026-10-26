@@ -573,7 +573,7 @@ public class PrestamoServiceImpl implements PrestamoService {
 
   }
 
-  @Scheduled(cron = "0 0 9 * * *") // Every day at 9 AM
+  @Scheduled(cron = "0 0 7 * * *") // Every day at 9 AM
   public void notificarPrestamosPorVencer() {
     // Notify loans expiring in the next 2 days
     List<Prestamo> porVencer = prestamoRepository.findPrestamosPorVencer(

@@ -225,7 +225,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     return response;
   }
 
-  @Scheduled(cron = "0 0 2 * * *") // Todos los días a las 2 AM
+  @Scheduled(cron = "0 0 4 * * *") // Todos los días a las 2 AM
   public void actualizarCertificadosVencidos() {
     List<CertificadoNoDeuda> vencidos = certificadoRepository.findCertificadosVencidos(LocalDateTime.now());
     for (CertificadoNoDeuda certificado : vencidos) {
