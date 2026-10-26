@@ -224,4 +224,16 @@ public interface SancionRepository extends JpaRepository<Sancion, Long> {
   BigDecimal sumMontoByEstadoAndBiblioteca(
       @Param("estado") EstadoSancion estado,
       @Param("bibliotecaId") Long bibliotecaId);
+
+  @Query("""
+      SELECT s
+      FROM Sancion s
+      WHERE s.usuario.idUsuario = :usuarioId
+        AND s.biblioteca.idBiblioteca = :bibliotecaId
+        AND s.estado = :estado
+      """)
+  List<Sancion> findActivasByUsuarioAndBiblioteca(
+      @Param("usuarioId") Long usuarioId,
+      @Param("bibliotecaId") Long bibliotecaId,
+      @Param("estado") EstadoSancion estado);
 }

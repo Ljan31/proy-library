@@ -96,10 +96,10 @@ public class SancionController {
 
   @GetMapping("/usuario/ci/{ci}/estado")
   public ResponseEntity<EstadoSancionUsuarioDTO> obtenerEstadoSancionesPorCi(
-      @PathVariable String ci) {
+      @PathVariable String ci, @RequestParam Long bibliotecaId) {
 
     return ResponseEntity.ok(
-        sancionService.obtenerEstadoSancionesPorCi(ci));
+        sancionService.obtenerEstadoSancionesPorCi(ci, bibliotecaId));
   }
 
   /**
@@ -125,8 +125,8 @@ public class SancionController {
   @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')" +
       " or (hasRole('ROLE_ESTUDIANTE') and #usuarioId == authentication.principal.id)")
   public ResponseEntity<EstadoSancionUsuarioDTO> obtenerEstadoSanciones(
-      @PathVariable Long usuarioId) {
-    return ResponseEntity.ok(sancionService.obtenerEstadoSanciones(usuarioId));
+      @PathVariable Long usuarioId, @RequestParam Long bibliotecaId) {
+    return ResponseEntity.ok(sancionService.obtenerEstadoSanciones(usuarioId, bibliotecaId));
   }
 
   /**

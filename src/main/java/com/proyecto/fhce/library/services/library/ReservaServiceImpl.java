@@ -142,7 +142,8 @@ public class ReservaServiceImpl implements ReservaService {
             () -> new ResourceNotFoundException("Biblioteca no encontrada con id: " + request.getBibliotecaId()));
 
     // ① Verificar suspensión vigente — INTEGRACIÓN CON SANCIONES
-    EstadoSancionUsuarioDTO estadoSanciones = sancionService.obtenerEstadoSanciones(usuarioId);
+    EstadoSancionUsuarioDTO estadoSanciones = sancionService.obtenerEstadoSanciones(usuarioId,
+        request.getBibliotecaId());
     if (estadoSanciones.tieneSuspensionVigente()) {
       throw new BusinessException(
           "No puedes realizar reservas. Tienes una suspensión activa hasta: "
@@ -294,7 +295,7 @@ public class ReservaServiceImpl implements ReservaService {
 
     // ① Verificar que el usuario no tenga sanción nueva desde que se notificó
     EstadoSancionUsuarioDTO estadoSanciones = sancionService
-        .obtenerEstadoSanciones(reserva.getUsuario().getId_usuario());
+        .obtenerEstadoSanciones(reserva.getUsuario().getId_usuario(), bibliotecarioId);
     if (estadoSanciones.tieneSuspensionVigente()) {
       throw new BusinessException(
           "El usuario tiene una suspensión activa. No se puede convertir la reserva en préstamo.");

@@ -248,7 +248,7 @@ public class SancionService {
         sancionRepository.findByBibliotecaAndEstado(bibliotecaId, estado));
   }
 
-  public EstadoSancionUsuarioDTO obtenerEstadoSancionesPorCi(String ci) {
+  public EstadoSancionUsuarioDTO obtenerEstadoSancionesPorCi(String ci, Long bibliotecaId) {
 
     Optional<Usuario> usuarioOpt = usuarioRepository.findByPersona_Ci(ci);
 
@@ -268,7 +268,7 @@ public class SancionService {
     Usuario usuario = usuarioOpt.get();
 
     return obtenerEstadoSanciones(
-        usuario.getId_usuario());
+        usuario.getId_usuario(), bibliotecaId);
 
   }
 
@@ -276,16 +276,61 @@ public class SancionService {
    * Estado consolidado de sanciones de un usuario.
    * Módulo de préstamos y reservas consulta esto antes de permitir operaciones.
    */
-  public EstadoSancionUsuarioDTO obtenerEstadoSanciones(Long usuarioId) {
-    boolean tieneSuspension = sancionRepository.tieneSuspensionVigente(usuarioId);
-    boolean tieneDeuda = sancionRepository.tieneDeudaPendiente(usuarioId);
-    long totalActivas = sancionRepository.contarSancionesActivasPorUsuario(usuarioId);
-    List<Sancion> sancionesActivas = sancionRepository.findActivasByUsuario(usuarioId);
+  public EstadoSancionUsuarioDTO obtenerEstadoSanciones(Long usuarioId, Long bibliotecaId) {
+    List<Sancion> sancionesActivas = sancionRepository.findActivasByUsuarioAndBiblioteca(usuarioId, bibliotecaId,
+        EstadoSancion.ACTIVA);
+
+    boolean tieneSuspension = sancionesActivas.stream()
+        .anyMatch(s -> s.implicaSuspension()
+            && s.getFechaFinSuspension() != null
+            && !s.getFechaFinSuspension().isBefore(LocalDate.now()));
+
+    boolean tieneDeuda = sancionesActivas.stream()
+        .anyMatch(s -> s.getMontoMulta() != null
+            && s.getMontoMulta().compareTo(BigDecimal.ZERO) > 0
+            && s.getFechaPago() == null);
+
+    long totalActivas = sancionesActivas.size();
+    // boolean tieneSuspension =
+    // sancionRepository.tieneSuspensionVigente(usuarioId);
+    // boolean tieneDeuda = sancionRepository.tieneDeudaPendiente(usuarioId);
+    // long totalActivas =
+    // sancionRepository.contarSancionesActivasPorUsuario(usuarioId);
     // Fecha de fin de suspensión más próxima (si tiene suspensión activa)
-    LocalDate fechaFinProxima = sancionRepository.findActivasByUsuario(usuarioId)
-        .stream()
+    // LocalDate fechaFinProxima = sancionRepository.findActivasByUsuario(usuarioId)
+    // .stream()
+    // .filter(Sancion::implicaSuspension)
+    // .filter(s -> s.getFechaFinSuspension() != null)
+    // .map(Sancion::getFechaFinSuspension)
+    // .min(LocalDate::compareTo)
+    // .orElse(null);
+
+    // List<SancionResumenDTO> sancionesResumen = sancionesActivas.stream()
+    // .map(s -> new SancionResumenDTO(
+    // s.getIdSancion(),
+    // s.getPrestamo() != null
+    // ? s.getPrestamo().getIdPrestamo()
+    // : null,
+    // s.getTipoSancion(),
+    // s.getEstado(),
+    // s.getMontoMulta(),
+    // s.getFechaFinSuspension(),
+    // s.implicaSuspension()
+    // && s.getFechaFinSuspension() != null
+    // && !s.getFechaFinSuspension().isBefore(LocalDate.now()),
+    // s.getMotivo() != null
+    // ? s.getMotivo().name()
+    // : null))
+    // .toList();
+    // BigDecimal montoTotalDeuda = sancionesResumen.stream()
+    // .map(SancionResumenDTO::montoMulta)
+    // .filter(monto -> monto != null)
+    // .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    LocalDate fechaFinProxima = sancionesActivas.stream()
         .filter(Sancion::implicaSuspension)
         .filter(s -> s.getFechaFinSuspension() != null)
+        .filter(s -> !s.getFechaFinSuspension().isBefore(LocalDate.now()))
         .map(Sancion::getFechaFinSuspension)
         .min(LocalDate::compareTo)
         .orElse(null);
@@ -303,15 +348,15 @@ public class SancionService {
             s.implicaSuspension()
                 && s.getFechaFinSuspension() != null
                 && !s.getFechaFinSuspension().isBefore(LocalDate.now()),
-            s.getMotivo() != null
-                ? s.getMotivo().name()
-                : null))
+            s.getMotivo() != null ? s.getMotivo().name() : null))
         .toList();
-    BigDecimal montoTotalDeuda = sancionesResumen.stream()
-        .map(SancionResumenDTO::montoMulta)
-        .filter(monto -> monto != null)
-        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+    BigDecimal montoTotalDeuda = sancionesActivas.stream()
+        .filter(s -> s.getMontoMulta() != null)
+        .filter(s -> s.getFechaPago() == null)
+        .map(Sancion::getMontoMulta)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+    System.out.println("tiene Dueda " + montoTotalDeuda);
     return new EstadoSancionUsuarioDTO(
         usuarioId,
         tieneSuspension,

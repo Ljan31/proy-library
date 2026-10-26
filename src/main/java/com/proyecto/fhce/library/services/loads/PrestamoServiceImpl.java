@@ -276,7 +276,8 @@ public class PrestamoServiceImpl implements PrestamoService {
 
     Usuario bibliotecario = validarEncargadoBiblioteca(bibliotecarioId, biblioteca);
     // Validate no active sanctions
-    EstadoSancionUsuarioDTO estadoSanciones = sancionService.obtenerEstadoSanciones(usuario.getId_usuario());
+    EstadoSancionUsuarioDTO estadoSanciones = sancionService.obtenerEstadoSanciones(usuario.getId_usuario(),
+        bibliotecarioId);
     log.debug("Estado sanciones: {}", estadoSanciones);
 
     if (estadoSanciones.tieneSuspensionVigente()) {
@@ -512,7 +513,7 @@ public class PrestamoServiceImpl implements PrestamoService {
 
     // ⑦ Verificar suspensión vigente antes de renovar — INTEGRACIÓN CON SANCIONES
     EstadoSancionUsuarioDTO estadoSanciones = sancionService
-        .obtenerEstadoSanciones(prestamo.getUsuario().getId_usuario());
+        .obtenerEstadoSanciones(prestamo.getUsuario().getId_usuario(), prestamo.getBiblioteca().getIdBiblioteca());
     if (estadoSanciones.tieneSuspensionVigente()) {
       throw new BusinessException("No se puede renovar con suspensión activa");
     }
