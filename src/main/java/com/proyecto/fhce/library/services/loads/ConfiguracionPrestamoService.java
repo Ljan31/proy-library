@@ -1,6 +1,8 @@
 package com.proyecto.fhce.library.services.loads;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,9 +53,9 @@ public class ConfiguracionPrestamoService {
         "configuracion_prestamo",
         guardada.getIdConfig(),
         null,
-        null);
+        mapToAuditoria(guardada));
 
-    return mapper.toResponseDTO(configuracionRepository.save(nueva));
+    return mapper.toResponseDTO(guardada);
   }
 
   @Transactional
@@ -61,15 +63,16 @@ public class ConfiguracionPrestamoService {
       ConfiguracionPrestamoRequestDTO request) {
     ConfiguracionPrestamo existente = buscarConfiguracionOLanzarError(id);
     validarNoExisteDuplicado(request.getBibliotecaId(), id);
-
+    Map<String, Object> datosAnteriores = mapToAuditoria(existente);
     Biblioteca biblioteca = buscarBibliotecaOLanzarError(request.getBibliotecaId());
     mapper.actualizarEntidad(existente, request, biblioteca);
+    Map<String, Object> datosNuevos = mapToAuditoria(existente);
     auditoriaService.registrar(
         "ACTUALIZAR",
         "configuracion_prestamo",
         id,
-        null,
-        null);
+        datosAnteriores,
+        datosNuevos);
     return mapper.toResponseDTO(existente);
   }
 
@@ -172,5 +175,30 @@ public class ConfiguracionPrestamoService {
     return bibliotecaRepository.findById(bibliotecaId)
         .orElseThrow(() -> new ResourceNotFoundException(
             "Biblioteca no encontrada con id: " + bibliotecaId));
+  }
+
+  private Map<String, Object> mapToAuditoria(
+      ConfiguracionPrestamo config) {
+
+    Map<String, Object> datos = new LinkedHashMap<>();
+
+    datos.put("idConfig", config.getIdConfig());
+
+    datos.put("bibliotecaId",
+        config.getBiblioteca() != null
+            ? config.getBiblioteca().getIdBiblioteca()
+            : null);
+
+    datos.put("diasPrestamoMax", config.getDiasPrestamoMax());
+    datos.put("renovacionesMax", config.getRenovacionesMax());
+    datos.put("ejemplaresMaxDomicilio",
+        config.getEjemplaresMaxDomicilio());
+    datos.put("ejemplaresMaxSala", config.getEjemplaresMaxSala());
+    datos.put("multaPorDia", config.getMultaPorDia());
+    datos.put("multaMaxDias", config.getMultaMaxDias());
+    datos.put("diasSuspension", config.getDiasSuspension());
+    datos.put("diasReserva", config.getDiasReserva());
+
+    return datos;
   }
 }

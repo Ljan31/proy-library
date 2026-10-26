@@ -214,7 +214,7 @@ public class SancionService {
         guardada.getIdSancion(),
         null,
         String.format(
-            "Sanción manual creada. Usuario: %d, biblioteca: %d, motivo: %s, monto: %s",
+            "Sanción manual creada. Usuario: %s, biblioteca: %s, motivo: %s, monto: %s",
             guardada.getUsuario().getId_usuario() + " - " + guardada.getUsuario().getUsername(),
             guardada.getBiblioteca().getIdBiblioteca() + " - " + guardada.getBiblioteca().getNombre(),
             guardada.getMotivo(),
