@@ -140,7 +140,7 @@ public class UserController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<Void>> delete(
       @PathVariable Long id) {
 
