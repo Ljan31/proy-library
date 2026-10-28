@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import com.proyecto.fhce.library.dto.SancionDTO.CondonacionRequestDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.EstadoSancionUsuarioDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.PagoMultaRequestDTO;
+import com.proyecto.fhce.library.dto.SancionDTO.SancionManualReposicionRequestDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.SancionManualRequestDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.SancionResponseDTO;
 import com.proyecto.fhce.library.enums.EstadoSancion;
@@ -18,6 +19,7 @@ import com.proyecto.fhce.library.security.UserDetailsImpl;
 import com.proyecto.fhce.library.services.loads.SancionService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/sanciones")
@@ -62,6 +64,40 @@ public class SancionController {
     Long bibliotecarioId = extractUserId(userDetails);
     SancionResponseDTO response = sancionService.registrarSancionManual(request, bibliotecarioId);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
+
+  /**
+   * POST /api/sanciones/reposicion
+   *
+   * Registra una sanción por pérdida de ejemplar.
+   * La sanción queda pendiente de resolución.
+   */
+  @PostMapping("/reposicion")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
+  public ResponseEntity<SancionResponseDTO> registrarPerdidaEjemplar(
+      @Valid @RequestBody SancionManualReposicionRequestDTO request,
+      @AuthenticationPrincipal UserDetails userDetails) {
+
+    Long bibliotecarioId = extractUserId(userDetails);
+
+    SancionResponseDTO response = sancionService.registrarPerdidaEjemplar(request, bibliotecarioId);
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
+
+  /**
+   * PATCH /api/sanciones/{idSancion}/reposicion-fisica
+   *
+   * Registra la entrega física de un ejemplar de reemplazo.
+   */
+  @PatchMapping("/{idSancion}/reposicion-fisica")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
+  public ResponseEntity<SancionResponseDTO> registrarReposicionFisica(
+      @PathVariable Long idSancion,
+      @RequestBody Map<String, String> body) {
+    String observaciones = body.get("observaciones");
+    return ResponseEntity.ok(
+        sancionService.registrarReposicionFisica(idSancion, observaciones));
   }
 
   // ════════════════════════════════════════════════════════════════════════

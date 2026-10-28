@@ -9,17 +9,20 @@ import org.springframework.transaction.annotation.Transactional;
 import com.proyecto.fhce.library.dto.SancionDTO.CondonacionRequestDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.EstadoSancionUsuarioDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.PagoMultaRequestDTO;
+import com.proyecto.fhce.library.dto.SancionDTO.SancionManualReposicionRequestDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.SancionManualRequestDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.SancionResponseDTO;
 import com.proyecto.fhce.library.dto.SancionDTO.SancionResumenDTO;
 import com.proyecto.fhce.library.dto.request.CrearNotificacionRequest;
 import com.proyecto.fhce.library.dto.response.loads.ConfiguracionPrestamoResponseDTO;
 import com.proyecto.fhce.library.entities.ConfiguracionPrestamo;
+import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.Persona;
 import com.proyecto.fhce.library.entities.Prestamo;
 import com.proyecto.fhce.library.entities.Sancion;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoSancion;
+import com.proyecto.fhce.library.enums.FormaResolucion;
 import com.proyecto.fhce.library.enums.MotivoSancion;
 import com.proyecto.fhce.library.enums.TipoSancion;
 import com.proyecto.fhce.library.enums.notificaciones.TipoNotificacion;
@@ -34,6 +37,7 @@ import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.SancionRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 import com.proyecto.fhce.library.services.AuditoriaService;
+import com.proyecto.fhce.library.services.library.EjemplarService;
 import com.proyecto.fhce.library.services.notificaciones.NotificacionService;
 
 import java.math.BigDecimal;
@@ -57,6 +61,7 @@ public class SancionService {
   private final NotificacionService notificacionService;
   private final SancionMapper mapper;
   private final AuditoriaService auditoriaService;
+  private final EjemplarService ejemplarService;
 
   public SancionService(
       SancionRepository sancionRepository,
@@ -65,7 +70,7 @@ public class SancionService {
       BibliotecaRepository bibliotecaRepository,
       ConfiguracionPrestamoService configuracionService,
       NotificacionService notificacionService,
-      SancionMapper mapper, AuditoriaService auditoriaService) {
+      SancionMapper mapper, AuditoriaService auditoriaService, EjemplarService ejemplarService) {
     this.sancionRepository = sancionRepository;
     this.prestamoRepository = prestamoRepository;
     this.usuarioRepository = usuarioRepository;
@@ -74,6 +79,7 @@ public class SancionService {
     this.notificacionService = notificacionService;
     this.mapper = mapper;
     this.auditoriaService = auditoriaService;
+    this.ejemplarService = ejemplarService;
   }
 
   // ════════════════════════════════════════════════════════════════════════
@@ -97,12 +103,23 @@ public class SancionService {
         .orElseThrow(() -> new RuntimeException("Préstamo no encontrado: " + idPrestamo));
 
     // ① Verificar que no exista sanción activa ya creada para este préstamo
-    if (sancionRepository.existsByPrestamo_IdPrestamoAndEstado(idPrestamo, EstadoSancion.ACTIVA)) {
-      log.warn("Ya existe una sanción activa para el préstamo ID={}",
+    // if (sancionRepository.existsByPrestamo_IdPrestamoAndEstado(idPrestamo,
+    // EstadoSancion.ACTIVA)) {
+    // log.warn("Ya existe una sanción activa para el préstamo ID={}",
+    // idPrestamo);
+    // throw new SancionDuplicadaException(idPrestamo);
+    // }
+    if (sancionRepository.existsByPrestamo_IdPrestamoAndMotivoAndEstado(
+        idPrestamo,
+        MotivoSancion.RETRASO_DEVOLUCION,
+        EstadoSancion.ACTIVA)) {
+
+      log.warn(
+          "Ya existe una sanción activa por retraso para el préstamo ID={}",
           idPrestamo);
+
       throw new SancionDuplicadaException(idPrestamo);
     }
-
     // ② Calcular días de retraso
     // Si ya fue devuelto, usamos la fecha real; si no, usamos hoy
     LocalDate fechaDevolucionReal = prestamo.getFechaDevolucionReal() != null
@@ -184,11 +201,19 @@ public class SancionService {
   @Transactional
   public SancionResponseDTO registrarSancionManual(SancionManualRequestDTO request, Long bibliotecarioId) {
     // Verificar duplicado por préstamo si se especifica uno
+    // if (request.prestamoId() != null &&
+    // sancionRepository.existsByPrestamo_IdPrestamoAndEstado(request.prestamoId(),
+    // EstadoSancion.ACTIVA)) {
+    // throw new SancionDuplicadaException(request.prestamoId());
+    // }
     if (request.prestamoId() != null &&
-        sancionRepository.existsByPrestamo_IdPrestamoAndEstado(request.prestamoId(), EstadoSancion.ACTIVA)) {
+        sancionRepository.existsByPrestamo_IdPrestamoAndMotivoAndEstado(
+            request.prestamoId(),
+            request.motivo(),
+            EstadoSancion.ACTIVA)) {
+
       throw new SancionDuplicadaException(request.prestamoId());
     }
-
     Sancion sancion = new Sancion();
     sancion.setUsuario(usuarioRepository.findById(request.usuarioId())
         .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + request.usuarioId())));
@@ -227,10 +252,98 @@ public class SancionService {
     return mapper.toResponseDTO(guardada);
   }
 
+  @Transactional
+  public SancionResponseDTO registrarPerdidaEjemplar(
+      SancionManualReposicionRequestDTO request, long bibliotecarioId) {
+
+    Prestamo prestamo = prestamoRepository
+        .findByIdWithRelations(request.prestamoId())
+        .orElseThrow(() -> new RuntimeException("Préstamo no encontrado: " + request.prestamoId()));
+
+    // Evitar duplicar una reposición por la misma pérdida.
+    boolean existeReposicion = sancionRepository.existsByPrestamo_IdPrestamoAndMotivo(
+        request.prestamoId(),
+        MotivoSancion.PERDIDA_EJEMPLAR);
+
+    if (existeReposicion) {
+      throw new IllegalStateException(
+          "Ya existe una sanción por pérdida para este préstamo.");
+    }
+    ejemplarService.reportarPerdido(
+        prestamo.getEjemplar().getIdEjemplar(),
+        "Pérdida reportada en el préstamo " + prestamo.getIdPrestamo());
+
+    Sancion sancion = new Sancion();
+    sancion.setUsuario(prestamo.getUsuario());
+    sancion.setPrestamo(prestamo);
+    sancion.setBiblioteca(prestamo.getBiblioteca());
+
+    sancion.setBibliotecario(
+        usuarioRepository.findById(bibliotecarioId)
+            .orElseThrow(() -> new RuntimeException("Bibliotecario no encontrado")));
+
+    sancion.setTipoSancion(TipoSancion.REPOSICION);
+    sancion.setMotivo(MotivoSancion.PERDIDA_EJEMPLAR);
+
+    sancion.setMontoReposicion(request.montoReposicion());
+    sancion.setFormaResolucion(FormaResolucion.PENDIENTE);
+    sancion.setObservaciones(request.observaciones());
+
+    Sancion guardada = sancionRepository.save(sancion);
+
+    enviarNotificacionSancion(guardada);
+
+    return mapper.toResponseDTO(guardada);
+  }
+
+  @Transactional
+  public SancionResponseDTO registrarReposicionFisica(
+      Long idSancion,
+      String observaciones) {
+
+    Sancion sancion = obtenerSancionOException(idSancion);
+
+    if (!sancion.estaActiva()) {
+      throw new SancionNoActivaException(
+          idSancion, sancion.getEstado().name());
+    }
+
+    if (sancion.getTipoSancion() != TipoSancion.REPOSICION) {
+      throw new IllegalStateException(
+          "La sanción no corresponde a una reposición.");
+    }
+
+    if (sancion.getFormaResolucion() != FormaResolucion.PENDIENTE) {
+      throw new IllegalStateException(
+          "La reposición ya fue resuelta.");
+    }
+
+    // Registrar el cambio del ejemplar y su historial.
+    ejemplarService.habilitarPorReposicion(
+        sancion.getPrestamo().getEjemplar().getIdEjemplar(),
+        "Reposición física de la sanción " + idSancion);
+
+    sancion.setFormaResolucion(FormaResolucion.REPOSICION_FISICA);
+    sancion.setFechaResolucion(LocalDateTime.now());
+    sancion.setEstado(EstadoSancion.PAGADA);
+
+    if (observaciones != null && !observaciones.isBlank()) {
+      sancion.setObservaciones(observaciones);
+    }
+    Sancion actualizada = sancionRepository.save(sancion);
+    auditoriaService.registrar(
+        "REGISTRAR_REPOSICION_FISICA",
+        "sanciones",
+        actualizada.getIdSancion(),
+        "Reposición pendiente",
+        "Reposición física registrada. Ejemplar habilitado: "
+            + sancion.getPrestamo().getEjemplar().getIdEjemplar());
+    return mapper.toResponseDTO(actualizada);
+  }
+
   // ════════════════════════════════════════════════════════════════════════
   // CONSULTAS
   // ════════════════════════════════════════════════════════════════════════
-
   public SancionResponseDTO buscarPorId(Long idSancion) {
     return mapper.toResponseDTO(obtenerSancionOException(idSancion));
   }
@@ -410,13 +523,18 @@ public class SancionService {
     if (!sancion.estaActiva()) {
       throw new SancionNoActivaException(idSancion, sancion.getEstado().name());
     }
+    // Evitar registrar un segundo pago.
+    if (sancion.getFechaPago() != null) {
+      throw new IllegalStateException(
+          "La multa de la sanción " + idSancion + " ya fue pagada");
+    }
 
     // Si tiene suspensión activa, el pago solo salda la multa.
     // La suspensión sigue su curso hasta fechaFinSuspension.
     if (sancion.getTipoSancion() == TipoSancion.MULTA_Y_SUSPENSION
         && sancion.suspensionVigente()) {
       // Solo marcamos el monto como pagado, la sanción sigue ACTIVA por la suspensión
-      sancion.setMontoMulta(BigDecimal.ZERO);
+      // sancion.setMontoMulta(BigDecimal.ZERO);
       sancion.setFechaPago(LocalDateTime.now());
       sancion.setMetodoPago(request.metodoPago());
     } else {
@@ -492,7 +610,7 @@ public class SancionService {
    * Idempotente: la verificación de duplicados garantiza que ejecutarlo
    * dos veces produce el mismo resultado.
    */
-  @Scheduled(cron = "0 0 2 * * *")
+  @Scheduled(cron = "0 43 12 * * *")
   @Transactional
   public void procesarPrestamosVencidos() {
     log.info("==================================================");
@@ -569,7 +687,7 @@ public class SancionService {
    * Si el usuario paga en el día 4 (Bs 12), el CRON no lo toca porque
    * el estado ya no es ACTIVA.
    */
-  @Scheduled(cron = "0 30 2 * * *")
+  @Scheduled(cron = "0 48 12 * * *")
   @Transactional
   public void actualizarMultasSanciones() {
     log.info("CRON inicio — actualizarMultasSanciones");
@@ -600,14 +718,25 @@ public class SancionService {
    * Cron diario a las 3:00 AM.
    * Cierra suspensiones que vencieron y no tienen deuda pendiente.
    */
-  @Scheduled(cron = "0 0 3 * * *")
+  @Scheduled(cron = "0 12 13 * * *")
   @Transactional
   public void cerrarSuspensionesVencidas() {
+    log.info("Iniciando cierre de suspensiones vencidas");
+
     List<Sancion> vencidas = sancionRepository.findSuspensionesVencidasSinDeuda();
+
+    log.info("Suspensiones encontradas: {}", vencidas.size());
+
     for (Sancion s : vencidas) {
       s.setEstado(EstadoSancion.PAGADA);
       sancionRepository.save(s);
-      log.info("Suspensión [id={}] cerrada automáticamente por vencimiento.", s.getIdSancion());
+
+      log.info(
+          "Suspensión cerrada: id={}, fechaFin={}, monto={}, fechaPago={}",
+          s.getIdSancion(),
+          s.getFechaFinSuspension(),
+          s.getMontoMulta(),
+          s.getFechaPago());
     }
   }
 

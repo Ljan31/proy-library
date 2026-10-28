@@ -3,7 +3,9 @@ package com.proyecto.fhce.library.services.loads;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -383,6 +385,17 @@ public class PrestamoServiceImpl implements PrestamoService {
 
     Usuario bibliotecario = validarEncargadoBiblioteca(bibliotecarioId, prestamo.getBiblioteca());
 
+    // Update copy state
+    Ejemplar ejemplar = prestamo.getEjemplar();
+
+    // 1. Capturar valores anteriores ANTES de modificar las entidades.
+    Map<String, Object> valoresAnteriores = new LinkedHashMap<>();
+    valoresAnteriores.put("estadoPrestamo", prestamo.getEstadoPrestamo());
+    valoresAnteriores.put("fechaDevolucionReal", prestamo.getFechaDevolucionReal());
+    valoresAnteriores.put("condicionDevolucion", prestamo.getCondicionDevolucion());
+    valoresAnteriores.put("estadoEjemplar", ejemplar.getEstadoEjemplar());
+    valoresAnteriores.put("condicionEntrega", prestamo.getCondicionEntrega());
+
     // Register return
     prestamo.setFechaDevolucionReal(LocalDateTime.now());
     prestamo.setBibliotecarioDevolucion(bibliotecario);
@@ -405,8 +418,6 @@ public class PrestamoServiceImpl implements PrestamoService {
           (prestamo.getObservaciones() != null ? prestamo.getObservaciones() + ". " : "") + alertaDeterioro);
     }
 
-    // Update copy state
-    Ejemplar ejemplar = prestamo.getEjemplar();
     EstadoEjemplar estadoAnterior = ejemplar.getEstadoEjemplar();
     EstadoEjemplar nuevoEstado = request.getEstadoEjemplar() != null
         ? request.getEstadoEjemplar()
@@ -445,11 +456,19 @@ public class PrestamoServiceImpl implements PrestamoService {
     // updated.getIdPrestamo(), e.getMessage());
     // }
     // }
-
+    // 4. Registrar valores posteriores.
+    Map<String, Object> valoresNuevos = new LinkedHashMap<>();
+    valoresNuevos.put("estadoPrestamo", updated.getEstadoPrestamo());
+    valoresNuevos.put("fechaDevolucionReal", updated.getFechaDevolucionReal());
+    valoresNuevos.put("condicionDevolucion", updated.getCondicionDevolucion());
+    valoresNuevos.put("estadoEjemplar", ejemplar.getEstadoEjemplar());
+    valoresNuevos.put("condicionEntrega", updated.getCondicionEntrega());
+    valoresNuevos.put("observaciones", updated.getObservaciones());
+    valoresNuevos.put("bibliotecario", bibliotecario.getUsername());
     // // Audit
     auditoriaService.registrar("DEVOLUCION_PRESTAMO", "Prestamos", updated.getIdPrestamo(),
-        null, "Devolución registrada por bibliotecario: " +
-            bibliotecario.getUsername());
+        valoresAnteriores,
+        valoresNuevos);
 
     // // Notification
     // notificacionService.enviarNotificacionDevolucion(updated);

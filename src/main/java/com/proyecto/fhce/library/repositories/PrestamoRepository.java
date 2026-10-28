@@ -30,11 +30,31 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
 
     List<Prestamo> findByBiblioteca_IdBiblioteca(Long bibliotecaId);
 
+    // @Query("""
+    // SELECT p FROM Prestamo p
+    // WHERE p.biblioteca.idBiblioteca = :bibliotecaId
+    // AND (:estado IS NULL OR p.estadoPrestamo = :estado)
+    // """)
+    // List<Prestamo> findByBibliotecaConFiltroEstado(
+    // @Param("bibliotecaId") Long bibliotecaId,
+    // @Param("estado") EstadoPrestamo estado);
+
     @Query("""
-            SELECT p FROM Prestamo p
+            SELECT DISTINCT p
+            FROM Prestamo p
+            LEFT JOIN FETCH p.ejemplar e
+            LEFT JOIN FETCH e.edicion ed
+            LEFT JOIN FETCH ed.libro
+            LEFT JOIN FETCH p.usuario u
+            LEFT JOIN FETCH u.persona
+            LEFT JOIN FETCH p.biblioteca
+            LEFT JOIN FETCH p.bibliotecarioPrestamo bp
+            LEFT JOIN FETCH bp.persona
+            LEFT JOIN FETCH p.bibliotecarioDevolucion bd
+            LEFT JOIN FETCH bd.persona
             WHERE p.biblioteca.idBiblioteca = :bibliotecaId
-            AND (:estado IS NULL OR p.estadoPrestamo = :estado)
-                    """)
+              AND (:estado IS NULL OR p.estadoPrestamo = :estado)
+            """)
     List<Prestamo> findByBibliotecaConFiltroEstado(
             @Param("bibliotecaId") Long bibliotecaId,
             @Param("estado") EstadoPrestamo estado);
@@ -177,6 +197,7 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
             AND NOT EXISTS (
                 SELECT 1 FROM Sancion s
                 WHERE s.prestamo = p AND s.estado = 'ACTIVA'
+                AND s.motivo = 'RETRASO_DEVOLUCION'
             )
             """)
     List<Prestamo> findPrestamosVencidosSinSancion();

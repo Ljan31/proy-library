@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.proyecto.fhce.library.enums.EstadoSancion;
+import com.proyecto.fhce.library.enums.FormaResolucion;
 import com.proyecto.fhce.library.enums.MotivoSancion;
 import com.proyecto.fhce.library.enums.TipoSancion;
 
@@ -115,6 +116,17 @@ public class Sancion {
   // ── Observaciones ────────────────────────────────────────────────────────
   @Column(name = "observaciones", columnDefinition = "TEXT")
   private String observaciones;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "forma_resolucion", length = 30)
+  private FormaResolucion formaResolucion = FormaResolucion.PENDIENTE;
+
+  @Column(name = "fecha_resolucion")
+  private LocalDateTime fechaResolucion;
+
+  @Column(name = "monto_reposicion", precision = 10, scale = 2)
+  @DecimalMin(value = "0.0")
+  private BigDecimal montoReposicion;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Constructores
@@ -295,6 +307,30 @@ public class Sancion {
 
   public void setObservaciones(String observaciones) {
     this.observaciones = observaciones;
+  }
+
+  public FormaResolucion getFormaResolucion() {
+    return formaResolucion;
+  }
+
+  public void setFormaResolucion(FormaResolucion formaResolucion) {
+    this.formaResolucion = formaResolucion;
+  }
+
+  public LocalDateTime getFechaResolucion() {
+    return fechaResolucion;
+  }
+
+  public void setFechaResolucion(LocalDateTime fechaResolucion) {
+    this.fechaResolucion = fechaResolucion;
+  }
+
+  public BigDecimal getMontoReposicion() {
+    return montoReposicion;
+  }
+
+  public void setMontoReposicion(BigDecimal montoReposicion) {
+    this.montoReposicion = montoReposicion;
   }
 
 }

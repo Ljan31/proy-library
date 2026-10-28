@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import com.proyecto.fhce.library.entities.Sancion;
 import com.proyecto.fhce.library.enums.EstadoSancion;
+import com.proyecto.fhce.library.enums.MotivoSancion;
 import com.proyecto.fhce.library.enums.TipoSancion;
 
 import java.math.BigDecimal;
@@ -24,6 +25,15 @@ public interface SancionRepository extends JpaRepository<Sancion, Long> {
    * Previene la generación de sanciones duplicadas por el mismo préstamo.
    */
   boolean existsByPrestamo_IdPrestamoAndEstado(Long idPrestamo, EstadoSancion estado);
+
+  boolean existsByPrestamo_IdPrestamoAndMotivo(
+      Long prestamoId,
+      MotivoSancion motivo);
+
+  boolean existsByPrestamo_IdPrestamoAndMotivoAndEstado(
+      Long prestamoId,
+      MotivoSancion motivo,
+      EstadoSancion estado);
 
   /**
    * Cuenta sanciones activas de un usuario (sin importar tipo).
@@ -79,11 +89,16 @@ public interface SancionRepository extends JpaRepository<Sancion, Long> {
    * Sanciones activas de una biblioteca, con usuario y préstamo cargados.
    * Para el panel del bibliotecario.
    */
+
   @Query("""
-      SELECT s FROM Sancion s
+      SELECT DISTINCT s FROM Sancion s
       JOIN FETCH s.usuario u
       JOIN FETCH u.persona
-      LEFT JOIN FETCH s.prestamo
+      LEFT JOIN FETCH s.biblioteca b
+      LEFT JOIN FETCH s.prestamo p
+      LEFT JOIN FETCH p.ejemplar e
+      LEFT JOIN FETCH e.edicion ed
+      LEFT JOIN FETCH ed.libro l
       WHERE s.biblioteca.idBiblioteca = :bibliotecaId
         AND s.estado = :estado
       ORDER BY s.fechaGeneracion DESC
@@ -91,6 +106,18 @@ public interface SancionRepository extends JpaRepository<Sancion, Long> {
   List<Sancion> findByBibliotecaAndEstado(
       @Param("bibliotecaId") Long bibliotecaId,
       @Param("estado") EstadoSancion estado);
+  // @Query("""
+  // SELECT s FROM Sancion s
+  // JOIN FETCH s.usuario u
+  // JOIN FETCH u.persona
+  // LEFT JOIN FETCH s.prestamo
+  // WHERE s.biblioteca.idBiblioteca = :bibliotecaId
+  // AND s.estado = :estado
+  // ORDER BY s.fechaGeneracion DESC
+  // """)
+  // List<Sancion> findByBibliotecaAndEstado(
+  // @Param("bibliotecaId") Long bibliotecaId,
+  // @Param("estado") EstadoSancion estado);
 
   // ── Para el módulo de certificados ───────────────────────────────────────
 
@@ -140,7 +167,10 @@ public interface SancionRepository extends JpaRepository<Sancion, Long> {
       WHERE s.estado = 'ACTIVA'
         AND (s.tipoSancion = 'SUSPENSION' OR s.tipoSancion = 'MULTA_Y_SUSPENSION')
         AND s.fechaFinSuspension < CURRENT_DATE
-        AND s.montoMulta IS NULL OR s.montoMulta = 0
+        AND (
+          s.tipoSancion = 'SUSPENSION'
+          OR s.fechaPago IS NOT NULL
+        )
       """)
   List<Sancion> findSuspensionesVencidasSinDeuda();
 

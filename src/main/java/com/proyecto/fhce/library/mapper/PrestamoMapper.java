@@ -50,31 +50,42 @@ public class PrestamoMapper {
   // ==================== PRIVATE HELPERS ====================
 
   private void mapEjemplar(Prestamo prestamo, PrestamoResponse response) {
-    if (prestamo.getEjemplar() == null)
+    if (prestamo.getEjemplar() == null) {
       return;
+    }
+
+    var ejemplar = prestamo.getEjemplar();
 
     EjemplarResponse er = new EjemplarResponse();
-    er.setId_ejemplar(prestamo.getEjemplar().getIdEjemplar());
-    er.setCodigoEjemplar(prestamo.getEjemplar().getCodigoEjemplar());
-    er.setEstadoEjemplar(prestamo.getEjemplar().getEstadoEjemplar());
+    er.setId_ejemplar(ejemplar.getIdEjemplar());
+    er.setCodigoEjemplar(ejemplar.getCodigoEjemplar());
+    er.setEstadoEjemplar(ejemplar.getEstadoEjemplar());
 
-    if (prestamo.getEjemplar().getEdicion() != null) {
+    // Agregar si existe este campo y su setter en EjemplarResponse
+    er.setCodigoTopograficoConcat(ejemplar.getCodigoTopograficoConcat());
+    if (ejemplar.getEdicion() != null) {
+      var edicion = ejemplar.getEdicion();
+
       EdicionSimpleResponse ed = new EdicionSimpleResponse();
-      ed.setIdEdicion(prestamo.getEjemplar().getEdicion().getIdEdicion());
-      ed.setEditorial(prestamo.getEjemplar().getEdicion().getEditorial());
-      ed.setAnoPublicacion(prestamo.getEjemplar().getEdicion().getAnoPublicacion());
-      ed.setEdicion(prestamo.getEjemplar().getEdicion().getEdicion());
-      ed.setImagenPortada(prestamo.getEjemplar().getEdicion().getImagenPortada());
+      ed.setIdEdicion(edicion.getIdEdicion());
+      ed.setEditorial(edicion.getEditorial());
+      ed.setAnoPublicacion(edicion.getAnoPublicacion());
+      ed.setEdicion(edicion.getEdicion());
+      ed.setImagenPortada(edicion.getImagenPortada());
 
-      if (prestamo.getEjemplar().getEdicion().getLibro() != null) {
-        ed.setIdLibro(prestamo.getEjemplar().getEdicion().getLibro().getIdLibro());
-        ed.setTitulo(prestamo.getEjemplar().getEdicion().getLibro().getTitulo());
+      if (edicion.getLibro() != null) {
+        var libroEntidad = edicion.getLibro();
+
+        ed.setIdLibro(libroEntidad.getIdLibro());
+        ed.setTitulo(libroEntidad.getTitulo());
 
         LibroSimpleResponse libro = new LibroSimpleResponse();
-        libro.setIdLibro(prestamo.getEjemplar().getEdicion().getLibro().getIdLibro());
-        libro.setTitulo(prestamo.getEjemplar().getEdicion().getLibro().getTitulo());
+        libro.setIdLibro(libroEntidad.getIdLibro());
+        libro.setTitulo(libroEntidad.getTitulo());
+
         er.setLibro(libro);
       }
+
       er.setEdicion(ed);
     }
 

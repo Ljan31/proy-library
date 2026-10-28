@@ -20,6 +20,18 @@ public class SancionMapper {
       nombreUsuario = persona.getNombre() + " " + persona.getApellido_pat();
       ciUsuario = persona.getCi() + "";
     }
+    var prestamo = s.getPrestamo();
+    var ejemplar = prestamo != null ? prestamo.getEjemplar() : null;
+    var edicion = ejemplar != null ? ejemplar.getEdicion() : null;
+    var libro = edicion != null ? edicion.getLibro() : null;
+
+    String codigoTopografico = ejemplar != null
+        ? ejemplar.getCodigoTopograficoConcat()
+        : null;
+
+    String tituloEjemplar = libro != null
+        ? libro.getTitulo()
+        : null;
 
     return new SancionResponseDTO(
         s.getIdSancion(),
@@ -34,15 +46,20 @@ public class SancionMapper {
         s.getEstado(),
         s.getDiasRetraso(),
         s.getMontoMulta(),
+        s.getMontoReposicion(),
         s.getDiasSuspension(),
         s.getFechaGeneracion(),
         s.getFechaInicioSuspension(),
         s.getFechaFinSuspension(),
         s.getFechaPago(),
         s.getFechaCondonacion(),
+        s.getFechaResolucion(),
+        s.getFormaResolucion(),
         s.getMetodoPago(),
         s.getObservaciones(),
-        s.suspensionVigente());
+        s.suspensionVigente(),
+        codigoTopografico,
+        tituloEjemplar);
   }
 
   public SancionResumenDTO toResumenDTO(Sancion s) {

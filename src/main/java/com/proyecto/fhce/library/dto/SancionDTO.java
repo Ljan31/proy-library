@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.proyecto.fhce.library.enums.EstadoSancion;
+import com.proyecto.fhce.library.enums.FormaResolucion;
 import com.proyecto.fhce.library.enums.MotivoSancion;
 import com.proyecto.fhce.library.enums.TipoSancion;
 
@@ -26,6 +27,16 @@ public class SancionDTO {
             @NotNull(message = "El motivo es requerido") MotivoSancion motivo,
 
             @DecimalMin(value = "0.0", message = "El monto no puede ser negativo") BigDecimal montoFijo,
+
+            String observaciones) {
+    }
+
+    public record SancionManualReposicionRequestDTO(
+            @NotNull(message = "El ID de Prestamo es requerido") Long prestamoId,
+
+            @NotNull(message = "El ID de biblioteca es requerido") Long bibliotecaId,
+
+            @DecimalMin(value = "0.0", message = "El monto no puede ser negativo") BigDecimal montoReposicion,
 
             String observaciones) {
     }
@@ -56,15 +67,20 @@ public class SancionDTO {
             EstadoSancion estado,
             Integer diasRetraso,
             BigDecimal montoMulta,
+            BigDecimal montoReposicion,
             Integer diasSuspension,
             LocalDateTime fechaGeneracion,
             LocalDate fechaInicioSuspension,
             LocalDate fechaFinSuspension,
             LocalDateTime fechaPago,
             LocalDateTime fechaCondonacion,
+            LocalDateTime fechaResolucion,
+            FormaResolucion formaResolucion,
             String metodoPago,
             String observaciones,
-            boolean suspensionVigente) {
+            boolean suspensionVigente,
+            String codigoTopograficoConcat,
+            String tituloEjemplar) {
     }
 
     // ── RESPONSE: resumen para incluir en respuestas de préstamo/usuario ──

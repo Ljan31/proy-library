@@ -228,8 +228,56 @@ public class EjemplarServiceImpl implements EjemplarService {
 
     registrarCambioEstado(ejemplar, estadoAnterior, EstadoEjemplar.PERDIDO, motivo);
 
-    auditoriaService.registrar("REPORTAR_PERTIDO_EJEMPLAR", "Ejemplares",
+    auditoriaService.registrar("REPORTAR_PERDIDA_EJEMPLAR", "Ejemplares",
         ejemplar.getIdEjemplar(), null, "Motivo: " + motivo);
+  }
+
+  @Transactional
+  public EjemplarResponse habilitarPorReposicion(Long idEjemplar, String motivo) {
+    Ejemplar ejemplar = ejemplarRepository.findById(idEjemplar)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "Ejemplar no encontrado con id: " + idEjemplar));
+
+    EstadoEjemplar estadoAnterior = ejemplar.getEstadoEjemplar();
+
+    // No habilitar ejemplares que todavía están prestados.
+    if (estadoAnterior == EstadoEjemplar.PRESTADO) {
+      throw new BusinessException(
+          "No se puede habilitar un ejemplar que está prestado.");
+    }
+
+    // Evitar cambios innecesarios.
+    if (estadoAnterior == EstadoEjemplar.DISPONIBLE) {
+      throw new BusinessException(
+          "El ejemplar ya se encuentra disponible.");
+    }
+
+    // La reposición no debe reactivar ejemplares dados de baja
+    // ni ejemplares cuyo estado no permita una habilitación segura.
+    if (estadoAnterior != EstadoEjemplar.PERDIDO
+        && estadoAnterior != EstadoEjemplar.DAÑADO) {
+      throw new BusinessException(
+          "El estado actual del ejemplar no permite habilitarlo por reposición.");
+    }
+
+    ejemplar.setEstadoEjemplar(EstadoEjemplar.DISPONIBLE);
+
+    Ejemplar actualizado = ejemplarRepository.save(ejemplar);
+
+    registrarCambioEstado(
+        actualizado,
+        estadoAnterior,
+        EstadoEjemplar.DISPONIBLE,
+        motivo != null ? motivo : "Reposición física de ejemplar");
+
+    auditoriaService.registrar(
+        "HABILITAR_EJEMPLAR_POR_REPOSICION",
+        "Ejemplares",
+        actualizado.getIdEjemplar(),
+        estadoAnterior,
+        EstadoEjemplar.DISPONIBLE);
+
+    return mapToResponse(actualizado);
   }
 
   public void transferirBiblioteca(Long ejemplarId, Long nuevaBibliotecaId, String motivo) {

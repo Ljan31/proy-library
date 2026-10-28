@@ -21,6 +21,8 @@ public interface EjemplarService {
 
   public void reportarPerdido(Long id, String motivo);
 
+  public EjemplarResponse habilitarPorReposicion(Long idEjemplar, String motivo);
+
   public void transferirBiblioteca(Long ejemplarId, Long nuevaBibliotecaId, String motivo);
 
   public List<EjemplarResponse> findAll();
