@@ -2,12 +2,12 @@ package com.proyecto.fhce.library.services.users;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -202,6 +202,20 @@ public class UserServiceImpl implements UserService {
 
     Persona persona = usuario.getPersona();
 
+    // Validar CI único si cambió
+    if (!Objects.equals(persona.getCi(), request.getCi()) &&
+        personaRepository.existsByCi(request.getCi())) {
+      throw new DuplicateResourceException(
+          "Ya existe una persona con CI: " + request.getCi());
+    }
+
+    // Validar email único si cambió
+    if (request.getEmail() != null &&
+        !request.getEmail().equals(persona.getEmail()) &&
+        personaRepository.existsByEmail(request.getEmail())) {
+      throw new DuplicateResourceException("Ya existe una persona con email: " + request.getEmail());
+    }
+
     if (request.getNombre() != null)
       persona.setNombre(request.getNombre());
     if (request.getApellido_pat() != null)
@@ -217,7 +231,6 @@ public class UserServiceImpl implements UserService {
     if (request.getCi() != null)
       persona.setCi(request.getCi());
     if (request.getUsername() != null) {
-
       usuario.setUsername(request.getUsername());
     }
     Usuario updated = usuarioRepository.save(usuario);
