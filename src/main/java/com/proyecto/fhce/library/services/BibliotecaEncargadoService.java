@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -100,10 +103,29 @@ public class BibliotecaEncargadoService {
 
   @Transactional
   public void removerEncargado(Long bibliotecaId, Long usuarioId) {
+    Biblioteca biblioteca = bibliotecaRepository.findById(bibliotecaId)
+        .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada"));
     BibliotecaEncargado encargado = encargadoRepository
         .findByBiblioteca_IdBibliotecaAndUsuario_IdUsuarioAndActivoTrue(bibliotecaId, usuarioId)
         .orElseThrow(() -> new ResourceNotFoundException(
             "El usuario no es encargado activo de esta biblioteca"));
+    // Obtener usuario actual (desde SecurityContext)
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth != null && auth.getPrincipal() instanceof UserDetails) {
+      UserDetails userDetails = (UserDetails) auth.getPrincipal();
+      Usuario usuario = usuarioRepository.findByUsername(userDetails.getUsername()).orElse(null);
+
+      boolean esBibliotecario = usuario.getRoles().stream()
+          .anyMatch(r -> r.getName().equals("ROLE_BIBLIOTECARIO"));
+
+      if (esBibliotecario) {
+        boolean yaAsignado = biblioteca.getEncargados().stream()
+            .anyMatch(be -> be.getUsuario().getId_usuario().equals(usuario.getId_usuario()) && be.getActivo());
+        if (!yaAsignado) {
+          throw new BusinessException("Solo puedes remover auxiliares a la biblioteca a la que perteneces.");
+        }
+      }
+    }
 
     // Soft delete: desactivar, no borrar
     Usuario usuario = encargado.getUsuario();

@@ -54,11 +54,10 @@ public class BibliotecaEncargadoController {
 
   @Operation(summary = "Remover encargado de una biblioteca", security = @SecurityRequirement(name = "bearer-jwt"))
   @DeleteMapping("/{usuarioId}")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<Void>> remover(
       @PathVariable Long bibliotecaId,
       @PathVariable Long usuarioId) {
-    System.out.println("====================desde encargado delete");
     encargadoService.removerEncargado(bibliotecaId, usuarioId);
     return ResponseEntity.ok(ApiResponse.success("Encargado removido exitosamente", null));
   }
