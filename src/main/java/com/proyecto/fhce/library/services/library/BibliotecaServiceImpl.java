@@ -454,7 +454,7 @@ public class BibliotecaServiceImpl implements BibliotecaService {
       throw new BusinessException("La imagen es requerida");
     }
     String respaldoAnterior = encargado.getRespaldoUrl();
-
+    storageService.eliminar(respaldoAnterior, TipoArchivo.RESPALDOS_ENCARGADOS);
     String imagenUrl = storageService.guardar(
         TipoArchivo.RESPALDOS_ENCARGADOS,
         imagen);
