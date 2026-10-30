@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.proyecto.fhce.library.dto.request.users.UsuarioCarreraRequest;
@@ -56,7 +55,7 @@ public class UsuarioCarreraController {
 
   @Operation(summary = "Asignar carrera a usuario", description = "Crea una nueva asignación de carrera para un usuario")
   @PostMapping
-  @PreAuthorize("hasAuthority('USUARIOS_EDITAR') or hasRole('ADMIN')")
+  @PreAuthorize("hasAuthority('USUARIOS_EDITAR') or hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<UsuarioCarreraResponse>> asignarCarrera(
       @Valid @RequestBody UsuarioCarreraRequest request) {
     UsuarioCarreraResponse asignacion = usuarioCarreraService.asignarCarrera(request);
