@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -25,7 +24,6 @@ import com.proyecto.fhce.library.dto.request.library.BibliotecaRequest;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.dto.response.library.BibliotecaResponse;
 import com.proyecto.fhce.library.enums.EstadoBiblioteca;
-import com.proyecto.fhce.library.enums.RolEncargado;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
 import com.proyecto.fhce.library.security.UserDetailsImpl;
 import com.proyecto.fhce.library.services.library.BibliotecaService;
@@ -174,12 +172,12 @@ public class BibliotecaController {
 
       @RequestPart("usuarioId") Long usuarioId,
 
-      @RequestPart("imagen") MultipartFile imagen) {
+      @RequestPart("imagen") MultipartFile imagen, Authentication authentication) {
 
     String imagenUrl = bibliotecaService.uploadEncargadoImagen(
         bibliotecaId,
         usuarioId,
-        imagen);
+        imagen, obtenerUsuarioId(authentication));
 
     Map<String, String> data = Map.of(
         "imagenUrl", imagenUrl);

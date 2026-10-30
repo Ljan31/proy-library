@@ -24,7 +24,7 @@ public interface BibliotecaService {
   public String uploadEncargadoImagen(
       Long bibliotecaId,
       Long usuarioId,
-      MultipartFile imagen);
+      MultipartFile imagen, long usuarioActualId);
 
   public List<BibliotecaResponse> findAll();
 

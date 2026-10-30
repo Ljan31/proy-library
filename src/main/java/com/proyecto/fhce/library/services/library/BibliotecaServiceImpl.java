@@ -424,7 +424,7 @@ public class BibliotecaServiceImpl implements BibliotecaService {
   public String uploadEncargadoImagen(
       Long bibliotecaId,
       Long usuarioId,
-      MultipartFile imagen) {
+      MultipartFile imagen, long usuarioActualId) {
 
     Biblioteca biblioteca = bibliotecaRepository.findById(bibliotecaId)
         .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada"));
@@ -436,6 +436,20 @@ public class BibliotecaServiceImpl implements BibliotecaService {
         .findFirst()
         .orElseThrow(() -> new ResourceNotFoundException("Encargado no encontrado"));
 
+    Usuario usuarioActual = usuarioRepository.findById(usuarioActualId)
+        .orElseThrow(() -> new ResourceNotFoundException("Usuario autenticado no encontrado"));
+    boolean esBibliotecario = usuarioActual.getRoles().stream()
+        .anyMatch(r -> r.getName().equals("ROLE_BIBLIOTECARIO"));
+
+    // validar que el bibliotecario es el encargado de la bibilioteca a agregar
+    if (esBibliotecario) {
+      boolean yaAsignado = biblioteca.getEncargados().stream()
+          .anyMatch(be -> be.getUsuario().getId_usuario().equals(usuarioActual.getId_usuario()) && be.getActivo());
+      if (!yaAsignado) {
+        throw new BusinessException(
+            "Solo puedes actualizar respaldo de auxiliares a la biblioteca a la que perteneces.");
+      }
+    }
     if (imagen == null || imagen.isEmpty()) {
       throw new BusinessException("La imagen es requerida");
     }
