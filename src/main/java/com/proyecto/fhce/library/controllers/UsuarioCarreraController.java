@@ -75,7 +75,7 @@ public class UsuarioCarreraController {
 
   @Operation(summary = "Remover carrera de usuario", description = "Elimina la asignación de una carrera a un usuario")
   @DeleteMapping("/usuario/{usuarioId}/carrera/{carreraId}")
-  @PreAuthorize("hasAuthority('USUARIOS_EDITAR') or hasRole('ADMIN')")
+  @PreAuthorize("hasAuthority('USUARIOS_EDITAR') or hasAnyRole('ADMIN','BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<Void>> removerCarrera(
       @PathVariable Long usuarioId,
       @PathVariable Long carreraId) {
