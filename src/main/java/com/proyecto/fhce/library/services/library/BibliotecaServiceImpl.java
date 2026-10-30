@@ -322,6 +322,7 @@ public class BibliotecaServiceImpl implements BibliotecaService {
   @Transactional
   public void asignarEncargado(Long bibliotecaId, List<Long> usuariosIds, MultipartFile respaldoFile,
       long usuarioActualId) {
+    // System.out.println("asignarEncargadBIB");
     Biblioteca biblioteca = bibliotecaRepository.findById(bibliotecaId)
         .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada"));
     Usuario usuarioActual = usuarioRepository.findById(usuarioActualId)
@@ -336,6 +337,15 @@ public class BibliotecaServiceImpl implements BibliotecaService {
     if (!esAdmin && !esBibliotecario) {
       throw new BusinessException("No tienes permisos para asignar encargados");
     }
+    // validar que el bibliotecario es el encargado de la bibilioteca a agregar
+    if (esBibliotecario) {
+      boolean yaAsignado = biblioteca.getEncargados().stream()
+          .anyMatch(be -> be.getUsuario().getId_usuario().equals(usuarioActual.getId_usuario()) && be.getActivo());
+      if (!yaAsignado) {
+        throw new BusinessException("Solo puedes asignar auxiliares a la biblioteca a la que perteneces.");
+      }
+    }
+
     for (Long usuarioId : usuariosIds) {
       Usuario usuario = usuarioRepository.findById(usuarioId)
           .orElseThrow(() -> new ResourceNotFoundException(
