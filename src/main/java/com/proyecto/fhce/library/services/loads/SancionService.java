@@ -26,6 +26,7 @@ import com.proyecto.fhce.library.enums.FormaResolucion;
 import com.proyecto.fhce.library.enums.MotivoSancion;
 import com.proyecto.fhce.library.enums.TipoSancion;
 import com.proyecto.fhce.library.enums.notificaciones.TipoNotificacion;
+import com.proyecto.fhce.library.exception.SancionException;
 import com.proyecto.fhce.library.exception.SancionException.PrestamoNoVencidoException;
 import com.proyecto.fhce.library.exception.SancionException.SancionDuplicadaException;
 import com.proyecto.fhce.library.exception.SancionException.SancionNoActivaException;
@@ -266,8 +267,7 @@ public class SancionService {
         MotivoSancion.PERDIDA_EJEMPLAR);
 
     if (existeReposicion) {
-      throw new IllegalStateException(
-          "Ya existe una sanción por pérdida para este préstamo.");
+      throw new SancionException.SancionDuplicadaException(request.prestamoId());
     }
     ejemplarService.reportarPerdido(
         prestamo.getEjemplar().getIdEjemplar(),
