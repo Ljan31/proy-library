@@ -372,6 +372,7 @@ public class SancionService {
           null,
           false,
           false,
+          false,
           0,
           BigDecimal.ZERO,
           null,
@@ -402,6 +403,9 @@ public class SancionService {
         .anyMatch(s -> s.getMontoMulta() != null
             && s.getMontoMulta().compareTo(BigDecimal.ZERO) > 0
             && s.getFechaPago() == null);
+
+    boolean tieneReposicion = sancionesActivas.stream()
+        .anyMatch(s -> s.getTipoSancion() == TipoSancion.REPOSICION);
 
     long totalActivas = sancionesActivas.size();
     // boolean tieneSuspension =
@@ -474,6 +478,7 @@ public class SancionService {
         usuarioId,
         tieneSuspension,
         tieneDeuda,
+        tieneReposicion,
         totalActivas,
         montoTotalDeuda,
         fechaFinProxima,

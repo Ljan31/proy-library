@@ -100,6 +100,7 @@ public class SancionDTO {
             Long usuarioId,
             boolean tieneSuspensionVigente,
             boolean tieneDeudaPendiente,
+            boolean tieneReposicionPendiente,
             long totalSancionesActivas,
             BigDecimal montoTotalDeuda,
             LocalDate fechaFinSuspensionMasProxima,
