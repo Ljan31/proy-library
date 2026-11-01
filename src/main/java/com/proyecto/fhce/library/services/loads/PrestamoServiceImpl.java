@@ -315,8 +315,10 @@ public class PrestamoServiceImpl implements PrestamoService {
         biblioteca.getIdBiblioteca(),
         request.getTipoPrestamo() // TipoPrestamo.SALA o TipoPrestamo.DOMICILIO
     );
-    log.debug(
+    log.info(
         "Configuración aplicada - idConfig={}, tipoPrestamo={}, diasPrestamoMax={}, ejemplaresPermitidos={}, multaPorDia={}, multaMaxDias={}, diasSuspension={}, diasReserva={}, nivelAplicacion={}",
+        reglas.getIdConfig(),
+        request.getTipoPrestamo(),
         reglas.getDiasPrestamoMax(),
         reglas.getEjemplaresPermitidos(),
         reglas.getMultaPorDia(),
@@ -324,7 +326,8 @@ public class PrestamoServiceImpl implements PrestamoService {
         reglas.getDiasSuspension(),
         reglas.getDiasReserva());
     // Validate simultaneous loan limit
-    Long prestamosActivos = prestamoRepository.countPrestamosActivosByUsuario(usuario.getId_usuario());
+    Long prestamosActivos = prestamoRepository.countPrestamosActivosByUsuarioAndBiblioteca(usuario.getId_usuario(),
+        biblioteca.getIdBiblioteca());
     if (prestamosActivos >= reglas.getEjemplaresPermitidos()) {
       throw new BusinessException(
           "El usuario ha alcanzado el límite de préstamos simultáneos: "
