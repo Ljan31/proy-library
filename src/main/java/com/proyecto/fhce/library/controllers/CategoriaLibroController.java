@@ -3,7 +3,6 @@ package com.proyecto.fhce.library.controllers;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,8 +32,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/categorias")
 @Tag(name = "Categorías", description = "Gestión de categorías de libros")
 public class CategoriaLibroController {
-  @Autowired
-  private CategoriaLibroService categoriaService;
+  private final CategoriaLibroService categoriaService;
+
+  public CategoriaLibroController(CategoriaLibroService categoriaService) {
+    this.categoriaService = categoriaService;
+  }
 
   @Operation(summary = "Listar todas las categorías", description = "Obtiene el listado completo de categorías de libros")
   @GetMapping
@@ -101,7 +103,7 @@ public class CategoriaLibroController {
 
   @Operation(summary = "Crear nueva categoría", description = "Registra una nueva categoría de libros", security = @SecurityRequirement(name = "bearer-jwt"))
   @PostMapping
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<CategoriaLibroResponse>> create(
       @Valid @RequestBody CategoriaLibroRequest request) {
     CategoriaLibroResponse categoria = categoriaService.create(request);
@@ -111,7 +113,7 @@ public class CategoriaLibroController {
 
   @Operation(summary = "Actualizar categoría", description = "Actualiza la información de una categoría existente", security = @SecurityRequirement(name = "bearer-jwt"))
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<CategoriaLibroResponse>> update(
       @PathVariable Long id,
       @Valid @RequestBody CategoriaLibroRequest request) {

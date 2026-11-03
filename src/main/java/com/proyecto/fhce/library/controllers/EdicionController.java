@@ -2,7 +2,6 @@ package com.proyecto.fhce.library.controllers;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,8 +31,11 @@ import jakarta.validation.Valid;
 @Tag(name = "Ediciones", description = "Gestión de ediciones de libros")
 public class EdicionController {
 
-  @Autowired
-  private EdicionService edicionService;
+  private final EdicionService edicionService;
+
+  public EdicionController(EdicionService edicionService) {
+    this.edicionService = edicionService;
+  }
 
   @Operation(summary = "Listar ediciones de un libro")
   @GetMapping("/libro/{libroId}")
@@ -49,7 +51,7 @@ public class EdicionController {
 
   @Operation(summary = "Crear nueva edición", description = "Acepta multipart/form-data. La portada puede ser archivo o URL.", security = @SecurityRequirement(name = "bearer-jwt"))
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<EdicionResponse>> create(
       @Valid @RequestPart("datos") EdicionRequest request,
       @RequestPart(value = "portada", required = false) MultipartFile portadaFile,
@@ -61,7 +63,7 @@ public class EdicionController {
 
   @Operation(summary = "Actualizar edición", security = @SecurityRequirement(name = "bearer-jwt"))
   @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<EdicionResponse>> update(
       @PathVariable Long id,
       @Valid @RequestPart("datos") EdicionRequest request,
@@ -73,7 +75,7 @@ public class EdicionController {
 
   @Operation(summary = "Eliminar edición", security = @SecurityRequirement(name = "bearer-jwt"))
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
     edicionService.delete(id);
     return ResponseEntity.ok(ApiResponse.success("Edición eliminada exitosamente", null));

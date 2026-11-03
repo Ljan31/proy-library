@@ -43,7 +43,7 @@ public class SancionController {
    * o puede invocarse manualmente por un ROLE_BIBLIOTECARIO.
    */
   @PostMapping("/prestamo/{idPrestamo}/procesar")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<SancionResponseDTO> procesarDevolucionTardia(
       @PathVariable Long idPrestamo) {
     SancionResponseDTO response = sancionService.procesarDevolucionTardia(idPrestamo);
@@ -57,7 +57,7 @@ public class SancionController {
    * Solo ROLE_BIBLIOTECARIO y ROLE_ADMIN.
    */
   @PostMapping("/manual")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<SancionResponseDTO> registrarSancionManual(
       @Valid @RequestBody SancionManualRequestDTO request,
       @AuthenticationPrincipal UserDetails userDetails) {
@@ -73,7 +73,7 @@ public class SancionController {
    * La sanción queda pendiente de resolución.
    */
   @PostMapping("/reposicion")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<SancionResponseDTO> registrarPerdidaEjemplar(
       @Valid @RequestBody SancionManualReposicionRequestDTO request,
       @AuthenticationPrincipal UserDetails userDetails) {
@@ -91,7 +91,7 @@ public class SancionController {
    * Registra la entrega física de un ejemplar de reemplazo.
    */
   @PatchMapping("/{idSancion}/reposicion-fisica")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<SancionResponseDTO> registrarReposicionFisica(
       @PathVariable Long idSancion,
       @RequestBody Map<String, String> body) {
@@ -112,7 +112,7 @@ public class SancionController {
    * servicio).
    */
   @GetMapping("/{idSancion}")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'ROLE_ESTUDIANTE')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'ROLE_ESTUDIANTE', 'AUXILIAR')")
   public ResponseEntity<SancionResponseDTO> buscarPorId(@PathVariable Long idSancion) {
     return ResponseEntity.ok(sancionService.buscarPorId(idSancion));
   }
@@ -123,7 +123,7 @@ public class SancionController {
    * Historial completo de sanciones de un usuario.
    */
   @GetMapping("/usuario/{usuarioId}/historial")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')" +
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')" +
       " or (hasRole('ROLE_ESTUDIANTE') and #usuarioId == authentication.principal.id)")
   public ResponseEntity<List<SancionResponseDTO>> historialPorUsuario(
       @PathVariable Long usuarioId) {
@@ -144,7 +144,7 @@ public class SancionController {
    * Sanciones activas de un usuario.
    */
   @GetMapping("/usuario/{usuarioId}/activas")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')" +
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')" +
       " or (hasRole('ROLE_ESTUDIANTE') and #usuarioId == authentication.principal.id)")
   public ResponseEntity<List<SancionResponseDTO>> sancionesActivasPorUsuario(
       @PathVariable Long usuarioId) {
@@ -158,7 +158,7 @@ public class SancionController {
    * Endpoint que consultan préstamos y reservas antes de permitir operaciones.
    */
   @GetMapping("/usuario/{usuarioId}/estado")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')" +
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')" +
       " or (hasRole('ROLE_ESTUDIANTE') and #usuarioId == authentication.principal.id)")
   public ResponseEntity<EstadoSancionUsuarioDTO> obtenerEstadoSanciones(
       @PathVariable Long usuarioId, @RequestParam Long bibliotecaId) {
@@ -172,7 +172,7 @@ public class SancionController {
    * Para el panel administrativo del bibliotecario.
    */
   @GetMapping("/biblioteca/{bibliotecaId}")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<List<SancionResponseDTO>> sancionesPorBiblioteca(
       @PathVariable Long bibliotecaId,
       @RequestParam(defaultValue = "ACTIVA") EstadoSancion estado) {
@@ -189,7 +189,7 @@ public class SancionController {
    * Registra el pago de una multa. Cambia estado a PAGADA.
    */
   @PatchMapping("/{idSancion}/pago")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<SancionResponseDTO> registrarPago(
       @PathVariable Long idSancion,
       @Valid @RequestBody PagoMultaRequestDTO request) {
@@ -202,7 +202,7 @@ public class SancionController {
    * Condona una sanción. Solo ROLE_ADMIN puede condonar.
    */
   @PatchMapping("/{idSancion}/condonar")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<SancionResponseDTO> condonar(
       @PathVariable Long idSancion,
       @Valid @RequestBody CondonacionRequestDTO request) {

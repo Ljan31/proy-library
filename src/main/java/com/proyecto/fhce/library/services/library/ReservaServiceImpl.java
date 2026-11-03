@@ -2,6 +2,7 @@ package com.proyecto.fhce.library.services.library;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -219,18 +222,28 @@ public class ReservaServiceImpl implements ReservaService {
 
   @Transactional
   public ReservaResponse cancelarReserva(Long reservaId, Long usuarioId,
-      boolean esBibliotecario,
       CancelarReservaRequest request) {
     Reserva reserva = reservaRepository.findByIdWithRelaciones(reservaId)
         .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada con id: " + reservaId));
+    Collection<? extends GrantedAuthority> authorities = SecurityContextHolder.getContext()
+        .getAuthentication()
+        .getAuthorities();
 
+    boolean esAdmin = tieneRol(authorities, "ROLE_ADMIN");
+    boolean esBibliotecario = tieneRol(authorities, "ROLE_BIBLIOTECARIO");
+    boolean esAuxiliar = tieneRol(authorities, "ROLE_AUXILIAR");
     // Validar autorización: solo el dueño o un bibliotecario de esa biblioteca
     boolean esPropietario = reserva.getUsuario().getId_usuario().equals(usuarioId);
-    if (!esPropietario) {
-      if (esBibliotecario) {
+
+    boolean esPersonalBiblioteca = esBibliotecario || esAuxiliar;
+
+    if (!esPropietario && !esAdmin) {
+
+      if (esPersonalBiblioteca) {
         validarEncargadoBiblioteca(usuarioId, reserva.getBiblioteca());
       } else {
-        throw new BusinessException("No estás autorizado para cancelar esta reserva");
+        throw new BusinessException(
+            "No estás autorizado para cancelar esta reserva");
       }
     }
 
@@ -417,5 +430,13 @@ public class ReservaServiceImpl implements ReservaService {
       throw new BusinessException(
           "No estás autorizado para operar en la biblioteca: " + biblioteca.getNombre());
     }
+  }
+
+  private boolean tieneRol(
+      Collection<? extends GrantedAuthority> authorities,
+      String rol) {
+
+    return authorities.stream()
+        .anyMatch(a -> a.getAuthority().equals(rol));
   }
 }

@@ -37,7 +37,7 @@ public class UsuarioCarreraController {
 
   @Operation(summary = "Obtener carreras de un usuario", description = "Lista todas las carreras asignadas a un usuario")
   @GetMapping("/usuario/{usuarioId}")
-  @PreAuthorize("hasAuthority('USUARIOS_VER') or #usuarioId == authentication.principal.id or hasAnyRole('ADMIN','BIBLIOTECARIO')")
+  @PreAuthorize("hasAuthority('USUARIOS_VER') or #usuarioId == authentication.principal.id or hasAnyRole('ADMIN','BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<List<CarreraSimpleResponse>>> findCarrerasByUsuario(
       @PathVariable Long usuarioId) {
     List<CarreraSimpleResponse> carreras = usuarioCarreraService.findCarrerasByUsuario(usuarioId);

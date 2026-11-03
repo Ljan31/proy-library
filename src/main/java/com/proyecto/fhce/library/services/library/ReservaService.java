@@ -50,8 +50,7 @@ public interface ReservaService {
    * Solo el dueño de la reserva o un bibliotecario de esa biblioteca puede
    * cancelar.
    */
-  ReservaResponse cancelarReserva(Long reservaId, Long usuarioId, boolean esBibliotecario,
-      CancelarReservaRequest request);
+  ReservaResponse cancelarReserva(Long reservaId, Long usuarioId, CancelarReservaRequest request);
 
   /**
    * Convierte una reserva NOTIFICADA en préstamo.

@@ -2,7 +2,6 @@ package com.proyecto.fhce.library.controllers;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,8 +34,11 @@ import jakarta.validation.Valid;
 @Tag(name = "Ejemplares", description = "Gestión de ejemplares físicos de libros")
 public class EjemplarController {
 
-  @Autowired
-  private EjemplarService ejemplarService;
+  private final EjemplarService ejemplarService;
+
+  public EjemplarController(EjemplarService ejemplarService) {
+    this.ejemplarService = ejemplarService;
+  }
 
   @Operation(summary = "Listar todos los ejemplares", description = "Obtiene el listado completo de ejemplares", security = @SecurityRequirement(name = "bearer-jwt"))
   @GetMapping
@@ -74,7 +76,7 @@ public class EjemplarController {
 
   @Operation(summary = "Obtener ejemplares de una biblioteca", description = "Lista todos los ejemplares de una biblioteca", security = @SecurityRequirement(name = "bearer-jwt"))
   @GetMapping("/biblioteca/{bibliotecaId}")
-  @PreAuthorize("hasAuthority('EJEMPLARES_VER') or hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasAuthority('EJEMPLARES_VER') or hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<List<EjemplarResponse>>> findByBiblioteca(@PathVariable Long bibliotecaId) {
     List<EjemplarResponse> ejemplares = ejemplarService.findByBiblioteca(bibliotecaId);
     return ResponseEntity.ok(ApiResponse.success(ejemplares));
@@ -82,7 +84,7 @@ public class EjemplarController {
 
   @Operation(summary = "Filtrar ejemplares por estado", description = "Obtiene ejemplares filtrados por estado", security = @SecurityRequirement(name = "bearer-jwt"))
   @GetMapping("/estado/{estado}")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<List<EjemplarResponse>>> findByEstado(@PathVariable EstadoEjemplar estado) {
     List<EjemplarResponse> ejemplares = ejemplarService.findByEstado(estado);
     return ResponseEntity.ok(ApiResponse.success(ejemplares));
@@ -116,7 +118,7 @@ public class EjemplarController {
 
   @Operation(summary = "Obtener historial de estados", description = "Retorna el historial completo de cambios de estado de un ejemplar", security = @SecurityRequirement(name = "bearer-jwt"))
   @GetMapping("/{id}/historial")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<List<HistorialEstadoResponse>>> getHistorial(@PathVariable Long id) {
     List<HistorialEstadoResponse> historial = ejemplarService.obtenerHistorial(id);
     return ResponseEntity.ok(ApiResponse.success(historial));
@@ -124,7 +126,7 @@ public class EjemplarController {
 
   @Operation(summary = "Crear nuevo ejemplar", description = "Registra un nuevo ejemplar físico de un libro", security = @SecurityRequirement(name = "bearer-jwt"))
   @PostMapping
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<EjemplarResponse>> create(@Valid @RequestBody EjemplarRequest request) {
     EjemplarResponse ejemplar = ejemplarService.create(request);
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -133,7 +135,7 @@ public class EjemplarController {
 
   @Operation(summary = "Actualizar ejemplar", description = "Actualiza la información de un ejemplar existente", security = @SecurityRequirement(name = "bearer-jwt"))
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<EjemplarResponse>> update(
       @PathVariable Long id,
       @Valid @RequestBody EjemplarRequest request) {
@@ -143,7 +145,7 @@ public class EjemplarController {
 
   @Operation(summary = "Actualizar estado del ejemplar", description = "Cambia el estado de un ejemplar (DISPONIBLE, PRESTADO, EN_REPARACION, etc.)", security = @SecurityRequirement(name = "bearer-jwt"))
   @PutMapping("/{id}/estado")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<EjemplarResponse>> actualizarEstado(
       @PathVariable Long id,
       @Valid @RequestBody EjemplarUpdateEstadoRequest request) {
@@ -163,7 +165,7 @@ public class EjemplarController {
 
   @Operation(summary = "Reportar ejemplar perdido", description = "Marca un ejemplar como perdido", security = @SecurityRequirement(name = "bearer-jwt"))
   @PutMapping("/{id}/perdido")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<Void>> reportarPerdido(
       @PathVariable Long id,
       @RequestParam String motivo) {
@@ -184,7 +186,7 @@ public class EjemplarController {
 
   @Operation(summary = "Eliminar ejemplar", description = "Elimina un ejemplar si no tiene préstamos ni reservas asociadas", security = @SecurityRequirement(name = "bearer-jwt"))
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
 
     ejemplarService.delete(id);

@@ -247,9 +247,9 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
 
     boolean esAdmin = tieneRol(authorities, "ROLE_ADMIN");
     boolean esBibliotecario = tieneRol(authorities, "ROLE_BIBLIOTECARIO");
-
+    boolean esAuxiliar = tieneRol(authorities, "ROLE_AUXILIAR");
     // Estudiante solo ve los suyos
-    if (!esAdmin && !esBibliotecario && !usuarioId.equals(solicitanteId)) {
+    if (!esAdmin && !esBibliotecario && !esAuxiliar && !usuarioId.equals(solicitanteId)) {
       throw new BusinessException("No autorizado para ver estos certificados");
     }
 
@@ -379,7 +379,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
 
     boolean esAdmin = tieneRol(authorities, "ROLE_ADMIN");
     boolean esBibliotecario = tieneRol(authorities, "ROLE_BIBLIOTECARIO");
-
+    boolean esAuxiliar = tieneRol(authorities, "ROLE_AUXILIAR");
     CertificadoNoDeuda certificado = certificadoRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException(
             "Certificado no encontrado con id: " + id));
@@ -388,7 +388,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     // Long usuarioId = certificado.getSolicitud().getUsuario().getId_usuario();
 
     // 🔒 Reglas de acceso
-    if (!esAdmin && !esBibliotecario && !usuario.getId_usuario().equals(solicitanteId)) {
+    if (!esAdmin && !esBibliotecario && !esAuxiliar && !usuario.getId_usuario().equals(solicitanteId)) {
       throw new BusinessException("No autorizado para descargar este certificado");
     }
 

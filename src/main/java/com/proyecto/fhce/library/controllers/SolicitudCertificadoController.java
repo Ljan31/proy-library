@@ -28,8 +28,11 @@ import java.util.List;
 @RequestMapping("/api/solicitudes-certificado")
 public class SolicitudCertificadoController {
 
-  @Autowired
-  private SolicitudCertificadoService solicitudService;
+  private final SolicitudCertificadoService solicitudService;
+
+  public SolicitudCertificadoController(SolicitudCertificadoService solicitudService) {
+    this.solicitudService = solicitudService;
+  }
 
   /**
    * Crear solicitud de certificado.
@@ -70,7 +73,7 @@ public class SolicitudCertificadoController {
    * Ver solicitudes de una biblioteca.
    */
   @GetMapping("/biblioteca/{bibliotecaId}")
-  @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<List<SolicitudCertificadoResponse>>> listarPorBiblioteca(
       @PathVariable Long bibliotecaId,
       @RequestParam(required = false) EstadoSolicitud estado,
@@ -114,7 +117,7 @@ public class SolicitudCertificadoController {
    * Solo ADMIN o BIBLIOTECARIO.
    */
   @PatchMapping("/{id}/aprobar")
-  @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<SolicitudCertificadoResponse>> aprobar(
       @PathVariable Long id,
       @RequestParam(required = false) String observacion,
@@ -138,7 +141,7 @@ public class SolicitudCertificadoController {
    * Rechazar solicitud.
    */
   @PatchMapping("/{id}/rechazar")
-  @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<SolicitudCertificadoResponse>> rechazar(
       @PathVariable Long id,
       @RequestParam(required = false) String observacion,

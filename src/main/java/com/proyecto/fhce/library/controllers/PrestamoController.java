@@ -2,7 +2,6 @@ package com.proyecto.fhce.library.controllers;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,20 +31,23 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/prestamos")
 public class PrestamoController {
 
-  @Autowired
-  private PrestamoService prestamoService;
+  private final PrestamoService prestamoService;
 
   // ==================== GET endpoints ====================
 
+  public PrestamoController(PrestamoService prestamoService) {
+    this.prestamoService = prestamoService;
+  }
+
   @GetMapping
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<List<PrestamoResponse>>> findAll() {
     List<PrestamoResponse> prestamos = prestamoService.findAll();
     return ResponseEntity.ok(ApiResponse.success(prestamos));
   }
 
   @GetMapping("/biblioteca/{bibliotecaId}")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<List<PrestamoResponse>>> findByBiblioteca(
       @PathVariable Long bibliotecaId,
       @RequestParam(required = false) EstadoPrestamo estado) {
@@ -82,7 +84,7 @@ public class PrestamoController {
   }
 
   @GetMapping("/estado/{estado}")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<List<PrestamoResponse>>> findByEstado(
       @PathVariable EstadoPrestamo estado) {
     List<PrestamoResponse> prestamos = prestamoService.findByEstado(estado);
@@ -90,14 +92,14 @@ public class PrestamoController {
   }
 
   @GetMapping("/vencidos")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<List<PrestamoResponse>>> findVencidos() {
     List<PrestamoResponse> prestamos = prestamoService.findPrestamosVencidos();
     return ResponseEntity.ok(ApiResponse.success(prestamos));
   }
 
   @GetMapping("/por-vencer")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<List<PrestamoResponse>>> findPorVencer(
       @RequestParam(defaultValue = "3") int dias) {
     List<PrestamoResponse> prestamos = prestamoService.findPrestamosPorVencer(dias);
@@ -107,7 +109,7 @@ public class PrestamoController {
   // ==================== POST endpoints ====================
 
   @PostMapping("/filtrar")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<List<PrestamoResponse>>> filtrar(
       @RequestBody FiltroPrestamoRequest filtro) {
     List<PrestamoResponse> prestamos = prestamoService.filtrar(filtro);
@@ -127,7 +129,7 @@ public class PrestamoController {
   }
 
   @PostMapping
-  @PreAuthorize("hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<PrestamoResponse>> realizarPrestamo(
       @Valid @RequestBody PrestamoRequest request,
       Authentication authentication) {
@@ -138,7 +140,7 @@ public class PrestamoController {
   }
 
   @PostMapping("/devolucion")
-  @PreAuthorize("hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<PrestamoResponse>> realizarDevolucion(
       @Valid @RequestBody DevolucionRequest request,
       Authentication authentication) {

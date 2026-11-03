@@ -26,11 +26,14 @@ import java.util.Map;
 @Tag(name = "Catálogo — Carga en lote", description = "Permite registrar un libro completo (obra + ediciones + ejemplares) en una sola llamada.")
 public class LibroLoteController {
 
-  @Autowired
-  private LibroLoteService libroLoteService;
+  private final LibroLoteService libroLoteService;
 
-  @Autowired
-  private ObjectMapper objectMapper;
+  private final ObjectMapper objectMapper;
+
+  public LibroLoteController(LibroLoteService libroLoteService, ObjectMapper objectMapper) {
+    this.libroLoteService = libroLoteService;
+    this.objectMapper = objectMapper;
+  }
 
   /**
    * POST /api/catalogo/lote
@@ -70,7 +73,7 @@ public class LibroLoteController {
       y se eliminan los archivos ya guardados en disco.
       """, security = @SecurityRequirement(name = "bearer-jwt"))
   @PostMapping(value = "/lote", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<LibroLoteResponse>> crearEnLote(
       MultipartHttpServletRequest httpRequest) throws IOException {
 

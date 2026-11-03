@@ -2,7 +2,6 @@ package com.proyecto.fhce.library.controllers;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,8 +31,11 @@ import jakarta.validation.Valid;
 @Tag(name = "Libros", description = "Gestión de libros de libros")
 public class LibroController {
 
-  @Autowired
-  private LibroService libroService;
+  private final LibroService libroService;
+
+  public LibroController(LibroService libroService) {
+    this.libroService = libroService;
+  }
 
   @GetMapping
   public ResponseEntity<ApiResponse<List<LibroResponse>>> findAll() {
@@ -65,7 +67,7 @@ public class LibroController {
   }
 
   @PostMapping
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<LibroResponse>> create(@Valid @RequestBody LibroRequest request) {
     LibroResponse libro = libroService.create(request);
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -73,7 +75,7 @@ public class LibroController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<LibroResponse>> update(
       @PathVariable Long id,
       @Valid @RequestBody LibroRequest request) {
@@ -82,7 +84,7 @@ public class LibroController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO','AUXILIAR')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
     libroService.delete(id);
     return ResponseEntity.ok(ApiResponse.success("Libro eliminado", null));

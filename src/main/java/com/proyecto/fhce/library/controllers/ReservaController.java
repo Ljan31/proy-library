@@ -9,7 +9,6 @@ import com.proyecto.fhce.library.security.UserDetailsImpl;
 import com.proyecto.fhce.library.services.library.ReservaService;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,8 +21,11 @@ import java.util.List;
 @RequestMapping("/api/reservas")
 public class ReservaController {
 
-  @Autowired
-  private ReservaService reservaService;
+  private final ReservaService reservaService;
+
+  public ReservaController(ReservaService reservaService) {
+    this.reservaService = reservaService;
+  }
 
   @GetMapping("/{id}")
   @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'ROLE_ESTUDIANTE')")
@@ -44,7 +46,7 @@ public class ReservaController {
    * Solo accesible por admin y bibliotecarios.
    */
   @GetMapping("/usuario/{usuarioId}")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<List<ReservaResponse>> getByUsuario(@PathVariable Long usuarioId) {
     return ResponseEntity.ok(reservaService.findByUsuario(usuarioId));
   }
@@ -55,7 +57,7 @@ public class ReservaController {
    * Solo accesible por admin y bibliotecarios de la biblioteca.
    */
   @GetMapping("/biblioteca/{bibliotecaId}")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<List<ReservaResponse>> getByBiblioteca(
       @PathVariable Long bibliotecaId,
       @RequestParam(required = false) EstadoReserva estado) {
@@ -69,7 +71,7 @@ public class ReservaController {
    * Útil para el panel del bibliotecario.
    */
   @GetMapping("/cola")
-  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<List<ReservaResponse>> getColaEspera(
       @RequestParam Long libroId,
       @RequestParam Long bibliotecaId) {
@@ -118,17 +120,14 @@ public class ReservaController {
    * Response 200 OK con la reserva actualizada.
    */
   @PatchMapping("/{id}/cancelar")
-  @PreAuthorize("hasAnyRole('ROLE_ESTUDIANTE', 'ROLE_DOCENTE', 'ROLE_ADMIN', 'ROLE_BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ROLE_ESTUDIANTE', 'ROLE_DOCENTE', 'ROLE_ADMIN', 'ROLE_BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ReservaResponse> cancelar(
       @PathVariable Long id,
       @RequestBody(required = false) CancelarReservaRequest request,
       @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-    boolean esBibliotecario = userDetails.getAuthorities().stream()
-        .anyMatch(a -> a.getAuthority().equals("ROLE_BIBLIOTECARIO"));
-
     ReservaResponse response = reservaService.cancelarReserva(
-        id, userDetails.getId(), esBibliotecario, request);
+        id, userDetails.getId(), request);
     return ResponseEntity.ok(response);
   }
 
@@ -143,7 +142,7 @@ public class ReservaController {
    * Response 200 OK con la reserva actualizada (estado ATENDIDA + prestamoId).
    */
   @PostMapping("/convertir")
-  @PreAuthorize("hasAnyRole('ROLE_BIBLIOTECARIO', 'ROLE_ADMIN')")
+  @PreAuthorize("hasAnyRole('ROLE_BIBLIOTECARIO', 'ROLE_ADMIN', 'AUXILIAR')")
   public ResponseEntity<ReservaResponse> convertirEnPrestamo(
       @Valid @RequestBody ConvertirReservaRequest request,
       @AuthenticationPrincipal UserDetailsImpl userDetails) {

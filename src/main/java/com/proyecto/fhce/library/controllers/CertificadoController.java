@@ -5,8 +5,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,11 +36,11 @@ import jakarta.validation.Valid;
 public class CertificadoController {
   private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-  @Autowired
-  private CertificadoNoDeudaService certificadoService;
+  private final CertificadoNoDeudaService certificadoService;
 
-  @Value("${app.certificados.ruta-base}")
-  private String rutaBase;
+  public CertificadoController(CertificadoNoDeudaService certificadoService) {
+    this.certificadoService = certificadoService;
+  }
 
   /**
    * ADMIN: genera certificado para cualquier usuario en cualquier biblioteca.
@@ -52,7 +50,7 @@ public class CertificadoController {
    * POST /api/certificados
    */
   @PostMapping
-  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
+  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<CertificadoResponse>> generar(
       @Valid @RequestBody CertificadoRequest request,
       Authentication authentication) {
@@ -105,7 +103,7 @@ public class CertificadoController {
    * GET /api/certificados/biblioteca/{bibliotecaId}?estado=VIGENTE
    */
   @GetMapping("/biblioteca/{bibliotecaId}")
-  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
+  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<List<CertificadoResponse>>> findByBiblioteca(
       @PathVariable Long bibliotecaId,
       @RequestParam(required = false) EstadoCertificado estado,
@@ -171,7 +169,7 @@ public class CertificadoController {
    * PATCH /api/certificados/{id}/anular
    */
   @PatchMapping("/{id}/anular")
-  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
+  @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<CertificadoResponse>> anular(
       @PathVariable Long id,
       Authentication authentication) {

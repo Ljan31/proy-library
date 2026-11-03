@@ -103,7 +103,8 @@ public class EjemplarServiceImpl implements EjemplarService {
     Ejemplar saved = ejemplarRepository.save(ejemplar);
 
     // Registrar en historial
-    registrarCambioEstado(saved, null, saved.getEstadoEjemplar(), "Registro inicial");
+    // registrarCambioEstado(saved, null, saved.getEstadoEjemplar(), "Registro
+    // inicial");
 
     EjemplarAuditoriaResponse valoresNuevos = mapToAuditoriaResponse(saved);
     auditoriaService.registrar("CREATE_EJEMPLAR", "Ejemplares",

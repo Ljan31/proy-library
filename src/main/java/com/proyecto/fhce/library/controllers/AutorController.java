@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,8 +20,11 @@ import java.util.List;
 @Tag(name = "Autores", description = "Gestión de autores normalizados")
 public class AutorController {
 
-  @Autowired
-  private AutorService autorService;
+  private final AutorService autorService;
+
+  public AutorController(AutorService autorService) {
+    this.autorService = autorService;
+  }
 
   @Operation(summary = "Listar todos los autores")
   @GetMapping
@@ -44,7 +46,7 @@ public class AutorController {
 
   @Operation(summary = "Crear autor", security = @SecurityRequirement(name = "bearer-jwt"))
   @PostMapping
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<AutorResponse>> create(@Valid @RequestBody AutorRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success("Autor creado exitosamente", autorService.create(request)));
@@ -52,7 +54,7 @@ public class AutorController {
 
   @Operation(summary = "Actualizar autor", security = @SecurityRequirement(name = "bearer-jwt"))
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<AutorResponse>> update(
       @PathVariable Long id, @Valid @RequestBody AutorRequest request) {
     return ResponseEntity.ok(ApiResponse.success("Autor actualizado", autorService.update(id, request)));
