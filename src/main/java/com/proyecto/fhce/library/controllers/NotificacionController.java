@@ -79,7 +79,7 @@ public class NotificacionController {
 
   /** POST /api/v1/notificaciones — solo ADMIN o BIBLIOTECARIO */
   @PostMapping
-  @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<NotificacionResponse> crear(
       @Valid @RequestBody CrearNotificacionRequest request) {
     return ResponseEntity
