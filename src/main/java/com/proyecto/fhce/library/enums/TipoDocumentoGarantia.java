@@ -2,5 +2,6 @@ package com.proyecto.fhce.library.enums;
 
 public enum TipoDocumentoGarantia {
   CI,
-  MATRICULA
+  MATRICULA,
+  CI_Y_MATRICULA
 }
