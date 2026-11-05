@@ -38,6 +38,7 @@ import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.ReservaRepository;
 import com.proyecto.fhce.library.services.AuditoriaService;
 
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
 @Service
@@ -167,7 +168,7 @@ public class LibroServiceImpl implements LibroService {
         if (request.getAutor() != null) {
           predicates.add(
               cb.like(
-                  cb.lower(root.join("autores").get("nombre")),
+                  cb.lower(root.join("autores", JoinType.LEFT).get("nombre")),
                   "%" + request.getAutor().toLowerCase() + "%"));
         }
 
