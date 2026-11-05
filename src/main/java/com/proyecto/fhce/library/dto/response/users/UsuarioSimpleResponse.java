@@ -6,6 +6,8 @@ public class UsuarioSimpleResponse {
   private String nombreCompleto;
   private String email;
   private String ci;
+  private String domicilio;
+  private String celular;
 
   public Long getId_usuario() {
     return id_usuario;
@@ -45,6 +47,22 @@ public class UsuarioSimpleResponse {
 
   public void setCi(String ci) {
     this.ci = ci;
+  }
+
+  public String getDomicilio() {
+    return domicilio;
+  }
+
+  public void setDomicilio(String domicilio) {
+    this.domicilio = domicilio;
+  }
+
+  public String getCelular() {
+    return celular;
+  }
+
+  public void setCelular(String celular) {
+    this.celular = celular;
   }
 
 }

@@ -5,13 +5,10 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,7 +21,7 @@ import com.proyecto.fhce.library.dto.request.library.CancelarReservaRequest;
 import com.proyecto.fhce.library.dto.request.library.ConvertirReservaRequest;
 import com.proyecto.fhce.library.dto.request.library.ReservaRequest;
 import com.proyecto.fhce.library.dto.response.library.ReservaResponse;
-import com.proyecto.fhce.library.dto.response.loads.ConfiguracionPrestamoResponseDTO;
+import com.proyecto.fhce.library.dto.response.loads.PrestamoResponse;
 import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.Libro;
@@ -288,7 +285,7 @@ public class ReservaServiceImpl implements ReservaService {
   }
 
   @Transactional
-  public ReservaResponse convertirEnPrestamo(ConvertirReservaRequest request, Long bibliotecarioId) {
+  public PrestamoResponse convertirEnPrestamo(ConvertirReservaRequest request, Long bibliotecarioId) {
     Reserva reserva = reservaRepository.findByIdWithRelaciones(request.getReservaId())
         .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada con id: " + request.getReservaId()));
 
@@ -350,7 +347,8 @@ public class ReservaServiceImpl implements ReservaService {
         Map.of(
             "estado", updated.getEstadoReserva().name(),
             "prestamoId", prestamoResponse.getId_prestamo()));
-    return reservaMapper.toResponse(updated);
+    // return reservaMapper.toResponse(updated);
+    return prestamoResponse;
   }
 
   // ==================== PROCESO DE ASIGNACIÓN ====================

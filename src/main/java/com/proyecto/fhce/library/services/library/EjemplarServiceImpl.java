@@ -533,8 +533,6 @@ public class EjemplarServiceImpl implements EjemplarService {
     response.setCutterTitulo(
         ejemplar.getCutterTitulo());
 
-    response.setCodigoTopograficoConcat(
-        ejemplar.getCodigoTopograficoConcat());
     response.setUbicacionFisica(ejemplar.getUbicacionFisica());
     response.setEstadoEjemplar(ejemplar.getEstadoEjemplar());
     response.setFechaAdquisicion(ejemplar.getFechaAdquisicion());

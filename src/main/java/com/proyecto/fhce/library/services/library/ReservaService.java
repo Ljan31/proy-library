@@ -6,6 +6,7 @@ import com.proyecto.fhce.library.dto.request.library.CancelarReservaRequest;
 import com.proyecto.fhce.library.dto.request.library.ConvertirReservaRequest;
 import com.proyecto.fhce.library.dto.request.library.ReservaRequest;
 import com.proyecto.fhce.library.dto.response.library.ReservaResponse;
+import com.proyecto.fhce.library.dto.response.loads.PrestamoResponse;
 import com.proyecto.fhce.library.enums.EstadoReserva;
 
 public interface ReservaService {
@@ -61,7 +62,7 @@ public interface ReservaService {
    *
    * Solo puede ejecutarlo un bibliotecario de la biblioteca correspondiente.
    */
-  ReservaResponse convertirEnPrestamo(ConvertirReservaRequest request, Long bibliotecarioId);
+  PrestamoResponse convertirEnPrestamo(ConvertirReservaRequest request, Long bibliotecarioId);
 
   // ─── Procesos automáticos (llamados desde CRON) ──────────────────────────
 

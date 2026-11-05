@@ -1,6 +1,7 @@
 package com.proyecto.fhce.library.mapper;
 
 import java.time.LocalDate;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -10,6 +11,7 @@ import com.proyecto.fhce.library.dto.response.library.EjemplarResponse;
 import com.proyecto.fhce.library.dto.response.library.LibroSimpleResponse;
 import com.proyecto.fhce.library.dto.response.loads.PrestamoResponse;
 import com.proyecto.fhce.library.dto.response.users.UsuarioSimpleResponse;
+import com.proyecto.fhce.library.entities.Autor;
 import com.proyecto.fhce.library.entities.Prestamo;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
@@ -31,7 +33,7 @@ public class PrestamoMapper {
     response.setCondicionEntrega(prestamo.getCondicionEntrega());
     response.setCondicionDevolucion(prestamo.getCondicionDevolucion());
     response.setIdConfigUsado(prestamo.getIdConfigUsado());
-
+    response.setTipoPrestamo(prestamo.getTipoPrestamo());
     // Flag de conveniencia: ¿está vencido en este momento?
     boolean vencido = prestamo.getEstadoPrestamo() == EstadoPrestamo.VENCIDO
         || ((prestamo.getEstadoPrestamo() == EstadoPrestamo.ACTIVO
@@ -57,12 +59,22 @@ public class PrestamoMapper {
     var ejemplar = prestamo.getEjemplar();
 
     EjemplarResponse er = new EjemplarResponse();
+    er.setClasificacionDecimal(ejemplar.getClasificacionDecimal());
+    er.setCutterAutor(ejemplar.getCutterAutor());
+    er.setCutterTitulo(ejemplar.getCutterTitulo());
     er.setId_ejemplar(ejemplar.getIdEjemplar());
     er.setCodigoEjemplar(ejemplar.getCodigoEjemplar());
     er.setEstadoEjemplar(ejemplar.getEstadoEjemplar());
-
-    // Agregar si existe este campo y su setter en EjemplarResponse
-    er.setCodigoTopograficoConcat(ejemplar.getCodigoTopograficoConcat());
+    if (ejemplar.getEdicion().getLibro().getAutores() != null
+        && !ejemplar.getEdicion().getLibro().getAutores().isEmpty()) {
+      String autores = ejemplar.getEdicion()
+          .getLibro()
+          .getAutores()
+          .stream()
+          .map(Autor::getNombre)
+          .collect(Collectors.joining(", "));
+      er.setAutores(autores);
+    }
     if (ejemplar.getEdicion() != null) {
       var edicion = ejemplar.getEdicion();
 
@@ -72,20 +84,18 @@ public class PrestamoMapper {
       ed.setAnoPublicacion(edicion.getAnoPublicacion());
       ed.setEdicion(edicion.getEdicion());
       ed.setImagenPortada(edicion.getImagenPortada());
-
       if (edicion.getLibro() != null) {
         var libroEntidad = edicion.getLibro();
 
         ed.setIdLibro(libroEntidad.getIdLibro());
         ed.setTitulo(libroEntidad.getTitulo());
+        ed.setIdioma(libroEntidad.getIdioma());
 
         LibroSimpleResponse libro = new LibroSimpleResponse();
         libro.setIdLibro(libroEntidad.getIdLibro());
         libro.setTitulo(libroEntidad.getTitulo());
-
         er.setLibro(libro);
       }
-
       er.setEdicion(ed);
     }
 
@@ -121,8 +131,10 @@ public class PrestamoMapper {
     u.setId_usuario(usuario.getId_usuario());
     u.setUsername(usuario.getUsername());
     if (usuario.getPersona() != null) {
-      u.setNombreCompleto(usuario.getPersona().getApellido_pat() + " " + usuario.getPersona().getNombre());
+      u.setNombreCompleto(usuario.getPersona().getApellido_pat() + " " + usuario.getPersona().getApellido_mat() + " "
+          + usuario.getPersona().getNombre());
       u.setCi(usuario.getPersona().getCi());
+      u.setCelular(usuario.getPersona().getCelular());
     }
     return u;
   }

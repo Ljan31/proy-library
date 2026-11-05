@@ -4,6 +4,7 @@ import com.proyecto.fhce.library.dto.request.library.CancelarReservaRequest;
 import com.proyecto.fhce.library.dto.request.library.ConvertirReservaRequest;
 import com.proyecto.fhce.library.dto.request.library.ReservaRequest;
 import com.proyecto.fhce.library.dto.response.library.ReservaResponse;
+import com.proyecto.fhce.library.dto.response.loads.PrestamoResponse;
 import com.proyecto.fhce.library.enums.EstadoReserva;
 import com.proyecto.fhce.library.security.UserDetailsImpl;
 import com.proyecto.fhce.library.services.library.ReservaService;
@@ -143,10 +144,10 @@ public class ReservaController {
    */
   @PostMapping("/convertir")
   @PreAuthorize("hasAnyRole('ROLE_BIBLIOTECARIO', 'ROLE_ADMIN', 'AUXILIAR')")
-  public ResponseEntity<ReservaResponse> convertirEnPrestamo(
+  public ResponseEntity<PrestamoResponse> convertirEnPrestamo(
       @Valid @RequestBody ConvertirReservaRequest request,
       @AuthenticationPrincipal UserDetailsImpl userDetails) {
-    ReservaResponse response = reservaService.convertirEnPrestamo(request, userDetails.getId());
+    PrestamoResponse response = reservaService.convertirEnPrestamo(request, userDetails.getId());
     return ResponseEntity.ok(response);
   }
 }

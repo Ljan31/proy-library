@@ -1,6 +1,5 @@
 package com.proyecto.fhce.library.dto.response.library;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import com.proyecto.fhce.library.dto.response.loads.PrestamoActivoResponse;
@@ -10,7 +9,6 @@ public class EjemplarResponse {
   private Long id_ejemplar;
   private String codigoEjemplar;
   private String codigoTopografico;
-  private String codigoTopograficoConcat;
   private String clasificacionDecimal;
   private String cutterAutor;
   private String cutterTitulo;
@@ -155,10 +153,6 @@ public class EjemplarResponse {
         decimal,
         autor,
         titulo).trim();
-  }
-
-  public void setCodigoTopograficoConcat(String codigoTopograficoConcat) {
-    this.codigoTopograficoConcat = codigoTopograficoConcat;
   }
 
   public String getAutores() {
