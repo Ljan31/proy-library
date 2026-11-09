@@ -577,7 +577,7 @@ public class PrestamoServiceImpl implements PrestamoService {
    * El CRON de SancionService (02:00 AM) procesará las sanciones automáticamente
    * usando findPrestamosVencidosSinSancion() — no duplicar lógica aquí.
    */
-  @Scheduled(cron = "0 0 1 * * *") // Every day at 8 AM
+  @Scheduled(cron = "${app.scheduling.prestamos.marcar-vencidos}") // Every day at 8 AM
   @Transactional
   public void procesarPrestamosVencidos() {
     List<Prestamo> vencidos = prestamoRepository.findPrestamosVencidos(LocalDate.now());
@@ -595,7 +595,7 @@ public class PrestamoServiceImpl implements PrestamoService {
 
   }
 
-  @Scheduled(cron = "0 0 7 * * *") // Every day at 9 AM
+  @Scheduled(cron = "${app.scheduling.prestamos.notificar-por-vencer}") // Every day at 9 AM
   public void notificarPrestamosPorVencer() {
     // Notify loans expiring in the next 2 days
     List<Prestamo> porVencer = prestamoRepository.findPrestamosPorVencer(

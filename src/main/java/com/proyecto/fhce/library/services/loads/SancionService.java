@@ -615,7 +615,7 @@ public class SancionService {
    * Idempotente: la verificación de duplicados garantiza que ejecutarlo
    * dos veces produce el mismo resultado.
    */
-  @Scheduled(cron = "0 43 12 * * *")
+  @Scheduled(cron = "${app.scheduling.sanciones.generar-sanciones}")
   @Transactional
   public void procesarPrestamosVencidos() {
     log.info("==================================================");
@@ -692,7 +692,7 @@ public class SancionService {
    * Si el usuario paga en el día 4 (Bs 12), el CRON no lo toca porque
    * el estado ya no es ACTIVA.
    */
-  @Scheduled(cron = "0 48 12 * * *")
+  @Scheduled(cron = "${app.scheduling.sanciones.actualizar-multas}")
   @Transactional
   public void actualizarMultasSanciones() {
     log.info("CRON inicio — actualizarMultasSanciones");
@@ -723,7 +723,7 @@ public class SancionService {
    * Cron diario a las 3:00 AM.
    * Cierra suspensiones que vencieron y no tienen deuda pendiente.
    */
-  @Scheduled(cron = "0 12 13 * * *")
+  @Scheduled(cron = "${app.scheduling.sanciones.cerrar-suspensiones}")
   @Transactional
   public void cerrarSuspensionesVencidas() {
     log.info("Iniciando cierre de suspensiones vencidas");

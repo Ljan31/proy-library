@@ -363,7 +363,7 @@ public class ReservaServiceImpl implements ReservaService {
    * redundante,
    * pero las reservas tienen su propio ciclo de vencimiento).
    */
-  @Scheduled(cron = "0 30 0 * * *")
+  @Scheduled(cron = "${app.scheduling.reservas.expirar}")
   @Transactional
   public void expirarReservasVencidas() {
     List<Reserva> vencidas = reservaRepository.findReservasVencidasParaExpirar(LocalDate.now());
@@ -412,7 +412,7 @@ public class ReservaServiceImpl implements ReservaService {
    * ejemplares liberados ya estén disponibles.
    */
   // @Scheduled(cron = "0 0 20 * * *")
-  @Scheduled(cron = "0 0 2 * * *")
+  @Scheduled(cron = "${app.scheduling.reservas.detectar-disponibles}")
   @Transactional
   public void detectarYAsignarDisponiblesProgramado() {
     asignacionReservaService.detectarYAsignarDisponibles();
