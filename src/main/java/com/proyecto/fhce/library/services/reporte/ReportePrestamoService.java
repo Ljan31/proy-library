@@ -1,11 +1,11 @@
 package com.proyecto.fhce.library.services.reporte;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,166 +30,98 @@ import com.proyecto.fhce.library.repositories.PrestamoRepository;
 @Service
 @Transactional(readOnly = true)
 public class ReportePrestamoService {
-  @Autowired
-  private PrestamoRepository prestamoRepository;
 
-  public PrestamoReporteResponseDTO generarReportePrestamos(
-      PrestamoFiltroDTO filtro) {
-    LocalDateTime fechaInicio = filtro.getFechaInicio() != null
-        ? filtro.getFechaInicio().atStartOfDay()
-        : LocalDateTime.of(1900, 1, 1, 0, 0);
+  private final PrestamoRepository prestamoRepository;
+  private final Clock clock;
 
-    LocalDateTime fechaFin = filtro.getFechaFin() != null
-        ? filtro.getFechaFin().atTime(23, 59, 59)
-        : LocalDateTime.of(2999, 12, 31, 23, 59, 59);
+  public ReportePrestamoService(PrestamoRepository prestamoRepository, Clock clock) {
+    this.prestamoRepository = prestamoRepository;
+    this.clock = clock;
+  }
+
+  // ==================== Reporte general de préstamos ====================
+
+  public PrestamoReporteResponseDTO generarReportePrestamos(PrestamoFiltroDTO filtro) {
+    ReporteUtil.validarRango(filtro.getFechaInicio(), filtro.getFechaFin());
+    LocalDate hoy = LocalDate.now(clock);
+
     List<Prestamo> prestamos = prestamoRepository.obtenerReportePrestamos(
         filtro.getBibliotecaId(),
         filtro.getEstado(),
-        fechaInicio,
-        fechaFin);
+        ReporteUtil.desde(filtro.getFechaInicio()),
+        ReporteUtil.hastaExclusivo(filtro.getFechaFin()));
 
     List<PrestamoReporteDTO> detalle = prestamos.stream()
-        .map(this::mapPrestamoReporte)
+        .map(p -> mapPrestamoReporte(p, hoy))
         .toList();
 
+    // El resumen se calcula sobre el MISMO conjunto filtrado que el detalle,
+    // para que los totales siempre cuadren con la tabla.
     ResumenPrestamoDTO resumen = new ResumenPrestamoDTO();
-
-    resumen.setTotalPrestamos(
-        prestamoRepository.countPrestamos(
-            filtro.getBibliotecaId()));
-
-    resumen.setActivos(
-        prestamoRepository.countByEstado(
-            EstadoPrestamo.ACTIVO,
-            filtro.getBibliotecaId()));
-
-    resumen.setVencidos(
-        prestamoRepository.countByEstado(
-            EstadoPrestamo.VENCIDO,
-            filtro.getBibliotecaId()));
-
-    resumen.setDevueltos(
-        prestamoRepository.countByEstado(
-            EstadoPrestamo.DEVUELTO,
-            filtro.getBibliotecaId()));
-
-    resumen.setRenovados(
-        prestamoRepository.countByEstado(
-            EstadoPrestamo.RENOVADO,
-            filtro.getBibliotecaId()));
+    resumen.setTotalPrestamos((long) detalle.size());
+    resumen.setActivos(contarEstado(detalle, EstadoPrestamo.ACTIVO));
+    resumen.setVencidos(contarEstado(detalle, EstadoPrestamo.VENCIDO));
+    resumen.setDevueltos(contarEstado(detalle, EstadoPrestamo.DEVUELTO));
+    resumen.setRenovados(contarEstado(detalle, EstadoPrestamo.RENOVADO));
 
     PrestamoReporteResponseDTO response = new PrestamoReporteResponseDTO();
-
     response.setResumen(resumen);
     response.setPrestamos(detalle);
-
     return response;
   }
 
-  private PrestamoReporteDTO mapPrestamoReporte(
-      Prestamo p) {
+  private long contarEstado(List<PrestamoReporteDTO> detalle, EstadoPrestamo estado) {
+    return detalle.stream()
+        .filter(d -> estado.name().equals(d.getEstadoPrestamo()))
+        .count();
+  }
 
+  private PrestamoReporteDTO mapPrestamoReporte(Prestamo p, LocalDate hoy) {
     PrestamoReporteDTO dto = new PrestamoReporteDTO();
-
-    dto.setIdPrestamo(
-        p.getIdPrestamo());
-
-    dto.setUsuario(
-        p.getUsuario()
-            .getPersona()
-            .getNombre() + " " +
-            p.getUsuario()
-                .getPersona()
-                .getApellido_pat());
-
-    dto.setCi(
-        p.getUsuario()
-            .getPersona()
-            .getCi());
-
-    dto.setLibro(
-        p.getEjemplar()
-            .getEdicion()
-            .getLibro()
-            .getTitulo());
-
-    dto.setBiblioteca(
-        p.getBiblioteca()
-            .getNombre());
-
-    dto.setFechaPrestamo(
-        p.getFechaPrestamo());
-
-    dto.setFechaDevolucionEstimada(
-        p.getFechaDevolucionEstimada());
-
-    dto.setFechaDevolucionReal(
-        p.getFechaDevolucionReal());
-
-    dto.setEstadoPrestamo(
-        p.getEstadoPrestamo().name());
-
-    dto.setTipoPrestamo(
-        p.getTipoPrestamo().name());
-
-    if (p.getEstadoPrestamo() == EstadoPrestamo.VENCIDO) {
-
-      dto.setDiasRetraso(
-          (int) java.time.temporal.ChronoUnit.DAYS.between(
-              p.getFechaDevolucionEstimada(),
-              LocalDate.now()));
-    } else {
-      dto.setDiasRetraso(0);
-    }
-
+    dto.setIdPrestamo(p.getIdPrestamo());
+    dto.setUsuario(ReporteUtil.nombreCorto(p.getUsuario().getPersona()));
+    dto.setCi(p.getUsuario().getPersona().getCi());
+    dto.setLibro(p.getEjemplar().getEdicion().getLibro().getTitulo());
+    dto.setBiblioteca(p.getBiblioteca().getNombre());
+    dto.setFechaPrestamo(p.getFechaPrestamo());
+    dto.setFechaDevolucionEstimada(p.getFechaDevolucionEstimada());
+    dto.setFechaDevolucionReal(p.getFechaDevolucionReal());
+    dto.setEstadoPrestamo(p.getEstadoPrestamo().name());
+    dto.setTipoPrestamo(p.getTipoPrestamo().name());
+    dto.setDiasRetraso(ReporteUtil.diasRetraso(p, hoy));
     return dto;
   }
 
-  public LibroMasPrestadoResponseDTO obtenerLibrosMasPrestados(
-      Long bibliotecaId) {
+  // ==================== Libros más / menos prestados ====================
 
-    List<LibroMasPrestadoDTO> libros = prestamoRepository.obtenerLibrosMasPrestados(
-        bibliotecaId);
+  public LibroMasPrestadoResponseDTO obtenerLibrosMasPrestados(Long bibliotecaId) {
+    return armarRespuestaLibros(prestamoRepository.obtenerLibrosMasPrestados(bibliotecaId));
+  }
 
-    Long totalPrestamos = libros.stream()
+  public LibroMasPrestadoResponseDTO librosMenosPrestados(Long bibliotecaId) {
+    return armarRespuestaLibros(prestamoRepository.obtenerLibrosMenosPrestados(bibliotecaId));
+  }
+
+  private LibroMasPrestadoResponseDTO armarRespuestaLibros(List<LibroMasPrestadoDTO> libros) {
+    long totalPrestamos = libros.stream()
         .mapToLong(LibroMasPrestadoDTO::getCantidadPrestamos)
         .sum();
 
     ResumenLibrosPrestadosDTO resumen = new ResumenLibrosPrestadosDTO();
-
-    resumen.setTotalLibros(
-        (long) libros.size());
-
-    resumen.setTotalPrestamos(
-        totalPrestamos);
-
-    LibroMasPrestadoResponseDTO response = new LibroMasPrestadoResponseDTO();
-
-    response.setResumen(resumen);
-    response.setLibros(libros);
-
-    return response;
-  }
-
-  public LibroMasPrestadoResponseDTO librosMenosPrestados(Long bibliotecaId) {
-    List<LibroMasPrestadoDTO> libros = prestamoRepository.obtenerLibrosMenosPrestados(bibliotecaId);
-    Long total = libros.stream().mapToLong(LibroMasPrestadoDTO::getCantidadPrestamos).sum();
-    ResumenLibrosPrestadosDTO resumen = new ResumenLibrosPrestadosDTO();
     resumen.setTotalLibros((long) libros.size());
-    resumen.setTotalPrestamos(total);
+    resumen.setTotalPrestamos(totalPrestamos);
+
     LibroMasPrestadoResponseDTO response = new LibroMasPrestadoResponseDTO();
     response.setResumen(resumen);
     response.setLibros(libros);
     return response;
   }
+
+  // ==================== Historial ====================
 
   public HistorialPrestamoResponseDTO historialPrestamos(HistorialPrestamoFiltroDTO filtro) {
-    LocalDateTime fechaInicio = filtro.getFechaInicio() != null
-        ? filtro.getFechaInicio().atStartOfDay()
-        : null;
-    LocalDateTime fechaFin = filtro.getFechaFin() != null
-        ? filtro.getFechaFin().atTime(23, 59, 59)
-        : null;
+    ReporteUtil.validarRango(filtro.getFechaInicio(), filtro.getFechaFin());
+    LocalDate hoy = LocalDate.now(clock);
 
     List<Prestamo> prestamos = prestamoRepository.obtenerHistorialPrestamos(
         filtro.getBibliotecaId(),
@@ -197,11 +129,11 @@ public class ReportePrestamoService {
         filtro.getLibroId(),
         filtro.getEstado(),
         filtro.getTipoPrestamo(),
-        fechaInicio,
-        fechaFin);
+        ReporteUtil.desde(filtro.getFechaInicio()),
+        ReporteUtil.hastaExclusivo(filtro.getFechaFin()));
 
     List<HistorialPrestamoDTO> detalle = prestamos.stream()
-        .map(this::mapHistorial)
+        .map(p -> mapHistorial(p, hoy))
         .toList();
 
     ResumenHistorialDTO resumen = new ResumenHistorialDTO();
@@ -223,18 +155,79 @@ public class ReportePrestamoService {
     return response;
   }
 
-  // ==================== REPORTE 1 — Préstamos activos del día
+  private HistorialPrestamoDTO mapHistorial(Prestamo p, LocalDate hoy) {
+    HistorialPrestamoDTO dto = new HistorialPrestamoDTO();
+    dto.setIdPrestamo(p.getIdPrestamo());
+    dto.setUsuario(ReporteUtil.nombreCorto(p.getUsuario().getPersona()));
+    dto.setCi(p.getUsuario().getPersona().getCi());
+    dto.setLibro(p.getEjemplar().getEdicion().getLibro().getTitulo());
+    dto.setBiblioteca(p.getBiblioteca().getNombre());
+    dto.setTipoPrestamo(p.getTipoPrestamo().name());
+    dto.setEstadoPrestamo(p.getEstadoPrestamo().name());
+    dto.setFechaPrestamo(p.getFechaPrestamo());
+    dto.setFechaDevolucionEstimada(p.getFechaDevolucionEstimada());
+    dto.setFechaDevolucionReal(p.getFechaDevolucionReal());
+    dto.setRenovaciones(p.getRenovaciones());
+
+    if (p.getCondicionEntrega() != null) {
+      dto.setCondicionEntrega(p.getCondicionEntrega().name());
+    }
+    if (p.getCondicionDevolucion() != null) {
+      dto.setCondicionDevolucion(p.getCondicionDevolucion().name());
+    }
+    // null-safe: antes lanzaba NPE si condicionEntrega era null
+    Integer diferencia = ReporteUtil.diferenciaCondicion(
+        p.getCondicionEntrega(), p.getCondicionDevolucion());
+    dto.setEntregadoConDeterioro(diferencia != null && diferencia > 0);
+
+    dto.setDiasRetraso(ReporteUtil.diasRetraso(p, hoy));
+    return dto;
+  }
+
+  // ==================== Reportes operativos (activos / vencidos / por vencer)
   // ====================
 
   public PrestamosActivosResponseDTO reportePrestamosActivos(Long bibliotecaId) {
-    List<Prestamo> prestamos = prestamoRepository
-        .findPrestamosActivosParaReporte(bibliotecaId);
-
-    LocalDate hoy = LocalDate.now();
-    List<PrestamoActivoDTO> detalle = prestamos.stream()
+    LocalDate hoy = LocalDate.now(clock);
+    List<PrestamoActivoDTO> detalle = prestamoRepository
+        .findPrestamosActivosParaReporte(bibliotecaId).stream()
         .map(p -> mapPrestamoActivo(p, hoy))
         .toList();
 
+    ResumenPrestamosActivosDTO resumen = resumenOperativo(detalle, hoy);
+    return respuestaOperativa(resumen, detalle);
+  }
+
+  public PrestamosActivosResponseDTO reporteDevolucionesPendientes(Long bibliotecaId) {
+    LocalDate hoy = LocalDate.now(clock);
+    List<PrestamoActivoDTO> detalle = prestamoRepository
+        .findDevolucionesPendientesVencidas(bibliotecaId).stream()
+        .map(p -> mapPrestamoActivo(p, hoy))
+        .toList();
+
+    ResumenPrestamosActivosDTO resumen = resumenOperativo(detalle, hoy);
+    return respuestaOperativa(resumen, detalle);
+  }
+
+  public PrestamosActivosResponseDTO reportePrestamosPorVencer(Long bibliotecaId, int dias) {
+    LocalDate hoy = LocalDate.now(clock);
+    LocalDate fechaLimite = hoy.plusDays(dias);
+
+    List<PrestamoActivoDTO> detalle = prestamoRepository
+        .findPrestamosPorVencerParaReporte(bibliotecaId, hoy, fechaLimite).stream()
+        .map(p -> mapPrestamoActivo(p, hoy))
+        .toList();
+
+    ResumenPrestamosActivosDTO resumen = resumenOperativo(detalle, hoy);
+    resumen.setDiasVentana(dias);
+    return respuestaOperativa(resumen, detalle);
+  }
+
+  /**
+   * Un único cálculo de resumen para los tres reportes operativos.
+   * Antes cada reporte lo armaba a mano (y con valores fijos en 0).
+   */
+  private ResumenPrestamosActivosDTO resumenOperativo(List<PrestamoActivoDTO> detalle, LocalDate hoy) {
     ResumenPrestamosActivosDTO resumen = new ResumenPrestamosActivosDTO();
     resumen.setFechaReporte(hoy);
     resumen.setTotalRegistros((long) detalle.size());
@@ -246,74 +239,16 @@ public class ReportePrestamoService {
         .filter(PrestamoActivoDTO::isVencido).count());
     resumen.setVencenHoy(detalle.stream()
         .filter(d -> hoy.equals(d.getFechaDevolucionEstimada())).count());
+    return resumen;
+  }
 
+  private PrestamosActivosResponseDTO respuestaOperativa(
+      ResumenPrestamosActivosDTO resumen, List<PrestamoActivoDTO> detalle) {
     PrestamosActivosResponseDTO response = new PrestamosActivosResponseDTO();
     response.setResumen(resumen);
     response.setPrestamos(detalle);
     return response;
   }
-
-  // ==================== REPORTE 2 — Devoluciones pendientes vencidas
-  // ====================
-
-  public PrestamosActivosResponseDTO reporteDevolucionesPendientes(Long bibliotecaId) {
-    List<Prestamo> prestamos = prestamoRepository
-        .findDevolucionesPendientesVencidas(bibliotecaId);
-
-    LocalDate hoy = LocalDate.now();
-    List<PrestamoActivoDTO> detalle = prestamos.stream()
-        .map(p -> mapPrestamoActivo(p, hoy))
-        .toList();
-
-    ResumenPrestamosActivosDTO resumen = new ResumenPrestamosActivosDTO();
-    resumen.setFechaReporte(hoy);
-    resumen.setTotalRegistros((long) detalle.size());
-    // En vencidos, todos tienen vencido=true y diasRetraso > 0
-    resumen.setYaVencidos((long) detalle.size());
-    resumen.setSoloActivos(0L);
-    resumen.setRenovados(0L);
-    resumen.setVencenHoy(0L);
-
-    PrestamosActivosResponseDTO response = new PrestamosActivosResponseDTO();
-    response.setResumen(resumen);
-    response.setPrestamos(detalle);
-    return response;
-  }
-
-  // ==================== REPORTE 3 — Por vencer en N días ====================
-
-  public PrestamosActivosResponseDTO reportePrestamosPorVencer(
-      Long bibliotecaId, int dias) {
-
-    LocalDate hoy = LocalDate.now();
-    LocalDate fechaLimite = hoy.plusDays(dias);
-
-    List<Prestamo> prestamos = prestamoRepository
-        .findPrestamosPorVencerParaReporte(bibliotecaId, fechaLimite);
-
-    List<PrestamoActivoDTO> detalle = prestamos.stream()
-        .map(p -> mapPrestamoActivo(p, hoy))
-        .toList();
-
-    ResumenPrestamosActivosDTO resumen = new ResumenPrestamosActivosDTO();
-    resumen.setFechaReporte(hoy);
-    resumen.setDiasVentana(dias);
-    resumen.setTotalRegistros((long) detalle.size());
-    resumen.setSoloActivos(detalle.stream()
-        .filter(d -> "ACTIVO".equals(d.getEstadoPrestamo())).count());
-    resumen.setRenovados(detalle.stream()
-        .filter(d -> "RENOVADO".equals(d.getEstadoPrestamo())).count());
-    resumen.setVencenHoy(detalle.stream()
-        .filter(d -> hoy.equals(d.getFechaDevolucionEstimada())).count());
-    resumen.setYaVencidos(0L); // la query excluye vencidos por diseño
-
-    PrestamosActivosResponseDTO response = new PrestamosActivosResponseDTO();
-    response.setResumen(resumen);
-    response.setPrestamos(detalle);
-    return response;
-  }
-
-  // ==================== Mapper privado compartido ====================
 
   private PrestamoActivoDTO mapPrestamoActivo(Prestamo p, LocalDate hoy) {
     PrestamoActivoDTO dto = new PrestamoActivoDTO();
@@ -325,74 +260,26 @@ public class ReportePrestamoService {
     dto.setFechaDevolucionEstimada(p.getFechaDevolucionEstimada());
     dto.setRenovaciones(p.getRenovaciones());
 
-    // Cálculo de vencimiento en Java — nunca hardcodeado en la query
+    // < 0 ya venció, == 0 vence hoy, > 0 días que faltan
     long diasDiferencia = ChronoUnit.DAYS.between(hoy, p.getFechaDevolucionEstimada());
-    // diasDiferencia < 0 → ya venció (días de retraso = valor absoluto)
-    // diasDiferencia == 0 → vence hoy
-    // diasDiferencia > 0 → días que faltan
     dto.setDiasRestantes((int) diasDiferencia);
-    boolean vencido = diasDiferencia < 0;
-    dto.setVencido(vencido);
-    dto.setDiasRetraso(vencido ? (int) Math.abs(diasDiferencia) : 0);
+    dto.setVencido(diasDiferencia < 0);
+    dto.setDiasRetraso(diasDiferencia < 0 ? (int) -diasDiferencia : 0);
 
-    // Usuario
     dto.setIdUsuario(p.getUsuario().getId_usuario());
-    dto.setNombreUsuario(
-        p.getUsuario().getPersona().getNombre() + " " +
-            p.getUsuario().getPersona().getApellido_pat());
+    dto.setNombreUsuario(ReporteUtil.nombreCorto(p.getUsuario().getPersona()));
     dto.setCi(p.getUsuario().getPersona().getCi());
 
-    // Ejemplar y libro
     dto.setIdEjemplar(p.getEjemplar().getIdEjemplar());
     dto.setCodigoEjemplar(p.getEjemplar().getCodigoEjemplar());
     dto.setTituloLibro(p.getEjemplar().getEdicion().getLibro().getTitulo());
     dto.setEditorial(p.getEjemplar().getEdicion().getEditorial());
+    // TODO isbn: el frontend lo declara pero Edicion no expone el campo.
+    // Ver nota de entrega (opción A: agregar isbn a Edicion + PrestamoActivoDTO;
+    // opción B: quitarlo de reporte.service.ts).
 
-    // Biblioteca
     dto.setIdBiblioteca(p.getBiblioteca().getIdBiblioteca());
     dto.setNombreBiblioteca(p.getBiblioteca().getNombre());
-
-    return dto;
-  }
-
-  private HistorialPrestamoDTO mapHistorial(Prestamo p) {
-    HistorialPrestamoDTO dto = new HistorialPrestamoDTO();
-    dto.setIdPrestamo(p.getIdPrestamo());
-    dto.setUsuario(p.getUsuario().getPersona().getNombre() + " "
-        + p.getUsuario().getPersona().getApellido_pat());
-    dto.setCi(p.getUsuario().getPersona().getCi());
-    dto.setLibro(p.getEjemplar().getEdicion().getLibro().getTitulo());
-    dto.setBiblioteca(p.getBiblioteca().getNombre());
-    dto.setTipoPrestamo(p.getTipoPrestamo().name());
-    dto.setEstadoPrestamo(p.getEstadoPrestamo().name());
-    dto.setFechaPrestamo(p.getFechaPrestamo());
-    dto.setFechaDevolucionEstimada(p.getFechaDevolucionEstimada());
-    dto.setFechaDevolucionReal(p.getFechaDevolucionReal());
-    dto.setRenovaciones(p.getRenovaciones());
-    if (p.getCondicionEntrega() != null) {
-      dto.setCondicionEntrega(p.getCondicionEntrega().name());
-    }
-    if (p.getCondicionDevolucion() != null) {
-      dto.setCondicionDevolucion(p.getCondicionDevolucion().name());
-      // deterioro si el ordinal de devolución es MAYOR que el de entrega
-      // (EXCELENTE=0, BUENO=1, REGULAR=2, MALO=3, DETERIORADO=4)
-      boolean deterioro = p.getCondicionDevolucion().ordinal() > p.getCondicionEntrega().ordinal();
-      dto.setEntregadoConDeterioro(deterioro);
-    }
-    // días de retraso: aplica a VENCIDO y DEVUELTO tardío
-    if (p.getEstadoPrestamo() == EstadoPrestamo.VENCIDO) {
-      dto.setDiasRetraso((int) ChronoUnit.DAYS.between(
-          p.getFechaDevolucionEstimada(), LocalDate.now()));
-    } else if (p.getEstadoPrestamo() == EstadoPrestamo.DEVUELTO
-        && p.getFechaDevolucionReal() != null
-        && p.getFechaDevolucionReal().toLocalDate()
-            .isAfter(p.getFechaDevolucionEstimada())) {
-      dto.setDiasRetraso((int) ChronoUnit.DAYS.between(
-          p.getFechaDevolucionEstimada(),
-          p.getFechaDevolucionReal().toLocalDate()));
-    } else {
-      dto.setDiasRetraso(0);
-    }
     return dto;
   }
 }

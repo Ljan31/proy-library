@@ -3,12 +3,12 @@ package com.proyecto.fhce.library.services.reporte;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.proyecto.fhce.library.dto.reportes.certificado.*;
 import com.proyecto.fhce.library.entities.CertificadoNoDeuda;
+import com.proyecto.fhce.library.entities.SolicitudCertificado;
 import com.proyecto.fhce.library.enums.EstadoCertificado;
 import com.proyecto.fhce.library.repositories.CertificadoNoDeudaRepository;
 
@@ -16,18 +16,18 @@ import com.proyecto.fhce.library.repositories.CertificadoNoDeudaRepository;
 @Transactional(readOnly = true)
 public class ReporteCertificadoService {
 
-  @Autowired
-  private CertificadoNoDeudaRepository certificadoRepository;
+  private final CertificadoNoDeudaRepository certificadoRepository;
+
+  public ReporteCertificadoService(CertificadoNoDeudaRepository certificadoRepository) {
+    this.certificadoRepository = certificadoRepository;
+  }
 
   public CertificadoReporteResponseDTO generarReporteCertificados(
       CertificadoFiltroDTO filtro) {
 
-    LocalDateTime fechaInicio = filtro.getFechaInicio() != null
-        ? filtro.getFechaInicio().atStartOfDay()
-        : null;
-    LocalDateTime fechaFin = filtro.getFechaFin() != null
-        ? filtro.getFechaFin().atTime(23, 59, 59)
-        : null;
+    ReporteUtil.validarRango(filtro.getFechaInicio(), filtro.getFechaFin());
+    LocalDateTime fechaInicio = ReporteUtil.desde(filtro.getFechaInicio());
+    LocalDateTime fechaFin = ReporteUtil.hastaExclusivo(filtro.getFechaFin());
 
     List<CertificadoNoDeuda> certificados = certificadoRepository
         .obtenerReporteCertificados(
@@ -60,13 +60,19 @@ public class ReporteCertificadoService {
     CertificadoReporteItemDTO dto = new CertificadoReporteItemDTO();
     dto.setIdCertificado(c.getIdCertificado());
     dto.setCodigoVerificacion(c.getCodigoVerificacion());
-    dto.setUsuario(c.getSolicitud().getUsuario().getPersona().getNombre() + " "
-        + c.getSolicitud().getUsuario().getPersona().getApellido_pat());
-    dto.setCi(c.getSolicitud().getUsuario().getPersona().getCi());
+    // La solicitud puede ser de una persona NO registrada en el sistema
+    // (usuario == null): en ese caso se usan los datos que dejó en la solicitud.
+    SolicitudCertificado solicitud = c.getSolicitud();
+    if (solicitud.getUsuario() != null && solicitud.getUsuario().getPersona() != null) {
+      dto.setUsuario(ReporteUtil.nombreCorto(solicitud.getUsuario().getPersona()));
+      dto.setCi(solicitud.getUsuario().getPersona().getCi());
+    } else {
+      dto.setUsuario((solicitud.getNombres() + " " + solicitud.getApellidos()).trim());
+      dto.setCi(solicitud.getCi());
+    }
     dto.setBiblioteca(c.getBiblioteca().getNombre());
     if (c.getBibliotecario() != null) {
-      dto.setBibliotecario(c.getBibliotecario().getPersona().getNombre() + " "
-          + c.getBibliotecario().getPersona().getApellido_pat());
+      dto.setBibliotecario(ReporteUtil.nombreCorto(c.getBibliotecario().getPersona()));
     }
     dto.setFechaEmision(c.getFechaEmision());
     dto.setFechaVencimiento(c.getFechaVencimiento());

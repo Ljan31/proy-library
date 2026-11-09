@@ -1,14 +1,16 @@
 package com.proyecto.fhce.library.services.reporte;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.proyecto.fhce.library.dto.reportes.sancion.*;
+import com.proyecto.fhce.library.dto.reportes.sancion.SancionFiltroDTO;
+import com.proyecto.fhce.library.dto.reportes.sancion.SancionReporteItemDTO;
+import com.proyecto.fhce.library.dto.reportes.sancion.SancionReporteResponseDTO;
+import com.proyecto.fhce.library.dto.reportes.sancion.SancionResumenDTO;
+import com.proyecto.fhce.library.entities.Prestamo;
 import com.proyecto.fhce.library.entities.Sancion;
 import com.proyecto.fhce.library.enums.EstadoSancion;
 import com.proyecto.fhce.library.enums.TipoSancion;
@@ -18,68 +20,78 @@ import com.proyecto.fhce.library.repositories.SancionRepository;
 @Transactional(readOnly = true)
 public class ReporteSancionService {
 
-  @Autowired
-  private SancionRepository sancionRepository;
+  private final SancionRepository sancionRepository;
+
+  public ReporteSancionService(SancionRepository sancionRepository) {
+    this.sancionRepository = sancionRepository;
+  }
 
   public SancionReporteResponseDTO generarReporteSanciones(SancionFiltroDTO filtro) {
-    LocalDateTime fechaInicio = filtro.getFechaInicio() != null
-        ? filtro.getFechaInicio().atStartOfDay()
-        : null;
-    LocalDateTime fechaFin = filtro.getFechaFin() != null
-        ? filtro.getFechaFin().atTime(23, 59, 59)
-        : null;
+    ReporteUtil.validarRango(filtro.getFechaInicio(), filtro.getFechaFin());
 
+    // Bug anterior: se calculaban fechaInicio/fechaFin como LocalDateTime pero se
+    // pasaban los LocalDate originales a la query. Ahora se filtra por
+    // fechaGeneracion (LocalDateTime) con rango semiabierto [inicio, fin).
     List<Sancion> sanciones = sancionRepository.obtenerReporteSanciones(
         filtro.getBibliotecaId(),
         filtro.getUsuarioId(),
         filtro.getTipo(),
         filtro.getEstado(),
-        filtro.getFechaInicio(),
-        filtro.getFechaFin());
+        ReporteUtil.desde(filtro.getFechaInicio()),
+        ReporteUtil.hastaExclusivo(filtro.getFechaFin()));
 
     List<SancionReporteItemDTO> detalle = sanciones.stream()
         .map(this::mapSancion)
         .toList();
 
-    SancionResumenDTO resumen = buildResumen(filtro.getBibliotecaId());
-
     SancionReporteResponseDTO response = new SancionReporteResponseDTO();
-    response.setResumen(resumen);
+    response.setResumen(buildResumen(sanciones));
     response.setSanciones(detalle);
     return response;
   }
 
-  private SancionResumenDTO buildResumen(Long bibliotecaId) {
+  /**
+   * Resumen calculado sobre las mismas sanciones del detalle (respeta los
+   * filtros) y en memoria: cero queries extra frente a las 9 anteriores.
+   */
+  private SancionResumenDTO buildResumen(List<Sancion> sanciones) {
     SancionResumenDTO r = new SancionResumenDTO();
-    r.setTotalSanciones(
-        sancionRepository.countByTipoAndEstadoAndBiblioteca(null, null, bibliotecaId));
-    r.setActivas(
-        sancionRepository.countByTipoAndEstadoAndBiblioteca(null, EstadoSancion.ACTIVA, bibliotecaId));
-    r.setPagadas(
-        sancionRepository.countByTipoAndEstadoAndBiblioteca(null, EstadoSancion.PAGADA, bibliotecaId));
-    r.setCondonadas(
-        sancionRepository.countByTipoAndEstadoAndBiblioteca(null, EstadoSancion.CONDONADA, bibliotecaId));
-    r.setMultas(
-        sancionRepository.countByTipoAndEstadoAndBiblioteca(TipoSancion.MULTA, null, bibliotecaId));
-    r.setSuspensiones(
-        sancionRepository.countByTipoAndEstadoAndBiblioteca(TipoSancion.SUSPENSION, null, bibliotecaId));
-    r.setMontoTotalGenerado(
-        sancionRepository.sumMontoByEstadoAndBiblioteca(null, bibliotecaId));
-    r.setMontoTotalPagado(
-        sancionRepository.sumMontoByEstadoAndBiblioteca(EstadoSancion.PAGADA, bibliotecaId));
-    // monto pendiente = activas
-    r.setMontoPendiente(
-        sancionRepository.sumMontoByEstadoAndBiblioteca(EstadoSancion.ACTIVA, bibliotecaId));
+    r.setTotalSanciones((long) sanciones.size());
+    r.setActivas(contarEstado(sanciones, EstadoSancion.ACTIVA));
+    r.setPagadas(contarEstado(sanciones, EstadoSancion.PAGADA));
+    r.setCondonadas(contarEstado(sanciones, EstadoSancion.CONDONADA));
+    r.setMultas(contarTipo(sanciones, TipoSancion.MULTA));
+    r.setSuspensiones(contarTipo(sanciones, TipoSancion.SUSPENSION));
+    r.setMontoTotalGenerado(sumarMonto(sanciones, null));
+    r.setMontoTotalPagado(sumarMonto(sanciones, EstadoSancion.PAGADA));
+    r.setMontoPendiente(sumarMonto(sanciones, EstadoSancion.ACTIVA));
     return r;
+  }
+
+  private long contarEstado(List<Sancion> sanciones, EstadoSancion estado) {
+    return sanciones.stream().filter(s -> s.getEstado() == estado).count();
+  }
+
+  private long contarTipo(List<Sancion> sanciones, TipoSancion tipo) {
+    return sanciones.stream().filter(s -> s.getTipoSancion() == tipo).count();
+  }
+
+  private BigDecimal sumarMonto(List<Sancion> sanciones, EstadoSancion estado) {
+    return sanciones.stream()
+        .filter(s -> estado == null || s.getEstado() == estado)
+        .map(Sancion::getMontoMulta)
+        .filter(m -> m != null)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 
   private SancionReporteItemDTO mapSancion(Sancion s) {
     SancionReporteItemDTO dto = new SancionReporteItemDTO();
     dto.setIdSancion(s.getIdSancion());
-    dto.setUsuario(s.getUsuario().getPersona().getNombre() + " "
-        + s.getUsuario().getPersona().getApellido_pat());
+    dto.setUsuario(ReporteUtil.nombreCorto(s.getUsuario().getPersona()));
     dto.setCi(s.getUsuario().getPersona().getCi());
-    dto.setBiblioteca(s.getPrestamo().getBiblioteca().getNombre());
+    // La biblioteca viene de la sanción (NOT NULL), no del préstamo:
+    // las sanciones manuales no tienen préstamo y antes provocaban NPE.
+    dto.setBiblioteca(s.getBiblioteca().getNombre());
     dto.setTipoSancion(s.getTipoSancion().name());
     dto.setEstadoSancion(s.getEstado().name());
     dto.setMonto(s.getMontoMulta());
@@ -87,9 +99,12 @@ public class ReporteSancionService {
     dto.setDiasRetraso(s.getDiasRetraso());
     dto.setFechaInicio(s.getFechaInicioSuspension());
     dto.setFechaFin(s.getFechaFinSuspension());
-    dto.setIdPrestamoOrigen(s.getPrestamo().getIdPrestamo());
-    dto.setLibroOrigen(s.getPrestamo().getEjemplar()
-        .getEdicion().getLibro().getTitulo());
+
+    Prestamo prestamo = s.getPrestamo();
+    if (prestamo != null) {
+      dto.setIdPrestamoOrigen(prestamo.getIdPrestamo());
+      dto.setLibroOrigen(prestamo.getEjemplar().getEdicion().getLibro().getTitulo());
+    }
     return dto;
   }
 }

@@ -168,6 +168,21 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
             @Param("usuarioId") Long usuarioId,
             @Param("bibliotecaId") Long bibliotecaId);
 
+    @Query("""
+            SELECT COUNT(r) FROM Reserva r
+            WHERE r.biblioteca.idBiblioteca = :bibliotecaId
+            AND r.estadoReserva IN ('ACTIVA', 'NOTIFICADA')
+            """)
+    Long countReservasActivasByBiblioteca(
+            @Param("bibliotecaId") Long bibliotecaId);
+
+    @Query("""
+            SELECT COUNT(r) FROM Reserva r
+            WHERE r.estadoReserva IN :estados
+            """)
+    Long countReservasByEstado(
+            @Param("estados") List<EstadoReserva> estados);
+
     /**
      * Obtiene el siguiente valor de prioridad para la cola de un libro/biblioteca.
      * La prioridad se asigna como MAX + 1 para garantizar el orden FIFO.

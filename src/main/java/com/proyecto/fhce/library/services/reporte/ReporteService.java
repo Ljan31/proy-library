@@ -3,9 +3,9 @@ package com.proyecto.fhce.library.services.reporte;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.proyecto.fhce.library.dto.reportes.DashboardDTO;
 import com.proyecto.fhce.library.dto.reportes.InventarioBibliotecaDTO;
 import com.proyecto.fhce.library.dto.reportes.ReportePrestamoDTO;
+import com.proyecto.fhce.library.dto.reportes.dashboard.DashboardDTO;
 import com.proyecto.fhce.library.dto.reportes.inventario.DeterioroReporteResponseDTO;
 import com.proyecto.fhce.library.dto.reportes.inventario.EjemplarNuncaPrestadoResponseDTO;
 import com.proyecto.fhce.library.dto.reportes.inventario.EstadoEjemplarBibliotecaResponseDTO;

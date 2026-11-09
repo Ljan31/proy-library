@@ -3,10 +3,10 @@ package com.proyecto.fhce.library.controllers;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.proyecto.fhce.library.dto.reportes.DashboardDTO;
 import com.proyecto.fhce.library.dto.reportes.certificado.CertificadoFiltroDTO;
 import com.proyecto.fhce.library.dto.reportes.certificado.CertificadoReporteResponseDTO;
+import com.proyecto.fhce.library.dto.reportes.dashboard.DashboardDTO;
 import com.proyecto.fhce.library.dto.reportes.inventario.DeterioroReporteResponseDTO;
 import com.proyecto.fhce.library.dto.reportes.inventario.EjemplarNuncaPrestadoResponseDTO;
 import com.proyecto.fhce.library.dto.reportes.inventario.EstadoEjemplarBibliotecaResponseDTO;
@@ -34,7 +34,6 @@ import com.proyecto.fhce.library.dto.reportes.sancion.SancionFiltroDTO;
 import com.proyecto.fhce.library.dto.reportes.sancion.SancionReporteResponseDTO;
 import com.proyecto.fhce.library.dto.response.ApiResponse;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
-import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.services.reporte.ReporteCertificadoService;
 import com.proyecto.fhce.library.services.reporte.ReportePrestamoService;
 import com.proyecto.fhce.library.services.reporte.ReporteSancionService;
@@ -42,21 +41,31 @@ import com.proyecto.fhce.library.services.reporte.ReporteService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 @RestController
 @RequestMapping("/api/reportes")
 @Tag(name = "Reportes")
+@Validated
 public class ReporteController {
 
-  @Autowired
-  private ReporteService reporteService;
+  private final ReporteService reporteService;
+  private final ReportePrestamoService reportePrestamoService;
+  private final ReporteSancionService reporteSancionService;
+  private final ReporteCertificadoService reporteCertificadoService;
 
-  @Autowired
-  private ReportePrestamoService reportePrestamoService;
-  @Autowired
-  private ReporteSancionService reporteSancionService;
-  @Autowired
-  private ReporteCertificadoService reporteCertificadoService;
+  public ReporteController(
+      ReporteService reporteService,
+      ReportePrestamoService reportePrestamoService,
+      ReporteSancionService reporteSancionService,
+      ReporteCertificadoService reporteCertificadoService) {
+    this.reporteService = reporteService;
+    this.reportePrestamoService = reportePrestamoService;
+    this.reporteSancionService = reporteSancionService;
+    this.reporteCertificadoService = reporteCertificadoService;
+  }
 
   @GetMapping("/dashboard")
   @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN', 'ESTUDIANTE')")
@@ -100,7 +109,7 @@ public class ReporteController {
   @PostMapping("/prestamos")
   @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<PrestamoReporteResponseDTO>> reportePrestamos(
-      @RequestBody PrestamoFiltroDTO filtro) {
+      @Valid @RequestBody PrestamoFiltroDTO filtro) {
 
     PrestamoReporteResponseDTO reporte = reportePrestamoService.generarReportePrestamos(filtro);
 
@@ -142,7 +151,7 @@ public class ReporteController {
   @PostMapping("/prestamos/historial")
   @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<HistorialPrestamoResponseDTO>> historialPrestamos(
-      @RequestBody HistorialPrestamoFiltroDTO filtro) {
+      @Valid @RequestBody HistorialPrestamoFiltroDTO filtro) {
     return ResponseEntity.ok(ApiResponse.success(
         reportePrestamoService.historialPrestamos(filtro)));
   }
@@ -186,7 +195,7 @@ public class ReporteController {
   @PostMapping("/sanciones")
   @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<SancionReporteResponseDTO>> reporteSanciones(
-      @RequestBody SancionFiltroDTO filtro) {
+      @Valid @RequestBody SancionFiltroDTO filtro) {
     return ResponseEntity.ok(ApiResponse.success(
         reporteSancionService.generarReporteSanciones(filtro)));
   }
@@ -195,7 +204,7 @@ public class ReporteController {
   @PostMapping("/certificados")
   @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO')")
   public ResponseEntity<ApiResponse<CertificadoReporteResponseDTO>> reporteCertificados(
-      @RequestBody CertificadoFiltroDTO filtro) {
+      @Valid @RequestBody CertificadoFiltroDTO filtro) {
     return ResponseEntity.ok(ApiResponse.success(
         reporteCertificadoService.generarReporteCertificados(filtro)));
   }
@@ -239,11 +248,7 @@ public class ReporteController {
   @PreAuthorize("hasAnyRole('BIBLIOTECARIO', 'ADMIN')")
   public ResponseEntity<ApiResponse<PrestamosActivosResponseDTO>> prestamosPorVencer(
       @RequestParam(required = false) Long bibliotecaId,
-      @RequestParam(defaultValue = "3") int dias) {
-
-    if (dias < 1 || dias > 30) {
-      throw new BusinessException("El parámetro 'dias' debe estar entre 1 y 30");
-    }
+      @RequestParam(defaultValue = "3") @Min(1) @Max(30) int dias) {
 
     return ResponseEntity.ok(ApiResponse.success(
         reportePrestamoService.reportePrestamosPorVencer(bibliotecaId, dias)));

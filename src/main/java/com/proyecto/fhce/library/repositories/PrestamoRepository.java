@@ -5,11 +5,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.proyecto.fhce.library.dto.reportes.dashboard.CondicionDevolucionDTO;
+import com.proyecto.fhce.library.dto.reportes.dashboard.DevolucionPorMesDTO;
+import com.proyecto.fhce.library.dto.reportes.dashboard.LibroMasPrestadoDashboardDTO;
+import com.proyecto.fhce.library.dto.reportes.dashboard.PeriodoPrestamosDTO;
+import com.proyecto.fhce.library.dto.reportes.dashboard.PrestamoEstadoDTO;
+import com.proyecto.fhce.library.dto.reportes.dashboard.PrestamoPorBibliotecaDTO;
+import com.proyecto.fhce.library.dto.reportes.dashboard.PrestamoPorTipoDTO;
 import com.proyecto.fhce.library.dto.reportes.prestamo.LibroMasPrestadoDTO;
 import com.proyecto.fhce.library.entities.Prestamo;
 import com.proyecto.fhce.library.enums.EstadoPrestamo;
@@ -232,7 +240,9 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
                   WHERE
                   (:bibliotecaId IS NULL OR p.biblioteca.idBiblioteca = :bibliotecaId)
                  AND (:estado IS NULL OR p.estadoPrestamo = :estado)
-            AND p.fechaPrestamo BETWEEN :fechaInicio AND :fechaFin
+            AND p.fechaPrestamo >= :fechaInicio
+                 AND p.fechaPrestamo < :fechaFin
+                 ORDER BY p.fechaPrestamo DESC
                           """)
     List<Prestamo> obtenerReportePrestamos(
             @Param("bibliotecaId") Long bibliotecaId,
@@ -279,9 +289,9 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
                 AND (:tipoPrestamo IS NULL OR p.tipoPrestamo = :tipoPrestamo)
 
                 AND (
-                    (:fechaInicio IS NULL OR p.fechaPrestamo >= :fechaInicio)
+                    p.fechaPrestamo >= :fechaInicio
                     AND
-                    (:fechaFin IS NULL OR p.fechaPrestamo <= :fechaFin)
+                    p.fechaPrestamo < :fechaFin
                 )
 
                 ORDER BY p.fechaPrestamo DESC
@@ -352,8 +362,8 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
             WHERE p.estadoPrestamo = 'DEVUELTO'
             AND p.condicionDevolucion IS NOT NULL
             AND (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
-            AND (:fechaInicio IS NULL OR p.fechaDevolucionReal >= :fechaInicio)
-            AND (:fechaFin IS NULL OR p.fechaDevolucionReal <= :fechaFin)
+            AND p.fechaDevolucionReal >= :fechaInicio
+            AND p.fechaDevolucionReal < :fechaFin
             ORDER BY p.fechaDevolucionReal DESC
             """)
     List<Prestamo> obtenerDevolucionesConCondicion(
@@ -420,10 +430,140 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
             JOIN FETCH ed.libro l
             WHERE p.estadoPrestamo IN ('ACTIVO', 'RENOVADO')
             AND (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
-            AND p.fechaDevolucionEstimada BETWEEN CURRENT_DATE AND :fechaLimite
+            AND p.fechaDevolucionEstimada BETWEEN :fechaDesde AND :fechaLimite
             ORDER BY p.fechaDevolucionEstimada ASC
             """)
     List<Prestamo> findPrestamosPorVencerParaReporte(
             @Param("bibliotecaId") Long bibliotecaId,
+            @Param("fechaDesde") LocalDate fechaDesde,
             @Param("fechaLimite") LocalDate fechaLimite);
+
+    // Gráfica 1. Evolución mensual de préstamos
+    @Query("""
+                SELECT new com.proyecto.fhce.library.dto.reportes.dashboard.PeriodoPrestamosDTO(
+                    YEAR(p.fechaPrestamo),
+                    MONTH(p.fechaPrestamo),
+                    COUNT(p.idPrestamo)
+                )
+                FROM Prestamo p
+                WHERE (:bibliotecaId IS NULL
+                       OR p.biblioteca.idBiblioteca = :bibliotecaId)
+                  AND p.fechaPrestamo >= :inicio
+                  AND p.fechaPrestamo < :fin
+                GROUP BY YEAR(p.fechaPrestamo), MONTH(p.fechaPrestamo)
+                ORDER BY YEAR(p.fechaPrestamo), MONTH(p.fechaPrestamo)
+            """)
+    List<PeriodoPrestamosDTO> obtenerPrestamosPorMes(
+            @Param("bibliotecaId") Long bibliotecaId,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fin") LocalDateTime fin);
+
+    // Gráfica 2. Distribución por estado
+    @Query("""
+                SELECT new com.proyecto.fhce.library.dto.reportes.dashboard.PrestamoEstadoDTO(
+                    CAST(p.estadoPrestamo AS string),
+                    COUNT(p.idPrestamo)
+                )
+                FROM Prestamo p
+                WHERE (:bibliotecaId IS NULL
+                       OR p.biblioteca.idBiblioteca = :bibliotecaId)
+                GROUP BY p.estadoPrestamo
+                ORDER BY p.estadoPrestamo
+            """)
+    List<PrestamoEstadoDTO> obtenerDistribucionPorEstado(
+            @Param("bibliotecaId") Long bibliotecaId);
+
+    // Gráfica 3. Cinco libros más prestados
+    @Query("""
+                SELECT new com.proyecto.fhce.library.dto.reportes.dashboard.LibroMasPrestadoDashboardDTO(
+                    l.idLibro,
+                    l.titulo,
+                    COUNT(p.idPrestamo)
+                )
+                FROM Prestamo p
+                JOIN p.ejemplar e
+                JOIN e.edicion ed
+                JOIN ed.libro l
+                WHERE (:bibliotecaId IS NULL
+                       OR p.biblioteca.idBiblioteca = :bibliotecaId)
+                GROUP BY l.idLibro, l.titulo
+                ORDER BY COUNT(p.idPrestamo) DESC
+            """)
+    List<LibroMasPrestadoDashboardDTO> obtenerTopLibrosMasPrestados(
+            @Param("bibliotecaId") Long bibliotecaId,
+            Pageable pageable);
+
+    // Gráfica 4. Préstamos por modalidad
+    @Query("""
+                SELECT new com.proyecto.fhce.library.dto.reportes.dashboard.PrestamoPorTipoDTO(
+                    CAST(p.tipoPrestamo AS string),
+                    COUNT(p.idPrestamo)
+                )
+                FROM Prestamo p
+                WHERE (:bibliotecaId IS NULL
+                       OR p.biblioteca.idBiblioteca = :bibliotecaId)
+                GROUP BY p.tipoPrestamo
+            """)
+    List<PrestamoPorTipoDTO> obtenerPrestamosPorTipo(
+            @Param("bibliotecaId") Long bibliotecaId);
+
+    // Gráfica 5. Actividad por biblioteca
+    @Query("""
+                SELECT new com.proyecto.fhce.library.dto.reportes.dashboard.PrestamoPorBibliotecaDTO(
+                    b.idBiblioteca,
+                    b.nombre,
+                    COUNT(p.idPrestamo)
+                )
+                FROM Prestamo p
+                JOIN p.biblioteca b
+                GROUP BY b.idBiblioteca, b.nombre
+                ORDER BY COUNT(p.idPrestamo) DESC
+            """)
+    List<PrestamoPorBibliotecaDTO> obtenerPrestamosPorBiblioteca();
+
+    // Gráfica 6. Devoluciones puntuales y tardías
+    @Query("""
+                SELECT new com.proyecto.fhce.library.dto.reportes.dashboard.DevolucionPorMesDTO(
+                    YEAR(p.fechaDevolucionReal),
+                    MONTH(p.fechaDevolucionReal),
+                    SUM(CASE
+                        WHEN CAST(p.fechaDevolucionReal AS date) <= p.fechaDevolucionEstimada
+                        THEN 1 ELSE 0
+                    END),
+                    SUM(CASE
+                        WHEN CAST(p.fechaDevolucionReal AS date) > p.fechaDevolucionEstimada
+                        THEN 1 ELSE 0
+                    END)
+                )
+                FROM Prestamo p
+                WHERE p.estadoPrestamo = 'DEVUELTO'
+                  AND p.fechaDevolucionReal IS NOT NULL
+                  AND (:bibliotecaId IS NULL
+                       OR p.biblioteca.idBiblioteca = :bibliotecaId)
+                  AND p.fechaDevolucionReal >= :inicio
+                  AND p.fechaDevolucionReal < :fin
+                GROUP BY YEAR(p.fechaDevolucionReal), MONTH(p.fechaDevolucionReal)
+                ORDER BY YEAR(p.fechaDevolucionReal), MONTH(p.fechaDevolucionReal)
+            """)
+    List<DevolucionPorMesDTO> obtenerDevolucionesPorMes(
+            @Param("bibliotecaId") Long bibliotecaId,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fin") LocalDateTime fin);
+
+    // Gráfica 7. Condición física de devoluciones
+    @Query("""
+                SELECT new com.proyecto.fhce.library.dto.reportes.dashboard.CondicionDevolucionDTO(
+                    CAST(p.condicionDevolucion AS string),
+                    COUNT(p.idPrestamo)
+                )
+                FROM Prestamo p
+                WHERE p.estadoPrestamo = 'DEVUELTO'
+                  AND p.condicionDevolucion IS NOT NULL
+                  AND (:bibliotecaId IS NULL
+                       OR p.biblioteca.idBiblioteca = :bibliotecaId)
+                GROUP BY p.condicionDevolucion
+                ORDER BY p.condicionDevolucion
+            """)
+    List<CondicionDevolucionDTO> obtenerCondicionesDevolucion(
+            @Param("bibliotecaId") Long bibliotecaId);
 }

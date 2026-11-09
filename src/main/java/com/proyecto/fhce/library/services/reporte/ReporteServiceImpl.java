@@ -2,15 +2,16 @@ package com.proyecto.fhce.library.services.reporte;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.proyecto.fhce.library.dto.reportes.DashboardDTO;
 import com.proyecto.fhce.library.dto.reportes.InventarioBibliotecaDTO;
 import com.proyecto.fhce.library.dto.reportes.ReportePrestamoDTO;
+import com.proyecto.fhce.library.dto.reportes.dashboard.*;
 import com.proyecto.fhce.library.dto.reportes.inventario.DeterioroItemDTO;
 import com.proyecto.fhce.library.dto.reportes.inventario.DeterioroReporteResponseDTO;
 import com.proyecto.fhce.library.dto.reportes.inventario.DeterioroResumenDTO;
@@ -27,30 +28,47 @@ import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.Ejemplar;
 import com.proyecto.fhce.library.entities.Prestamo;
 import com.proyecto.fhce.library.enums.EstadoEjemplar;
+import com.proyecto.fhce.library.enums.EstadoReserva;
+import com.proyecto.fhce.library.enums.EstadoSancion;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
+import com.proyecto.fhce.library.repositories.CertificadoNoDeudaRepository;
 import com.proyecto.fhce.library.repositories.EjemplarRepository;
 import com.proyecto.fhce.library.repositories.LibroRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
+import com.proyecto.fhce.library.repositories.ReservaRepository;
+import com.proyecto.fhce.library.repositories.SancionRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 
 @Service
 @Transactional(readOnly = true)
 public class ReporteServiceImpl implements ReporteService {
 
-  @Autowired
-  private LibroRepository libroRepository;
+  private final LibroRepository libroRepository;
+  private final PrestamoRepository prestamoRepository;
+  private final EjemplarRepository ejemplarRepository;
+  private final UserRepository usuarioRepository;
+  private final BibliotecaRepository bibliotecaRepository;
+  private final SancionRepository sancionRepository;
+  private final ReservaRepository reservaRepository;
+  private final CertificadoNoDeudaRepository certificadoNoDeudaRepository;
 
-  @Autowired
-  private PrestamoRepository prestamoRepository;
-
-  @Autowired
-  private EjemplarRepository ejemplarRepository;
-
-  @Autowired
-  private UserRepository usuarioRepository;
-  @Autowired
-  private BibliotecaRepository bibliotecaRepository;
+  public ReporteServiceImpl(
+      LibroRepository libroRepository,
+      PrestamoRepository prestamoRepository,
+      EjemplarRepository ejemplarRepository,
+      UserRepository usuarioRepository,
+      BibliotecaRepository bibliotecaRepository, SancionRepository sancionRepository,
+      ReservaRepository reservaRepository, CertificadoNoDeudaRepository certificadoNoDeudaRepository) {
+    this.libroRepository = libroRepository;
+    this.prestamoRepository = prestamoRepository;
+    this.ejemplarRepository = ejemplarRepository;
+    this.usuarioRepository = usuarioRepository;
+    this.bibliotecaRepository = bibliotecaRepository;
+    this.sancionRepository = sancionRepository;
+    this.reservaRepository = reservaRepository;
+    this.certificadoNoDeudaRepository = certificadoNoDeudaRepository;
+  }
 
   @Override
   public DashboardDTO obtenerDashboard(Long bibliotecaId) {
@@ -59,7 +77,9 @@ public class ReporteServiceImpl implements ReporteService {
     if (bibliotecaId == null) {
 
       // ADMIN
-
+      List<EstadoReserva> estadosActivos = List.of(
+          EstadoReserva.ACTIVA,
+          EstadoReserva.NOTIFICADA);
       dto.setTotalLibros(
           libroRepository.countTotalLibros());
 
@@ -74,6 +94,9 @@ public class ReporteServiceImpl implements ReporteService {
 
       dto.setTotalUsuarios(
           usuarioRepository.countTotalUsuarios());
+      dto.setTotalSancionesActivas(sancionRepository.contarSancionesActivas(EstadoSancion.ACTIVA));
+      dto.setTotalReservas(reservaRepository.countReservasByEstado(estadosActivos));
+      dto.setTotalCertificadosEmitidos(certificadoNoDeudaRepository.countByBiblioteca(null));
 
     } else {
 
@@ -101,8 +124,11 @@ public class ReporteServiceImpl implements ReporteService {
           prestamoRepository
               .countPrestamosVencidosByBiblioteca(
                   bibliotecaId));
+      dto.setTotalSancionesActivas(sancionRepository.contarActivasPorBiblioteca(bibliotecaId));
+      dto.setTotalReservas(reservaRepository.countReservasActivasByBiblioteca(bibliotecaId));
+      dto.setTotalCertificadosEmitidos(certificadoNoDeudaRepository.countByBiblioteca(bibliotecaId));
     }
-
+    cargarGraficas(dto, bibliotecaId);
     return dto;
   }
 
@@ -150,7 +176,7 @@ public class ReporteServiceImpl implements ReporteService {
     if (bibliotecaId == null) {
 
       resumen.setTotalEjemplares(
-          (long) ejemplarRepository.findAll().size());
+          ejemplarRepository.countTotalEjemplares());
 
     } else {
 
@@ -256,12 +282,9 @@ public class ReporteServiceImpl implements ReporteService {
   public DeterioroReporteResponseDTO reporteDeterioro(
       Long bibliotecaId, LocalDate fechaInicio, LocalDate fechaFin) {
 
-    LocalDateTime inicio = fechaInicio != null
-        ? fechaInicio.atStartOfDay()
-        : null;
-    LocalDateTime fin = fechaFin != null
-        ? fechaFin.atTime(23, 59, 59)
-        : null;
+    ReporteUtil.validarRango(fechaInicio, fechaFin);
+    LocalDateTime inicio = ReporteUtil.desde(fechaInicio);
+    LocalDateTime fin = ReporteUtil.hastaExclusivo(fechaFin);
 
     List<Prestamo> devoluciones = prestamoRepository
         .obtenerDevolucionesConCondicion(bibliotecaId, inicio, fin);
@@ -326,8 +349,7 @@ public class ReporteServiceImpl implements ReporteService {
     dto.setCodigoEjemplar(p.getEjemplar().getCodigoEjemplar());
     dto.setLibro(p.getEjemplar().getEdicion().getLibro().getTitulo());
     dto.setBiblioteca(p.getBiblioteca().getNombre());
-    dto.setUsuario(p.getUsuario().getPersona().getNombre() + " "
-        + p.getUsuario().getPersona().getApellido_pat());
+    dto.setUsuario(ReporteUtil.nombreCorto(p.getUsuario().getPersona()));
     dto.setCi(p.getUsuario().getPersona().getCi());
     if (p.getCondicionEntrega() != null) {
       dto.setCondicionEntrega(p.getCondicionEntrega().name());
@@ -357,4 +379,49 @@ public class ReporteServiceImpl implements ReporteService {
     return dto;
   }
 
+  private void cargarGraficas(DashboardDTO dto, Long bibliotecaId) {
+
+    YearMonth actual = YearMonth.now();
+
+    LocalDate fechaInicio = actual.minusMonths(5).atDay(1);
+    LocalDate fechaFin = actual.plusMonths(1).atDay(1);
+
+    LocalDateTime inicio = fechaInicio.atStartOfDay();
+    LocalDateTime fin = fechaFin.atStartOfDay();
+
+    // 1. Evolución mensual
+    dto.setPrestamosPorMes(
+        prestamoRepository.obtenerPrestamosPorMes(
+            bibliotecaId, inicio, fin));
+
+    // 2. Estados
+    dto.setPrestamosPorEstado(
+        prestamoRepository.obtenerDistribucionPorEstado(bibliotecaId));
+
+    // 3. Top 5 libros
+    dto.setLibrosMasPrestados(
+        prestamoRepository.obtenerTopLibrosMasPrestados(
+            bibliotecaId, PageRequest.of(0, 5)));
+
+    // 4. Modalidad
+    dto.setPrestamosPorTipo(
+        prestamoRepository.obtenerPrestamosPorTipo(bibliotecaId));
+
+    // 5. Actividad por biblioteca
+    if (bibliotecaId == null) {
+      dto.setPrestamosPorBiblioteca(
+          prestamoRepository.obtenerPrestamosPorBiblioteca());
+    } else {
+      dto.setPrestamosPorBiblioteca(List.of());
+    }
+
+    // 6. Puntualidad de devoluciones
+    dto.setDevolucionesPorMes(
+        prestamoRepository.obtenerDevolucionesPorMes(
+            bibliotecaId, inicio, fin));
+
+    // 7. Condiciones físicas
+    dto.setCondicionDevoluciones(
+        prestamoRepository.obtenerCondicionesDevolucion(bibliotecaId));
+  }
 }

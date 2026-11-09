@@ -43,6 +43,13 @@ public interface CertificadoNoDeudaRepository extends JpaRepository<CertificadoN
   @Query("SELECT COUNT(c) FROM CertificadoNoDeuda c WHERE c.bibliotecario.idUsuario = :bibliotecarioId")
   Long countByBibliotecario(@Param("bibliotecarioId") Long bibliotecarioId);
 
+  @Query("""
+          SELECT COUNT(c)
+          FROM CertificadoNoDeuda c
+          WHERE (:bibliotecaId IS NULL OR c.biblioteca.idBiblioteca = :bibliotecaId)
+      """)
+  Long countByBiblioteca(@Param("bibliotecaId") Long bibliotecaId);
+
   // Para listar por biblioteca con filtro de estado opcional
   @Query("""
           SELECT c FROM CertificadoNoDeuda c
@@ -66,7 +73,7 @@ public interface CertificadoNoDeudaRepository extends JpaRepository<CertificadoN
       SELECT c FROM CertificadoNoDeuda c
       JOIN FETCH c.solicitud s
       LEFT JOIN FETCH s.usuario u
-      JOIN FETCH u.persona
+      LEFT JOIN FETCH u.persona
       JOIN FETCH c.biblioteca b
       LEFT JOIN FETCH c.bibliotecario bib
       LEFT JOIN FETCH bib.persona
@@ -74,8 +81,8 @@ public interface CertificadoNoDeudaRepository extends JpaRepository<CertificadoN
         (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
         AND (:bibliotecarioId IS NULL OR bib.idUsuario = :bibliotecarioId)
         AND (:estado IS NULL OR c.estadoCertificado = :estado)
-        AND (:fechaInicio IS NULL OR c.fechaEmision >= :fechaInicio)
-        AND (:fechaFin IS NULL OR c.fechaEmision <= :fechaFin)
+        AND c.fechaEmision >= :fechaInicio
+        AND c.fechaEmision < :fechaFin
       ORDER BY c.fechaEmision DESC
       """)
   List<CertificadoNoDeuda> obtenerReporteCertificados(

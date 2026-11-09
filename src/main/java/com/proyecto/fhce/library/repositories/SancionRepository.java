@@ -11,7 +11,7 @@ import com.proyecto.fhce.library.enums.MotivoSancion;
 import com.proyecto.fhce.library.enums.TipoSancion;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -183,33 +183,36 @@ public interface SancionRepository extends JpaRepository<Sancion, Long> {
   @Query("SELECT COUNT(s) FROM Sancion s WHERE s.biblioteca.idBiblioteca = :bibliotecaId AND s.estado = 'ACTIVA'")
   long contarActivasPorBiblioteca(@Param("bibliotecaId") Long bibliotecaId);
 
+  @Query("SELECT COUNT(s) FROM Sancion s WHERE s.estado = :estado")
+  long contarSancionesActivas(@Param("estado") EstadoSancion estado);
+
   List<Sancion> findByTipoSancionAndEstado(TipoSancion tipoSancion, EstadoSancion estado);
 
   @Query("""
       SELECT s FROM Sancion s
       JOIN FETCH s.usuario u
       JOIN FETCH u.persona
-      JOIN FETCH s.prestamo p
-      JOIN FETCH p.biblioteca b
-      JOIN FETCH p.ejemplar e
-      JOIN FETCH e.edicion ed
-      JOIN FETCH ed.libro l
+      JOIN FETCH s.biblioteca b
+      LEFT JOIN FETCH s.prestamo p
+      LEFT JOIN FETCH p.ejemplar e
+      LEFT JOIN FETCH e.edicion ed
+      LEFT JOIN FETCH ed.libro l
       WHERE
         (:bibliotecaId IS NULL OR b.idBiblioteca = :bibliotecaId)
         AND (:usuarioId IS NULL OR u.idUsuario = :usuarioId)
         AND (:tipo IS NULL OR s.tipoSancion = :tipo)
         AND (:estado IS NULL OR s.estado = :estado)
-        AND (:fechaInicio IS NULL OR s.fechaInicioSuspension >= :fechaInicio)
-        AND (:fechaFin IS NULL OR s.fechaInicioSuspension <= :fechaFin)
-      ORDER BY s.fechaInicioSuspension DESC
+        AND s.fechaGeneracion >= :fechaInicio
+        AND s.fechaGeneracion < :fechaFin
+      ORDER BY s.fechaGeneracion DESC
       """)
   List<Sancion> obtenerReporteSanciones(
       @Param("bibliotecaId") Long bibliotecaId,
       @Param("usuarioId") Long usuarioId,
       @Param("tipo") TipoSancion tipo,
       @Param("estado") EstadoSancion estado,
-      @Param("fechaInicio") LocalDate fechaInicio,
-      @Param("fechaFin") LocalDate fechaFin);
+      @Param("fechaInicio") LocalDateTime fechaInicio,
+      @Param("fechaFin") LocalDateTime fechaFin);
 
   // @Query("""
   // SELECT COUNT(s) FROM Sancion s
