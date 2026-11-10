@@ -391,8 +391,10 @@ public class ReporteServiceImpl implements ReporteService {
 
     // 1. Evolución mensual
     dto.setPrestamosPorMes(
-        prestamoRepository.obtenerPrestamosPorMes(
-            bibliotecaId, inicio, fin));
+        obtenerEvolucionPrestamos(
+            bibliotecaId,
+            fechaInicio,
+            fechaFin));
 
     // 2. Estados
     dto.setPrestamosPorEstado(
@@ -423,5 +425,20 @@ public class ReporteServiceImpl implements ReporteService {
     // 7. Condiciones físicas
     dto.setCondicionDevoluciones(
         prestamoRepository.obtenerCondicionesDevolucion(bibliotecaId));
+  }
+
+  private List<PeriodoPrestamosDTO> obtenerEvolucionPrestamos(
+      Long bibliotecaId,
+      LocalDate inicio,
+      LocalDate fin) {
+
+    return prestamoRepository
+        .obtenerPrestamosPorMes(bibliotecaId, inicio, fin)
+        .stream()
+        .map(row -> new PeriodoPrestamosDTO(
+            ((Number) row[0]).intValue(),
+            ((Number) row[1]).intValue(),
+            ((Number) row[2]).longValue()))
+        .toList();
   }
 }

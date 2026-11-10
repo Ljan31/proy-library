@@ -439,24 +439,32 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
             @Param("fechaLimite") LocalDate fechaLimite);
 
     // Gráfica 1. Evolución mensual de préstamos
-    @Query("""
-                SELECT new com.proyecto.fhce.library.dto.reportes.dashboard.PeriodoPrestamosDTO(
-                    YEAR(p.fechaPrestamo),
-                    MONTH(p.fechaPrestamo),
-                    COUNT(p.idPrestamo)
+    @Query(value = """
+            WITH meses AS (
+                SELECT generate_series(
+                    CAST(:inicio AS date),
+                    CAST(:fin AS date) - INTERVAL '1 month',
+                    INTERVAL '1 month'
+                )::date AS mes
+            )
+            SELECT
+                EXTRACT(YEAR FROM m.mes)::integer AS anio,
+                EXTRACT(MONTH FROM m.mes)::integer AS mes,
+                COUNT(p.id_prestamo)::bigint AS cantidad
+            FROM meses m
+            LEFT JOIN loans p
+                ON DATE_TRUNC('month', p.fecha_prestamo) = m.mes
+                AND (
+                    CAST(:bibliotecaId AS bigint) IS NULL
+                    OR p.library_id = :bibliotecaId
                 )
-                FROM Prestamo p
-                WHERE (:bibliotecaId IS NULL
-                       OR p.biblioteca.idBiblioteca = :bibliotecaId)
-                  AND p.fechaPrestamo >= :inicio
-                  AND p.fechaPrestamo < :fin
-                GROUP BY YEAR(p.fechaPrestamo), MONTH(p.fechaPrestamo)
-                ORDER BY YEAR(p.fechaPrestamo), MONTH(p.fechaPrestamo)
-            """)
-    List<PeriodoPrestamosDTO> obtenerPrestamosPorMes(
+            GROUP BY m.mes
+            ORDER BY m.mes
+            """, nativeQuery = true)
+    List<Object[]> obtenerPrestamosPorMes(
             @Param("bibliotecaId") Long bibliotecaId,
-            @Param("inicio") LocalDateTime inicio,
-            @Param("fin") LocalDateTime fin);
+            @Param("inicio") LocalDate inicio,
+            @Param("fin") LocalDate fin);
 
     // Gráfica 2. Distribución por estado
     @Query("""
