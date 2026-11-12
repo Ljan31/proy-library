@@ -22,7 +22,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "loans")
+@Table(name = "prestamos")
 public class Prestamo {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

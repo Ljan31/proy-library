@@ -209,7 +209,7 @@ public class GlobalExceptionHandler {
 
       }
       // Certificado sin usuario
-      if (rootMessage.contains("no_debt_certificates")
+      if (rootMessage.contains("certificados_no_deuda")
           && rootMessage.contains("user_id")) {
         message = "No se puede emitir el certificado porque no se ha asignado un usuario";
       }

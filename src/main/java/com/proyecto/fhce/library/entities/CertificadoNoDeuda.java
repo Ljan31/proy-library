@@ -20,7 +20,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "no_debt_certificates")
+@Table(name = "certificados_no_deuda")
 public class CertificadoNoDeuda {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -13,7 +13,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "permissions")
+@Table(name = "permisos")
 public class Permiso {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

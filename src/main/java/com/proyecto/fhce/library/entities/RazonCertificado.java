@@ -11,7 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "certificate_reasons")
+@Table(name = "razones_certificado")
 public class RazonCertificado {
 
   @Id

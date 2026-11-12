@@ -452,7 +452,7 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
                 EXTRACT(MONTH FROM m.mes)::integer AS mes,
                 COUNT(p.id_prestamo)::bigint AS cantidad
             FROM meses m
-            LEFT JOIN loans p
+            LEFT JOIN prestamos p
                 ON DATE_TRUNC('month', p.fecha_prestamo) = m.mes
                 AND (
                     CAST(:bibliotecaId AS bigint) IS NULL

@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
 @Entity
-@Table(name = "persons")
+@Table(name = "personas")
 public class Persona {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
