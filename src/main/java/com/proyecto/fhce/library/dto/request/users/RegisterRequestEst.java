@@ -2,6 +2,7 @@ package com.proyecto.fhce.library.dto.request.users;
 
 import java.util.Set;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -16,6 +17,7 @@ public class RegisterRequestEst {
   private String password;
 
   @NotNull(message = "Datos de persona son requeridos")
+  @Valid
   private PersonaRequest persona;
 
   private Set<UsuarioCarreraRequestEst> userCarreras;

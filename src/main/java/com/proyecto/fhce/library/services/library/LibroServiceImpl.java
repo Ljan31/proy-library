@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.proyecto.fhce.library.dto.request.library.BusquedaLibroRequest;
+import com.proyecto.fhce.library.dto.request.library.LibroLoteRequest;
+import com.proyecto.fhce.library.dto.request.library.LibroLoteRequest.AutorItem;
 import com.proyecto.fhce.library.dto.request.library.LibroRequest;
 import com.proyecto.fhce.library.dto.response.PageResponse;
 import com.proyecto.fhce.library.dto.response.library.AutorResponse;
@@ -38,6 +40,7 @@ import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.ReservaRepository;
 import com.proyecto.fhce.library.services.AuditoriaService;
 
+import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
@@ -102,6 +105,7 @@ public class LibroServiceImpl implements LibroService {
 
     asignarCategoria(libro, request.getCategoriaId());
     asignarAutores(libro, request.getAutorIds());
+    asignarAutoresNuevos(libro, request.getAutores());
 
     Libro actualizado = libroRepository.save(libro);
 
@@ -143,38 +147,60 @@ public class LibroServiceImpl implements LibroService {
     // Por simplicidad, usamos búsqueda básica
     // List<Libro> libros = libroRepository.findAll();
     Specification<Libro> spec = Specification.where(null);
-
     // Aplicar filtros
-    // if (request.getTitulo() != null) {
-    // spec = spec.and((root, query, cb) -> cb.like(
-    // cb.lower(root.get("titulo")),
-    // "%" + request.getTitulo().toLowerCase() + "%"));
-    // }
+    if (request.getBusqueda() != null && !request.getBusqueda().isBlank()) {
 
-    if (request.getTitulo() != null || request.getAutor() != null) {
+      String[] palabras = request.getBusqueda()
+          .trim()
+          .toLowerCase()
+          .split("\\s+");
+
       spec = spec.and((root, query, cb) -> {
 
         query.distinct(true);
 
-        List<Predicate> predicates = new ArrayList<>();
+        Join<Libro, Autor> autorJoin = root.join("autores", JoinType.LEFT);
 
-        if (request.getTitulo() != null) {
-          predicates.add(
-              cb.like(
-                  cb.lower(root.get("titulo")),
-                  "%" + request.getTitulo().toLowerCase() + "%"));
+        List<Predicate> condiciones = new ArrayList<>();
+
+        for (String palabra : palabras) {
+
+          String texto = "%" + palabra + "%";
+
+          condiciones.add(
+              cb.or(
+                  cb.like(cb.lower(root.get("titulo")), texto),
+                  cb.like(cb.lower(autorJoin.get("nombre")), texto)));
         }
 
-        if (request.getAutor() != null) {
-          predicates.add(
-              cb.like(
-                  cb.lower(root.join("autores", JoinType.LEFT).get("nombre")),
-                  "%" + request.getAutor().toLowerCase() + "%"));
-        }
-
-        return cb.or(predicates.toArray(new Predicate[0]));
+        return cb.and(condiciones.toArray(new Predicate[0]));
       });
     }
+
+    // if (request.getTitulo() != null || request.getAutor() != null) {
+    // spec = spec.and((root, query, cb) -> {
+
+    // query.distinct(true);
+
+    // List<Predicate> predicates = new ArrayList<>();
+
+    // if (request.getTitulo() != null) {
+    // predicates.add(
+    // cb.like(
+    // cb.lower(root.get("titulo")),
+    // "%" + request.getTitulo().toLowerCase() + "%"));
+    // }
+
+    // if (request.getAutor() != null) {
+    // predicates.add(
+    // cb.like(
+    // cb.lower(root.join("autores", JoinType.LEFT).get("nombre")),
+    // "%" + request.getAutor().toLowerCase() + "%"));
+    // }
+
+    // return cb.or(predicates.toArray(new Predicate[0]));
+    // });
+    // }
 
     if (request.getCategoriaId() != null) {
       spec = spec.and((root, query, cb) -> cb.equal(root.get("categoria").get("idCategoria"),
@@ -333,6 +359,32 @@ public class LibroServiceImpl implements LibroService {
     }
     List<Autor> autores = autorRepository.findAllById(autorIds);
     libro.setAutores(autores);
+  }
+
+  private void asignarAutoresNuevos(Libro libro, List<AutorItem> autores) {
+    List<Autor> autoresFinales = new ArrayList<>();
+    if (autores != null && !autores.isEmpty()) {
+
+      for (LibroLoteRequest.AutorItem item : autores) {
+
+        // ⚠️ Como NO es obligatorio, lo validamos manualmente
+        if (item.getNombre() == null || item.getNombre().isBlank()) {
+          continue; // ignora autores vacíos
+        }
+
+        // 🔥 evitar duplicados (muy importante)
+        Autor autor = autorRepository
+            .findByNombreIgnoreCase(item.getNombre())
+            .orElseGet(() -> {
+              Autor nuevo = new Autor();
+              nuevo.setNombre(item.getNombre());
+              return autorRepository.save(nuevo);
+            });
+
+        autoresFinales.add(autor);
+      }
+    }
+    libro.setAutores(autoresFinales);
   }
 
   private Map<String, Object> mapToAuditoria(Libro libro) {

@@ -84,6 +84,7 @@ public class RoleController {
   }
 
   @PostMapping("/{roleId}/permisos/{permisoId}")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<RoleResponse>> asignarPermiso(
       @PathVariable Long roleId,
       @PathVariable Long permisoId) {
@@ -92,6 +93,7 @@ public class RoleController {
   }
 
   @DeleteMapping("/{roleId}/permisos/{permisoId}")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<RoleResponse>> removerPermiso(
       @PathVariable Long roleId,
       @PathVariable Long permisoId) {

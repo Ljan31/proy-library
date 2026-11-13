@@ -1,6 +1,7 @@
 package com.proyecto.fhce.library.services.users;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Objects;
+
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,7 +70,7 @@ public class PersonaServiceImpl implements PersonaService {
     // Capturar el estado anterior antes de modificar
     PersonaResponse valoresAnteriores = mapToResponse(persona);
     // Validar CI único si cambió
-    if (persona.getCi() != request.getCi() &&
+    if (!Objects.equals(persona.getCi(), request.getCi()) &&
         personaRepository.existsByCi(request.getCi())) {
       throw new DuplicateResourceException("Ya existe una persona con CI: " + request.getCi());
     }

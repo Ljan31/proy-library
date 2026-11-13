@@ -1,12 +1,14 @@
 package com.proyecto.fhce.library.dto.request.library;
 
 public class BusquedaLibroRequest {
+  private String busqueda;
   private String titulo;
   private String autor;
   private String editorial;
   private Integer anoPublicacion;
   private Long categoriaId;
   private Long bibliotecaId;
+  private String codigoTopograficoConcat;
 
   // private EstadoEjemplar estadoDisponibilidad;
   public String getTitulo() {
@@ -55,6 +57,22 @@ public class BusquedaLibroRequest {
 
   public void setBibliotecaId(Long bibliotecaId) {
     this.bibliotecaId = bibliotecaId;
+  }
+
+  public String getCodigoTopograficoConcat() {
+    return codigoTopograficoConcat;
+  }
+
+  public void setCodigoTopograficoConcat(String codigoTopograficoConcat) {
+    this.codigoTopograficoConcat = codigoTopograficoConcat;
+  }
+
+  public String getBusqueda() {
+    return busqueda;
+  }
+
+  public void setBusqueda(String busqueda) {
+    this.busqueda = busqueda;
   }
 
 }

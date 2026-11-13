@@ -54,7 +54,7 @@ public class AutorController {
 
   @Operation(summary = "Actualizar autor", security = @SecurityRequirement(name = "bearer-jwt"))
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('BIBLIOTECARIO', 'AUXILIAR')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO', 'AUXILIAR')")
   public ResponseEntity<ApiResponse<AutorResponse>> update(
       @PathVariable Long id, @Valid @RequestBody AutorRequest request) {
     return ResponseEntity.ok(ApiResponse.success("Autor actualizado", autorService.update(id, request)));
