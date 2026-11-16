@@ -285,7 +285,8 @@ class CertificadoIntegrationTest extends CertificadoIntegrationBase {
    * biblioteca sigue pudiendo generar y anular certificados.
    */
   @Test
-  @Disabled("DEF-16: un encargado dado de baja (activo=false) sigue pudiendo generar/anular certificados")
+  // @Disabled("DEF-16: un encargado dado de baja (activo=false) sigue pudiendo
+  // generar/anular certificados")
   @DisplayName("IT4-I-CER-12: un encargado inactivo ya no puede generar certificados (409)")
   void encargadoInactivo() throws Exception {
     long solicitud = solicitudAprobada(estudiante1);

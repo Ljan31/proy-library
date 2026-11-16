@@ -96,11 +96,17 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
 
     // BIBLIOTECARIO: solo puede operar sobre su biblioteca asignada
     if (esBibliotecario && !esAdmin) {
-      boolean esEncargado = biblioteca.getEncargados().stream()
-          .anyMatch(enc -> enc.getUsuario().getId_usuario().equals(solicitanteId));
+      LocalDateTime ahora = LocalDateTime.now();
 
-      if (!esEncargado) {
-        throw new BusinessException("Solo puede generar certificados de la biblioteca a su cargo");
+      boolean esEncargadoActivo = biblioteca.getEncargados().stream()
+          .anyMatch(enc -> enc.getUsuario().getId_usuario().equals(solicitanteId)
+              && Boolean.TRUE.equals(enc.getActivo())
+              && (enc.getFechaFin() == null
+                  || enc.getFechaFin().isAfter(ahora)));
+
+      if (!esEncargadoActivo) {
+        throw new BusinessException(
+            "No tiene autorización vigente para generar certificados en esta biblioteca");
       }
     }
     Usuario solicitante = usuarioRepository.findById(solicitanteId)
