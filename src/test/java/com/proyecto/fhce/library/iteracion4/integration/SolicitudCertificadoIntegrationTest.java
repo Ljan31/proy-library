@@ -20,7 +20,10 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import com.proyecto.fhce.library.enums.EstadoSolicitud;
 
-/** Iteración 4 · Solicitudes y razones de certificado (API + seguridad + JPA sobre H2). */
+/**
+ * Iteración 4 · Solicitudes y razones de certificado (API + seguridad + JPA
+ * sobre H2).
+ */
 @DisplayName("Iteración 4 · Solicitudes y razones de certificado (integración)")
 class SolicitudCertificadoIntegrationTest extends CertificadoIntegrationBase {
 
@@ -170,7 +173,8 @@ class SolicitudCertificadoIntegrationTest extends CertificadoIntegrationBase {
    * con los campos faltantes.
    */
   @Test
-  @Disabled("DEF-12: SolicitudCertificadoRequest sin validaciones: cuerpo vacío -> 500")
+  // @Disabled("DEF-12: SolicitudCertificadoRequest sin validaciones: cuerpo vacío
+  // -> 500")
   @DisplayName("IT4-I-SOL-13: una solicitud sin datos obligatorios devuelve 400")
   void crear_validacion() throws Exception {
     assertThat(postSolicitud(null, new HashMap<>()).getResponse().getStatus()).isEqualTo(400);
@@ -185,7 +189,8 @@ class SolicitudCertificadoIntegrationTest extends CertificadoIntegrationBase {
    * estudiante puede leer solicitudes ajenas (CI, correo, teléfono, matrícula).
    */
   @Test
-  @Disabled("DEF-15: cualquier usuario autenticado puede leer solicitudes de otras personas")
+  // @Disabled("DEF-15: cualquier usuario autenticado puede leer solicitudes de
+  // otras personas")
   @DisplayName("IT4-I-SOL-14: un estudiante no puede ver la solicitud de otro estudiante (403)")
   void obtenerPorId_ajena() throws Exception {
     long id = crearSolicitud(estudiante1);

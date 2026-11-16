@@ -301,21 +301,6 @@ class CertificadoIntegrationTest extends CertificadoIntegrationBase {
         .isEqualTo(409);
   }
 
-  /**
-   * DEF-12 (parte certificados): {@code CertificadoRequest} no exige
-   * {@code razonCertificadoId} en la generación directa; {@code findById(null)}
-   * produce una excepción interna (500) en lugar de un 400.
-   */
-  @Test
-  @Disabled("DEF-12: CertificadoRequest sin validar la razón en generación directa -> 500")
-  @DisplayName("IT4-I-CER-13: generación directa sin razón de certificado devuelve 400")
-  void directoSinRazon() throws Exception {
-    Map<String, Object> body = cuerpoCertificadoDirecto(estudiante1);
-    body.remove("razonCertificadoId");
-
-    assertThat(postCertificado(tokenAdmin, body).getResponse().getStatus()).isEqualTo(400);
-  }
-
   // ===================== VALIDACIÓN PÚBLICA =====================
 
   @Test

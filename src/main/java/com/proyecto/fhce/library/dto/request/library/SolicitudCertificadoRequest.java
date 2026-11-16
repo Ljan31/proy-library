@@ -1,13 +1,17 @@
 package com.proyecto.fhce.library.dto.request.library;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 public class SolicitudCertificadoRequest {
 
+  @NotNull(message = "La biblioteca es obligatoria")
   private Long bibliotecaId;
-
+  @NotBlank(message = "Los apellidos son obligatorios")
   private String nombres;
-
+  @NotBlank(message = "Los apellidos son obligatorios")
   private String apellidos;
-
+  @NotBlank(message = "El CI es obligatorio")
   private String ci;
 
   private String matricula;

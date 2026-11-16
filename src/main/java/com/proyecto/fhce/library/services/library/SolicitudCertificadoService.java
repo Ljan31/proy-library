@@ -5,11 +5,14 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -106,7 +109,9 @@ public class SolicitudCertificadoService {
     solicitud.setBiblioteca(biblioteca);
 
     // intentar vincular usuario si existe
+    System.out.println("personaUsuarioOPT");
     Optional<Usuario> usuarioOpt = usuarioRepository.findByPersona_Ci(request.getCi());
+    System.out.println("personaUsuarioOPT2");
 
     usuarioOpt.ifPresent(solicitud::setUsuario);
     solicitud.setBiblioteca(biblioteca);
@@ -173,6 +178,22 @@ public class SolicitudCertificadoService {
     SolicitudCertificado solicitud = solicitudRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException(
             "Solicitud no encontrada"));
+
+    boolean esAdminOrBibliotecario = authorities.stream()
+        .anyMatch(authority -> Set.of(
+            "ROLE_ADMIN",
+            "ROLE_BIBLIOTECARIO",
+            "ROLE_AUXILIAR").contains(authority.getAuthority()));
+
+    Usuario usuario = solicitud.getUsuario();
+
+    boolean esPropietario = usuario != null
+        && Objects.equals(usuario.getId_usuario(), solicitanteId);
+
+    if (!esPropietario && !esAdminOrBibliotecario) {
+      throw new AccessDeniedException(
+          "No tienes permisos para consultar esta solicitud");
+    }
 
     return mapToResponse(solicitud);
   }
