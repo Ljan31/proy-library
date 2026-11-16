@@ -292,7 +292,8 @@ class SolicitudCertificadoIntegrationTest extends CertificadoIntegrationBase {
    * crear una razón sin biblioteca ni nombre termina en 500.
    */
   @Test
-  @Disabled("DEF-12: RazonCertificadoRequestDTO sin validaciones: datos faltantes -> 500")
+  // @Disabled("DEF-12: RazonCertificadoRequestDTO sin validaciones: datos
+  // faltantes -> 500")
   @DisplayName("IT4-I-RAZ-07: crear una razón sin nombre o sin biblioteca devuelve 400")
   void razon_validacion() throws Exception {
     Map<String, Object> sinNombre = cuerpoRazon();

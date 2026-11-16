@@ -2,9 +2,13 @@ package com.proyecto.fhce.library.dto.request.library;
 
 import java.util.List;
 
-public class RazonCertificadoRequestDTO {
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
+public class RazonCertificadoRequestDTO {
+    @NotNull(message = "La biblioteca es obligatoria")
     private Long bibliotecaId;
+    @NotBlank(message = "Los apellidos son obligatorios")
     private String nombre;
     private String descripcion;
     private List<String> requisitos;
