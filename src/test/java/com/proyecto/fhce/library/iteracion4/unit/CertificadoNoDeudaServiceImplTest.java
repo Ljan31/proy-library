@@ -44,6 +44,7 @@ import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.CertificadoNoDeudaRepository;
 import com.proyecto.fhce.library.repositories.PrestamoRepository;
 import com.proyecto.fhce.library.repositories.RazonCertificadoRepository;
+import com.proyecto.fhce.library.repositories.SancionRepository;
 import com.proyecto.fhce.library.repositories.SolicitudCertificadoRepository;
 import com.proyecto.fhce.library.repositories.UserRepository;
 import com.proyecto.fhce.library.services.AuditoriaService;
@@ -57,7 +58,8 @@ import com.proyecto.fhce.library.support.TestData;
 /**
  * Iteración 4 · Certificados de No Deuda: emisión, validación pública,
  * anulación, vencimiento y reglas de acceso por rol/biblioteca.
- * (La generación del PDF/DOCX queda fuera: depende de plantillas y LibreOffice.)
+ * (La generación del PDF/DOCX queda fuera: depende de plantillas y
+ * LibreOffice.)
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Iteración 4 · CertificadoNoDeudaServiceImpl (unitaria)")
@@ -85,7 +87,8 @@ class CertificadoNoDeudaServiceImplTest {
   FormatoCertificadoService formatoService;
   @Mock
   AuditoriaService auditoriaService;
-
+  @Mock
+  private SancionRepository sancionRepository;
   @InjectMocks
   CertificadoNoDeudaServiceImpl service;
 
@@ -138,7 +141,10 @@ class CertificadoNoDeudaServiceImplTest {
         .thenReturn(0L);
   }
 
-  /** Stubs para una generación directa (sin solicitud) válida de un usuario registrado. */
+  /**
+   * Stubs para una generación directa (sin solicitud) válida de un usuario
+   * registrado.
+   */
   private void escenarioDirectoValido() {
     when(bibliotecaRepository.findById(1L)).thenReturn(Optional.of(biblioteca));
     when(usuarioRepository.findById(9L)).thenReturn(Optional.of(admin));
@@ -298,7 +304,7 @@ class CertificadoNoDeudaServiceImplTest {
     when(bibliotecaRepository.findById(1L)).thenReturn(Optional.of(biblioteca));
 
     assertThatThrownBy(() -> service.generar(requestDirecto(), 2L, roles("ROLE_BIBLIOTECARIO")))
-        .isInstanceOf(BusinessException.class).hasMessageContaining("a su cargo");
+        .isInstanceOf(BusinessException.class).hasMessageContaining("No tiene autorización vigente");
     verify(certificadoRepository, never()).save(any());
   }
 

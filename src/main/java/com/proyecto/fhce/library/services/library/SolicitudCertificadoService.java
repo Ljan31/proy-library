@@ -82,6 +82,11 @@ public class SolicitudCertificadoService {
     RazonCertificado razon = razonCertificadoRepository
         .findById(request.getRazonCertificadoId())
         .orElseThrow(() -> new ResourceNotFoundException("Razón no encontrada"));
+    // Validar que la razón del certificado esté activa
+    if (!Boolean.TRUE.equals(razon.getActivo())) {
+      throw new BusinessException(
+          "No se puede crear una solicitud con una razón de certificado inactiva");
+    }
     if (razon.getBiblioteca() != null &&
         !razon.getBiblioteca().getIdBiblioteca()
             .equals(biblioteca.getIdBiblioteca())) {
@@ -209,6 +214,8 @@ public class SolicitudCertificadoService {
     SolicitudCertificado solicitud = solicitudRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException(
             "Solicitud no encontrada"));
+    // Validar que la solicitud esté pendiente
+    validarSolicitudPendiente(solicitud);
     // Cargar el usuario que está atendiendo
     Usuario bibliotecario = usuarioRepository.findById(solicitanteId)
         .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
@@ -242,6 +249,8 @@ public class SolicitudCertificadoService {
     SolicitudCertificado solicitud = solicitudRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException(
             "Solicitud no encontrada"));
+    // Validar que la solicitud esté pendiente
+    validarSolicitudPendiente(solicitud);
     Usuario bibliotecario = usuarioRepository.findById(solicitanteId)
         .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     Map<String, Object> valoresAnteriores = mapAuditoria(solicitud);
@@ -373,6 +382,13 @@ public class SolicitudCertificadoService {
               usuarioEncargado.getId_usuario(), e);
         }
       }
+    }
+  }
+
+  private void validarSolicitudPendiente(SolicitudCertificado solicitud) {
+    if (solicitud.getEstado() != EstadoSolicitud.PENDIENTE) {
+      throw new BusinessException(
+          "Solo se pueden aprobar o rechazar solicitudes pendientes");
     }
   }
 

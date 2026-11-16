@@ -280,7 +280,8 @@ class SolicitudYRazonServiceTest {
    * razón esté ACTIVA; se pueden crear solicitudes con razones desactivadas.
    */
   @Test
-  @Disabled("DEF-17: se aceptan solicitudes con razones de certificado inactivas")
+  // @Disabled("DEF-17: se aceptan solicitudes con razones de certificado
+  // inactivas")
   @DisplayName("IT4-U-SOL-09: una razón inactiva no puede usarse en una solicitud")
   void crear_razonInactiva() {
     razon.setActivo(false);
@@ -344,12 +345,12 @@ class SolicitudYRazonServiceTest {
    * Solo una solicitud PENDIENTE debería poder resolverse.
    */
   @Test
-  @Disabled("DEF-14: se puede aprobar/rechazar una solicitud que ya fue resuelta")
+  // @Disabled("DEF-14: se puede aprobar/rechazar una solicitud que ya fue
+  // resuelta")
   @DisplayName("IT4-U-SOL-13: solo una solicitud PENDIENTE puede aprobarse o rechazarse")
   void resolver_soloPendientes() {
     SolicitudCertificado rechazada = solicitud(EstadoSolicitud.RECHAZADA);
     when(solicitudRepository.findById(20L)).thenReturn(Optional.of(rechazada));
-    when(usuarioRepository.findById(2L)).thenReturn(Optional.of(bibliotecario));
 
     assertThatThrownBy(() -> service.aprobarSolicitud(20L, null, 2L, roles("ROLE_BIBLIOTECARIO")))
         .isInstanceOf(BusinessException.class);
@@ -472,7 +473,8 @@ class SolicitudYRazonServiceTest {
    * {@code ResourceNotFoundException} (404), como el resto de los servicios.
    */
   @Test
-  @Disabled("DEF-13: RazonCertificadoServiceImpl lanza RuntimeException (500) en vez de ResourceNotFoundException (404)")
+  // @Disabled("DEF-13: RazonCertificadoServiceImpl lanza RuntimeException (500)
+  // en vez de ResourceNotFoundException (404)")
   @DisplayName("IT4-U-RAZ-05: razón o biblioteca inexistente lanza ResourceNotFoundException")
   void razon_inexistente() {
     RazonCertificadoServiceImpl razones = new RazonCertificadoServiceImpl(razonRepository, bibliotecaRepository,
