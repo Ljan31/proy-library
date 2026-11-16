@@ -278,7 +278,7 @@ class SolicitudCertificadoIntegrationTest extends CertificadoIntegrationBase {
    * la responde como 500. Debe ser 404.
    */
   @Test
-  @Disabled("DEF-13: razón inexistente responde 500 en vez de 404")
+  // @Disabled("DEF-13: razón inexistente responde 500 en vez de 404")
   @DisplayName("IT4-I-RAZ-06: consultar o editar una razón inexistente devuelve 404")
   void razon_inexistente() throws Exception {
     mockMvc.perform(get("/api/razones-certificado/999999")).andExpect(status().isNotFound());

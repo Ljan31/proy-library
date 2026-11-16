@@ -4,6 +4,7 @@ import com.proyecto.fhce.library.dto.request.library.RazonCertificadoRequestDTO;
 import com.proyecto.fhce.library.dto.response.library.RazonCertificadoResponseDTO;
 import com.proyecto.fhce.library.entities.Biblioteca;
 import com.proyecto.fhce.library.entities.RazonCertificado;
+import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.mapper.RazonCertificadoMapper;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
 import com.proyecto.fhce.library.repositories.RazonCertificadoRepository;
@@ -35,7 +36,7 @@ public class RazonCertificadoServiceImpl implements RazonCertificadoService {
   public RazonCertificadoResponseDTO crear(RazonCertificadoRequestDTO dto) {
 
     Biblioteca biblioteca = bibliotecaRepository.findById(dto.getBibliotecaId())
-        .orElseThrow(() -> new RuntimeException("Biblioteca no encontrada"));
+        .orElseThrow(() -> new ResourceNotFoundException("Biblioteca no encontrada"));
 
     RazonCertificado entity = RazonCertificadoMapper.toEntity(dto, biblioteca);
 
@@ -70,7 +71,7 @@ public class RazonCertificadoServiceImpl implements RazonCertificadoService {
   @Override
   public RazonCertificadoResponseDTO obtenerPorId(Long id) {
     RazonCertificado entity = razonRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Razón no encontrada"));
+        .orElseThrow(() -> new ResourceNotFoundException("Razón no encontrada"));
 
     return RazonCertificadoMapper.toDTO(entity);
   }
@@ -79,7 +80,7 @@ public class RazonCertificadoServiceImpl implements RazonCertificadoService {
   public RazonCertificadoResponseDTO actualizar(Long id, RazonCertificadoRequestDTO dto) {
 
     RazonCertificado entity = razonRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Razón no encontrada"));
+        .orElseThrow(() -> new ResourceNotFoundException("Razón no encontrada"));
     Map<String, Object> anterior = mapToAuditoria(entity);
 
     entity.setNombre(dto.getNombre());
@@ -105,7 +106,7 @@ public class RazonCertificadoServiceImpl implements RazonCertificadoService {
   @Override
   public void eliminar(Long id) {
     RazonCertificado entity = razonRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Razón no encontrada"));
+        .orElseThrow(() -> new ResourceNotFoundException("Razón no encontrada"));
     Map<String, Object> anterior = mapToAuditoria(entity);
 
     razonRepository.delete(entity);
