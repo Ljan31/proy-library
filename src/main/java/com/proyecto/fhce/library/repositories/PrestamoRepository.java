@@ -201,7 +201,7 @@ public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
     @Query("""
             SELECT p FROM Prestamo p
             WHERE p.fechaDevolucionEstimada < CURRENT_DATE
-            AND p.estadoPrestamo NOT IN ('DEVUELTO', 'CANCELADO')
+            AND p.estadoPrestamo <> 'DEVUELTO'
             AND NOT EXISTS (
                 SELECT 1 FROM Sancion s
                 WHERE s.prestamo = p AND s.estado = 'ACTIVA'

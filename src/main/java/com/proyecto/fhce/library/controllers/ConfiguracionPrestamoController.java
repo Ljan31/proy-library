@@ -1,10 +1,10 @@
 package com.proyecto.fhce.library.controllers;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.proyecto.fhce.library.dto.ReglasPrestamoDTO;
 import com.proyecto.fhce.library.dto.request.loads.ConfiguracionPrestamoRequestDTO;
 import com.proyecto.fhce.library.dto.response.loads.ConfiguracionPrestamoResponseDTO;
-import com.proyecto.fhce.library.dto.response.loads.ConfiguracionResueltaDTO;
 import com.proyecto.fhce.library.enums.TipoPrestamo;
 import com.proyecto.fhce.library.services.loads.ConfiguracionPrestamoService;
 
@@ -36,7 +35,7 @@ public class ConfiguracionPrestamoController {
   }
 
   @PostMapping
-  // @PreAuthorize("hasAuthority('CONFIGURACION_PRESTAMO_CREAR')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO')")
   public ResponseEntity<ConfiguracionPrestamoResponseDTO> crear(
       @Valid @RequestBody ConfiguracionPrestamoRequestDTO request) {
 
@@ -45,7 +44,7 @@ public class ConfiguracionPrestamoController {
   }
 
   @PutMapping("/{id}")
-  // @PreAuthorize("hasAuthority('CONFIGURACION_PRESTAMO_EDITAR')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO')")
   public ResponseEntity<ConfiguracionPrestamoResponseDTO> actualizar(
       @PathVariable Long id,
       @Valid @RequestBody ConfiguracionPrestamoRequestDTO request) {
@@ -54,7 +53,7 @@ public class ConfiguracionPrestamoController {
   }
 
   @DeleteMapping("/{id}")
-  // @PreAuthorize("hasAuthority('CONFIGURACION_PRESTAMO_ELIMINAR')")
+  @PreAuthorize("hasRole('ADMIN') or hasAnyRole('BIBLIOTECARIO')")
   public ResponseEntity<Void> eliminar(@PathVariable Long id) {
     configuracionService.eliminar(id);
     return ResponseEntity.noContent().build();

@@ -30,10 +30,11 @@ import jakarta.persistence.EntityManager;
 
 /**
  * Base de las pruebas de INTEGRACIÓN.
- * - Levanta toda la aplicación (controladores + seguridad JWT + servicios + JPA).
+ * - Levanta toda la aplicación (controladores + seguridad JWT + servicios +
+ * JPA).
  * - BD H2 en memoria (perfil "test"), esquema creado por Hibernate.
  * - Cada prueba corre dentro de una transacción que se revierte al terminar,
- *   así que las pruebas no se contaminan entre sí.
+ * así que las pruebas no se contaminan entre sí.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -73,7 +74,10 @@ public abstract class IntegrationTestBase {
 
   // ---------------- datos ----------------
 
-  /** Crea y persiste un usuario habilitado con contraseña PASSWORD (encriptada con BCrypt). */
+  /**
+   * Crea y persiste un usuario habilitado con contraseña PASSWORD (encriptada con
+   * BCrypt).
+   */
   protected Usuario crearUsuario(String username, Role... roles) {
     long n = SECUENCIA.incrementAndGet();
     Persona p = new Persona();

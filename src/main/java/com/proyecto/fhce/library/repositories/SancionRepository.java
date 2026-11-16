@@ -269,4 +269,45 @@ public interface SancionRepository extends JpaRepository<Sancion, Long> {
       @Param("usuarioId") Long usuarioId,
       @Param("bibliotecaId") Long bibliotecaId,
       @Param("estado") EstadoSancion estado);
+
+  @Query("""
+      SELECT COUNT(s) > 0
+      FROM Sancion s
+      WHERE s.usuario.idUsuario = :usuarioId
+        AND s.biblioteca.idBiblioteca = :bibliotecaId
+        AND s.estado = com.proyecto.fhce.library.enums.EstadoSancion.ACTIVA
+        AND (
+            s.tipoSancion = com.proyecto.fhce.library.enums.TipoSancion.MULTA
+            OR s.tipoSancion = com.proyecto.fhce.library.enums.TipoSancion.REPOSICION
+            OR (
+                s.tipoSancion = com.proyecto.fhce.library.enums.TipoSancion.SUSPENSION
+                AND s.fechaFinSuspension >= CURRENT_DATE
+            )
+            OR (
+                s.tipoSancion = com.proyecto.fhce.library.enums.TipoSancion.MULTA_Y_SUSPENSION
+                AND (
+                    s.montoMulta > 0
+                    OR s.fechaFinSuspension >= CURRENT_DATE
+                )
+            )
+        )
+      """)
+  boolean findActivasByUsuarioAndBiblioteca(
+      @Param("usuarioId") Long usuarioId,
+      @Param("bibliotecaId") Long bibliotecaId);
+
+  @Query("""
+      SELECT COALESCE(SUM(s.montoMulta), 0)
+      FROM Sancion s
+      WHERE s.usuario.idUsuario = :usuarioId
+        AND s.biblioteca.idBiblioteca = :bibliotecaId
+        AND s.estado = com.proyecto.fhce.library.enums.EstadoSancion.ACTIVA
+        AND s.tipoSancion IN (
+            com.proyecto.fhce.library.enums.TipoSancion.MULTA,
+            com.proyecto.fhce.library.enums.TipoSancion.MULTA_Y_SUSPENSION
+        )
+      """)
+  BigDecimal sumMontoSancionesActivas(
+      @Param("usuarioId") Long usuarioId,
+      @Param("bibliotecaId") Long bibliotecaId);
 }

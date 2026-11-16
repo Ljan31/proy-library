@@ -1,6 +1,8 @@
 package com.proyecto.fhce.library.services.loads;
 
+import com.proyecto.fhce.library.repositories.SancionRepository;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -49,7 +51,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
 
   private final CertificadoNoDeudaRepository certificadoRepository;
   private final UserRepository usuarioRepository;
-  // // final private SancionRepository sancionRepository;
+  private final SancionRepository sancionRepository;
   private final PrestamoRepository prestamoRepository;
   private final BibliotecaRepository bibliotecaRepository;
   private final NotificacionService notificacionService;
@@ -68,7 +70,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
       NotificacionService notificacionService, CertificadoDocxService certificadoDocxService,
       DocxToPdfConverter pdfConverter, SolicitudCertificadoRepository solicitudCertificadoRepository,
       RazonCertificadoRepository razonCertificadoRepository, FormatoCertificadoService formatoService,
-      AuditoriaService auditoriaService) {
+      AuditoriaService auditoriaService, SancionRepository sancionRepository) {
     this.certificadoRepository = certificadoRepository;
     this.usuarioRepository = usuarioRepository;
     this.prestamoRepository = prestamoRepository;
@@ -80,6 +82,7 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     this.razonCertificadoRepository = razonCertificadoRepository;
     this.formatoService = formatoService;
     this.auditoriaService = auditoriaService;
+    this.sancionRepository = sancionRepository;
   }
 
   public CertificadoResponse generar(CertificadoRequest request, Long solicitanteId,
@@ -179,14 +182,6 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
         saved.getIdCertificado(), null, "Certificado generado");
     // 11. Retornar respuesta
     return mapToResponse(saved);
-    // ** Validar que no tenga sanciones activas
-    // if (sancionRepository.hasUsuarioSancionesActivas(usuario.getId_usuario())) {
-    // BigDecimal montoDeuda =
-    // sancionRepository.sumMontoSancionesActivas(usuario.getId_usuario());
-    // throw new BusinessException("El usuario tiene sanciones activas por un monto
-    // de Bs. " + montoDeuda);
-    // }
-    // notificacionService.enviarNotificacionCertificado(saved);
 
   }
 
@@ -463,10 +458,15 @@ public class CertificadoNoDeudaServiceImpl implements CertificadoNoDeudaService 
     if (renovados > 0)
       throw new BusinessException(
           "El usuario tiene " + renovados + " préstamo(s) con renovación pendiente en esta biblioteca");
+    // ** Validar que no tenga sanciones activas
+    if (sancionRepository.findActivasByUsuarioAndBiblioteca(usuarioId, bibliotecaId)) {
+      BigDecimal montoDeuda = sancionRepository.sumMontoSancionesActivas(usuarioId, bibliotecaId);
+      throw new BusinessException("El usuario tiene sanciones activas por un monto de Bs. " + montoDeuda);
+    }
+    // notificacionService.enviarNotificacionCertificado(saved);
   }
 
   private void validarDeudas(Long usuarioId, Long bibliotecaId, String ci) {
-
     if (usuarioId != null) {
       // Validación normal por usuarioId (como arriba)
       validarDeudas(usuarioId, bibliotecaId);
