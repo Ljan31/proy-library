@@ -109,9 +109,7 @@ public class SolicitudCertificadoService {
     solicitud.setBiblioteca(biblioteca);
 
     // intentar vincular usuario si existe
-    System.out.println("personaUsuarioOPT");
     Optional<Usuario> usuarioOpt = usuarioRepository.findByPersona_Ci(request.getCi());
-    System.out.println("personaUsuarioOPT2");
 
     usuarioOpt.ifPresent(solicitud::setUsuario);
     solicitud.setBiblioteca(biblioteca);
@@ -317,6 +315,7 @@ public class SolicitudCertificadoService {
     String ciSolicitante = solicitud.getUsuario() != null
         ? solicitud.getUsuario().getPersona().getCi()
         : solicitud.getCi();
+
     String mensaje = String.format("""
         Se ha recibido una nueva solicitud de Certificado de No Deuda.
 
@@ -330,10 +329,10 @@ public class SolicitudCertificadoService {
 
         nombreSolicitante,
         ciSolicitante,
-        idSolicitante,
         nombreRazon,
         biblioteca.getNombre(),
-        StringUtils.hasText(solicitud.getDescripcion()) ? solicitud.getDescripcion()
+        StringUtils.hasText(solicitud.getDescripcion())
+            ? solicitud.getDescripcion()
             : "Sin descripción");
 
     // Obtener todos los encargados de la biblioteca

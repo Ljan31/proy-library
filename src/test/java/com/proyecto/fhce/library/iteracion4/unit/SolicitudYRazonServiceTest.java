@@ -259,7 +259,8 @@ class SolicitudYRazonServiceTest {
    * razón y "Descripción" muestra el nombre de la biblioteca.
    */
   @Test
-  @Disabled("DEF-18: el mensaje de notificación a encargados mezcla Razón/Biblioteca/Descripción")
+  // @Disabled("DEF-18: el mensaje de notificación a encargados mezcla
+  // Razón/Biblioteca/Descripción")
   @DisplayName("IT4-U-SOL-08: el mensaje a los encargados muestra razón, biblioteca y descripción correctas")
   void crear_mensajeNotificacionCorrecto() {
     escenarioCrear();
