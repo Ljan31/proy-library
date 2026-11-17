@@ -34,4 +34,15 @@ public interface CanalEnvioService {
   default boolean estaDisponible() {
     return true;
   }
+
+  /**
+   * Máximo de envíos exitosos en una ventana móvil de 24 horas.
+   * Protege las cuotas de los servicios gratuitos (Gmail ~500/día, Brevo
+   * 300/día, plan de SMS del chip). Cuando se alcanza, las notificaciones
+   * quedan PENDIENTE (sin gastar intentos) hasta que haya cupo de nuevo.
+   * 0 = sin límite.
+   */
+  default int limiteDiario() {
+    return 0;
+  }
 }

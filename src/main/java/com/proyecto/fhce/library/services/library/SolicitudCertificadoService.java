@@ -2,6 +2,7 @@ package com.proyecto.fhce.library.services.library;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import com.proyecto.fhce.library.entities.SolicitudCertificado;
 import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoSolicitud;
 import com.proyecto.fhce.library.enums.RolEncargado;
+import com.proyecto.fhce.library.enums.notificaciones.CanalNotificacion;
 import com.proyecto.fhce.library.enums.notificaciones.TipoNotificacion;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
@@ -51,6 +53,8 @@ public class SolicitudCertificadoService {
   private final NotificacionService notificacionService;
   private final AuditoriaService auditoriaService;
   private static final Logger log = LoggerFactory.getLogger(CertificadoNoDeudaServiceImpl.class);
+  private static final Set<CanalNotificacion> CANALES_AVISO = EnumSet.of(CanalNotificacion.SISTEMA,
+      CanalNotificacion.EMAIL);
 
   public SolicitudCertificadoService(
       SolicitudCertificadoRepository solicitudRepository,
@@ -211,27 +215,80 @@ public class SolicitudCertificadoService {
       Long solicitanteId,
       Collection<? extends GrantedAuthority> authorities) {
 
+    // Buscar solicitud
     SolicitudCertificado solicitud = solicitudRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException(
             "Solicitud no encontrada"));
-    // Validar que la solicitud esté pendiente
+
+    // Validar que esté pendiente
     validarSolicitudPendiente(solicitud);
-    // Cargar el usuario que está atendiendo
+
+    // Cargar bibliotecario que atiende
     Usuario bibliotecario = usuarioRepository.findById(solicitanteId)
-        .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "Usuario no encontrado"));
+
+    // Guardar valores anteriores para auditoría
     Map<String, Object> valoresAnteriores = mapAuditoria(solicitud);
+
+    // Actualizar solicitud
     solicitud.setEstado(EstadoSolicitud.APROBADA);
     solicitud.setFechaRespuesta(LocalDateTime.now());
     solicitud.setObservacionRespuesta(observacion);
     solicitud.setAtendidoPor(bibliotecario);
+
     SolicitudCertificado actualizada = solicitudRepository.save(solicitud);
 
+    // Registrar auditoría
     auditoriaService.registrar(
         "APROBAR_SOLICITUD_CERTIFICADO",
         "SolicitudesCertificado",
         actualizada.getId(),
         valoresAnteriores,
         mapAuditoria(actualizada));
+
+    // Preparar notificación al solicitante
+    String email = actualizada.getEmail();
+
+    if (email != null && !email.isBlank()) {
+
+      String mensaje = """
+          Estimado/a %s %s:
+
+          Le informamos que su solicitud de certificado ha sido APROBADA.
+
+          Observación: %s
+
+          Gracias por utilizar los servicios de nuestra biblioteca.
+          """.formatted(
+          actualizada.getNombres(),
+          actualizada.getApellidos(),
+          observacion != null && !observacion.isBlank()
+              ? observacion
+              : "Sin observaciones");
+
+      try {
+        notificacionService.crearYEnviarExterna(
+            new CrearNotificacionRequest(
+                null,
+                TipoNotificacion.CERTIFICADO,
+                "Solicitud de certificado aprobada",
+                mensaje,
+                CanalNotificacion.EMAIL,
+                actualizada.getId(),
+                "SOLICITUD_CERTIFICADO"));
+
+      } catch (Exception e) {
+        log.warn(
+            "No se pudo registrar/enviar notificación al solicitante de la solicitud {}",
+            actualizada.getId(),
+            e);
+      }
+    } else {
+      log.warn(
+          "La solicitud {} no tiene correo registrado. No se enviará notificación.",
+          actualizada.getId());
+    }
 
     return mapToResponse(actualizada);
   }
@@ -268,6 +325,47 @@ public class SolicitudCertificadoService {
         actualizada.getId(),
         valoresAnteriores,
         mapAuditoria(actualizada));
+    String email = actualizada.getEmail();
+
+    if (email != null && !email.isBlank()) {
+
+      String mensaje = """
+          Estimado/a %s %s:
+
+          Le informamos que su solicitud de certificado ha sido RECHAZADA.
+
+          Observación: %s
+
+          Gracias por utilizar los servicios de nuestra biblioteca.
+          """.formatted(
+          actualizada.getNombres(),
+          actualizada.getApellidos(),
+          observacion != null && !observacion.isBlank()
+              ? observacion
+              : "Sin observaciones");
+
+      try {
+        notificacionService.crearYEnviarExterna(
+            new CrearNotificacionRequest(
+                null,
+                TipoNotificacion.CERTIFICADO,
+                "Solicitud de certificado RECHAZADA",
+                mensaje,
+                CanalNotificacion.EMAIL,
+                actualizada.getId(),
+                "SOLICITUD_CERTIFICADO"));
+
+      } catch (Exception e) {
+        log.warn(
+            "No se pudo registrar/enviar notificación al solicitante de la solicitud {}",
+            actualizada.getId(),
+            e);
+      }
+    } else {
+      log.warn(
+          "La solicitud {} no tiene correo registrado. No se enviará notificación.",
+          actualizada.getId());
+    }
 
     return mapToResponse(actualizada);
   }
@@ -376,7 +474,7 @@ public class SolicitudCertificadoService {
         );
 
         try {
-          notificacionService.crear(notifRequest);
+          notificacionService.crearEnCanales(notifRequest, CANALES_AVISO);
         } catch (Exception e) {
           log.warn("No se pudo crear notificación para usuario {}",
               usuarioEncargado.getId_usuario(), e);

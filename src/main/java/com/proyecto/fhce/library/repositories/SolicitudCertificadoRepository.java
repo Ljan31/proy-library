@@ -3,12 +3,15 @@ package com.proyecto.fhce.library.repositories;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.proyecto.fhce.library.entities.SolicitudCertificado;
 import com.proyecto.fhce.library.enums.EstadoSolicitud;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SolicitudCertificadoRepository
@@ -27,12 +30,10 @@ public interface SolicitudCertificadoRepository
                         Long usuarioId);
 
         // Buscar por CI
-        List<SolicitudCertificado> findByCi(
-                        String ci);
+        List<SolicitudCertificado> findByCi(String ci);
 
         // Buscar por matrícula
-        List<SolicitudCertificado> findByMatricula(
-                        String matricula);
+        List<SolicitudCertificado> findByMatricula(String matricula);
 
         // Obtener solicitudes por biblioteca y estado
         List<SolicitudCertificado> findByBiblioteca_IdBibliotecaAndEstado(
@@ -45,20 +46,29 @@ public interface SolicitudCertificadoRepository
 
         Page<SolicitudCertificado> findAll(Pageable pageable);
 
-        /**
-         * Verifica si existe una solicitud PENDIENTE para el mismo CI,
-         * misma biblioteca y misma razón.
-         */
+        // NUEVO: Obtener correo de una solicitud
+        @Query("""
+                        SELECT s.email
+                        FROM SolicitudCertificado s
+                        WHERE s.id = :solicitudId
+                        """)
+        Optional<String> obtenerEmailPorSolicitud(
+                        @Param("solicitudId") Long solicitudId);
+
+        // NUEVO: Verificar si existe una solicitud con correo
+        boolean existsByIdAndEmailIsNotNull(
+                        Long solicitudId);
+
+        // Verificar solicitudes pendientes por CI, biblioteca y razón
         boolean existsByCiAndBiblioteca_IdBibliotecaAndRazonCertificado_IdRazonAndEstado(
                         String ci,
                         Long bibliotecaId,
                         Long razonId,
                         EstadoSolicitud estado);
 
-        // Opcional: más flexible (cualquier solicitud pendiente en la biblioteca)
+        // Verificar cualquier solicitud pendiente en biblioteca
         boolean existsByCiAndBiblioteca_IdBibliotecaAndEstado(
                         String ci,
                         Long bibliotecaId,
                         EstadoSolicitud estado);
-
 }

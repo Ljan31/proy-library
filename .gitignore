@@ -31,8 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
-# .env
-
+.env
+src/main/resources/application-dev.properties
 uploads/
 certificados/
 portadas/

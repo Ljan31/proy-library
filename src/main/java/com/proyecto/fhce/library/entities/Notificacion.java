@@ -30,7 +30,7 @@ public class Notificacion {
     @Column(name = "id_notificacion")
     private Long idNotificacion;
 
-    @Column(name = "id_usuario", nullable = false)
+    @Column(name = "id_usuario", nullable = false) // true
     private Long idUsuario;
 
     @Enumerated(EnumType.STRING)
@@ -241,6 +241,17 @@ public class Notificacion {
     public void registrarFallo(String mensajeError) {
         this.estadoEnvio = EstadoEnvio.FALLIDO;
         this.intentosEnvio = this.intentosEnvio + 1;
+        this.ultimoError = mensajeError;
+    }
+
+    /**
+     * Fallo que no tiene sentido reintentar (p. ej. el usuario no tiene correo
+     * o teléfono válido). Deja los intentos en el máximo para que el scheduler
+     * de reintentos no vuelva a tomarla.
+     */
+    public void registrarFalloDefinitivo(String mensajeError, int maxIntentos) {
+        this.estadoEnvio = EstadoEnvio.FALLIDO;
+        this.intentosEnvio = Math.max(this.intentosEnvio + 1, maxIntentos);
         this.ultimoError = mensajeError;
     }
 

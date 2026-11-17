@@ -27,5 +27,5 @@ public record CrearNotificacionRequest(
     Long idReferencia,
 
     // PRESTAMO | RESERVA | SANCION
-    String tipoReferencia) {
+    @Size(max = 30, message = "El tipo de referencia no puede superar 30 caracteres") String tipoReferencia) {
 }
