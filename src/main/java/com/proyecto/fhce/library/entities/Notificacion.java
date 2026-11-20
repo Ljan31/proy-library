@@ -30,7 +30,7 @@ public class Notificacion {
     @Column(name = "id_notificacion")
     private Long idNotificacion;
 
-    @Column(name = "id_usuario", nullable = false) // true
+    @Column(name = "id_usuario", nullable = true)
     private Long idUsuario;
 
     @Enumerated(EnumType.STRING)

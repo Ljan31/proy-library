@@ -3,6 +3,7 @@ package com.proyecto.fhce.library.iteracion4.unit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -12,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +44,7 @@ import com.proyecto.fhce.library.entities.Usuario;
 import com.proyecto.fhce.library.enums.EstadoSolicitud;
 import com.proyecto.fhce.library.enums.RolEncargado;
 import com.proyecto.fhce.library.enums.TipoBiblioteca;
+import com.proyecto.fhce.library.enums.notificaciones.CanalNotificacion;
 import com.proyecto.fhce.library.exception.BusinessException;
 import com.proyecto.fhce.library.exception.ResourceNotFoundException;
 import com.proyecto.fhce.library.repositories.BibliotecaRepository;
@@ -235,7 +238,7 @@ class SolicitudYRazonServiceTest {
     service.crearSolicitud(request(), 1L, roles("ROLE_ESTUDIANTE"));
 
     ArgumentCaptor<CrearNotificacionRequest> cap = ArgumentCaptor.forClass(CrearNotificacionRequest.class);
-    verify(notificacionService, times(2)).crear(cap.capture());
+    verify(notificacionService, times(2)).crearEnCanales(cap.capture(), anySet());
     assertThat(cap.getAllValues()).extracting(CrearNotificacionRequest::idUsuario).containsExactlyInAnyOrder(2L, 3L);
     assertThat(cap.getAllValues().get(0).asunto()).contains("Certificado No Deuda");
   }
@@ -245,7 +248,8 @@ class SolicitudYRazonServiceTest {
   void crear_falloNotificacion() {
     escenarioCrear();
     biblioteca.setEncargados(List.of(encargado(bibliotecario, RolEncargado.PRINCIPAL, true, null)));
-    org.mockito.Mockito.doThrow(new RuntimeException("SMTP caído")).when(notificacionService).crear(any());
+    org.mockito.Mockito.doThrow(new RuntimeException("SMTP caído")).when(notificacionService).crearEnCanales(any(),
+        any());
 
     SolicitudCertificadoResponse r = service.crearSolicitud(request(), 1L, roles("ROLE_ESTUDIANTE"));
 
@@ -269,7 +273,7 @@ class SolicitudYRazonServiceTest {
     service.crearSolicitud(request(), 1L, roles("ROLE_ESTUDIANTE"));
 
     ArgumentCaptor<CrearNotificacionRequest> cap = ArgumentCaptor.forClass(CrearNotificacionRequest.class);
-    verify(notificacionService).crear(cap.capture());
+    verify(notificacionService).crearEnCanales(cap.capture(), anySet());
     String msg = cap.getValue().mensaje();
     assertThat(msg).contains("Razón: Titulación").contains("Biblioteca: Central")
         .contains("Descripción: Para titulación");
